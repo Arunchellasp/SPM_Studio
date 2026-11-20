@@ -98,6 +98,7 @@
   --field-h: 32px;
   --radius-input: 4px;
   --label-h: 18px; /* label row above the box, 2 px gap */
+  --field-disabled-bg: #eef0f2; /* read-only box (= --panel in light) */
   --error: #d32f2f; /* invalid value: same red as danger / P1, used for the border and the message */
 
   /* segmented switch (N00: 110 × 32 segments, square corners, 12 px; header version 120 × 32) */
@@ -163,6 +164,7 @@
   --danger: #f07171;
   --danger-lt: #432626;
   --error: #f07171;
+  --field-disabled-bg: #1f252c; /* darker than the card, so read-only boxes look different (found on the PC) */
 
   --alarm-bg: #4a2424;
   --alarm-line: #7a3434;

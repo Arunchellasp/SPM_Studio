@@ -44,7 +44,7 @@
   box-shadow: 0 0 0 1px var(--focus); /* 2 px blue edge while typing, like the button focus ring */
 }
 .field-control:disabled {
-  background: var(--panel);
+  background: var(--field-disabled-bg);
   color: var(--muted);
   cursor: default;
 }

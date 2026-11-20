@@ -111,6 +111,7 @@ test('UI-10.4 dark: all N00 parts use the dark tokens; state, alarm and header c
   expect(await bg('.card')).toBe('rgb(42, 49, 57)')
   expect(await fg('.card-title')).toBe('rgb(230, 233, 237)')
   expect(await bg('.field-control')).toBe('rgb(42, 49, 57)')
+  expect(await bg('.field-control:disabled')).toBe('rgb(31, 37, 44)') // read-only box darker than the card (PC test finding)
   expect(await fg('.tbl td')).toBe('rgb(230, 233, 237)')
   expect(await bg('.tbl tr.tbl-forced')).toBe('rgb(122, 95, 18)')
   expect(await bg('.tbl tr.tbl-fault')).toBe('rgb(132, 48, 48)')
