@@ -31,7 +31,7 @@
 }
 .toast-icon {
   font-size: 18px;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .toast-done .toast-icon {
   color: var(--st-execute);

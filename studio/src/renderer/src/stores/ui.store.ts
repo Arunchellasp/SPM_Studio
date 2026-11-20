@@ -4,7 +4,7 @@
  * mode and alarms come from the C runtime instead of these defaults.
  */
 import { create } from 'zustand'
-import { SCREENS } from '../app/screens'
+import { applyTheme, loadTheme, saveTheme, type Theme } from '../app/theme'
 
 export type MachineState = 'STOPPED' | 'IDLE' | 'STARTING' | 'EXECUTE' | 'HELD' | 'SUSPENDED' | 'ABORTED' | 'COMPLETE'
 export type Mode = 'Auto' | 'Manual' | 'Maintenance'
@@ -27,22 +27,33 @@ interface UiState {
   machineState: MachineState
   mode: Mode
   alarms: Alarm[]
+  // display (step 10): saved on this PC
+  theme: Theme
   // actions
   openScreen: (id: string) => void
   setMode: (m: Mode) => void
   ackTopAlarm: () => void
+  setTheme: (t: Theme) => void
 }
 
 export const useUi = create<UiState>((set) => ({
   cellName: 'Line 3 · Trim dispensing cell',
   userName: 'A. Engineer',
-  activeScreen: SCREENS[0].id,
+  // a plain id, not SCREENS[0].id: screens.ts imports screen views that use this store,
+  // so importing screens.ts here would be a circle (found in step 10)
+  activeScreen: 'operate',
 
   machineState: 'STOPPED',
   mode: 'Auto',
   alarms: [],
+  theme: loadTheme(), // what was chosen last time on this PC (default light)
 
   openScreen: (id) => set({ activeScreen: id }),
   setMode: (mode) => set({ mode }),
-  ackTopAlarm: () => set((s) => ({ alarms: s.alarms.map((a, i) => (i === 0 ? { ...a, acked: true } : a)) }))
+  ackTopAlarm: () => set((s) => ({ alarms: s.alarms.map((a, i) => (i === 0 ? { ...a, acked: true } : a)) })),
+  setTheme: (theme) => {
+    applyTheme(theme)
+    saveTheme(theme)
+    set({ theme })
+  }
 }))

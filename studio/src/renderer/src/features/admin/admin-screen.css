@@ -1,0 +1,39 @@
+/* N10 Admin: page head on the grey background, cards in a grid like N00 */
+.adm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+.adm-head h1 {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: 600;
+}
+.adm-code {
+  color: var(--muted-on-bg);
+  font-weight: 700;
+  margin-right: 6px;
+}
+.adm-purpose {
+  margin: 4px 0 0;
+  color: var(--muted-on-bg);
+}
+.adm-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gap);
+}
+.adm-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.adm-label {
+  width: 80px;
+  color: var(--muted);
+}
+.adm-note {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}

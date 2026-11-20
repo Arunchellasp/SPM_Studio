@@ -86,11 +86,11 @@
   color: var(--text);
 }
 .rail-item:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--hover);
 }
 .rail-item.active {
   background: var(--accent-lt);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .rail-item.active::before {
   content: '';

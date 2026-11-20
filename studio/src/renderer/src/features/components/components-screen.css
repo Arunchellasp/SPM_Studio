@@ -10,13 +10,13 @@
   font-weight: 600;
 }
 .cmp-code {
-  color: var(--muted);
+  color: var(--muted-on-bg);
   font-weight: 700;
   margin-right: 6px;
 }
 .cmp-purpose {
   margin: 4px 0 0;
-  color: var(--muted);
+  color: var(--muted-on-bg);
 }
 .cmp-grid {
   display: grid;
@@ -77,4 +77,9 @@
 /* step 6: the tag table card is wider than the value-states card */
 .cmp-tables {
   grid-template-columns: 640px minmax(0, 1fr);
+}
+
+/* step 10: notes in the page head sit on the grey page background */
+.cmp-head .cmp-note {
+  color: var(--muted-on-bg);
 }

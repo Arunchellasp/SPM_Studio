@@ -67,12 +67,12 @@
 .btn-ghost {
   background: transparent;
   border-color: transparent;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .btn-danger {
   background: var(--surface);
-  border-color: var(--p1);
-  color: var(--p1);
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
 /* hover (not drawn in N00; kept subtle so the design colours stay recognisable) */

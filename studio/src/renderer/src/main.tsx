@@ -6,6 +6,9 @@ import { createRoot } from 'react-dom/client'
 import './theme/tokens.css'
 import './theme/base.css'
 import { AppShell } from './shell/app-shell.view'
+import { applyTheme, loadTheme } from './app/theme'
+
+applyTheme(loadTheme()) // before the first paint, so a dark PC never flashes light
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

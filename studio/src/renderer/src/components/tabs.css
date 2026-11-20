@@ -15,7 +15,7 @@
   border: none;
 }
 .tab[aria-selected='true'] {
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 700;
 }
 .tab[aria-selected='true']::after {
@@ -25,7 +25,7 @@
   right: var(--tab-inset);
   bottom: -1px; /* sits on the grey base line */
   height: var(--tab-line);
-  background: var(--accent);
+  background: var(--accent-text); /* = accent in light; lighter in dark so it stays visible */
 }
 .tab:hover:not(:disabled):not([aria-selected='true']) {
   color: var(--text);

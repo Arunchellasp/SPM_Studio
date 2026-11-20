@@ -19,12 +19,15 @@
   /* text and lines */
   --text: #1f2328;
   --muted: #5f6670;
+  --muted-on-bg: #575e68; /* muted text placed directly on --bg (#5F6670 there is 4.34 : 1, below 4.5) */
   --border: #b8bec6;
   --border-soft: #c9ced4;
 
   /* interaction (one accent colour only) */
   --accent: #2b5fa8;
   --accent-lt: #dce6f4;
+  --accent-text: #2b5fa8; /* accent used as TEXT (ghost button, selected tab, active rail); lighter in dark */
+  --danger: #d32f2f; /* danger button text / border (= P1 red in light; lighter in dark for contrast) */
   --on-accent: #ffffff; /* text on accent-coloured surfaces (primary button) */
   --accent-hover: #234f8c; /* primary button hover */
   --hover: rgba(0, 0, 0, 0.05); /* light hover on default / quiet / ghost */
@@ -123,10 +126,53 @@
   /* icons (lucide SVG, 1em square: size = font size where they sit) */
   --icon-rail: 24px; /* rail glyphs in N00 are ~24 px */
   --icon-cmd: 14px; /* header Start / Hold / Stop / Reset */
+  /* (theme) — see the dark set at the end of this file */
 
   /* dialog + toast (GUI templates › Dialog 420 px wide, drawn like an N00 card) */
   --dialog-w: 420px;
   --toast-w: 360px;
   --backdrop: rgba(31, 35, 40, 0.45); /* dims the screen behind a dialog */
   --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.22); /* only things that float above the screen get a shadow */
+}
+
+/*
+ * Dark theme (step 10). N00 rule: "same tokens for a dark theme: swap bg / surface / text only".
+ * Only surfaces, lines, text and the tints that sit behind text change.
+ * NOT changed: machine state colours (--st-*), alarm priorities (--p1 … --p4), the header bar,
+ * the accent FILL (--accent) and every size. Every text pair here is ≥ 4.5 : 1 (checked in UI-10.2).
+ */
+:root[data-theme='dark'] {
+  color-scheme: dark; /* native parts (scrollbars, select lists) follow */
+
+  --bg: #1b2128;
+  --panel: #232a32;
+  --surface: #2a3139;
+  --rail: #20262d;
+
+  --text: #e6e9ed;
+  --muted: #a3abb5;
+  --muted-on-bg: #a3abb5;
+  --border: #4a535e;
+  --border-soft: #3b434d;
+
+  --accent-lt: #24395a;
+  --accent-text: #82b1ee;
+  --accent-hover: #3569b5;
+  --hover: rgba(255, 255, 255, 0.06);
+  --focus: #82b1ee;
+  --danger: #f07171;
+  --danger-lt: #432626;
+  --error: #f07171;
+
+  --alarm-bg: #4a2424;
+  --alarm-line: #7a3434;
+
+  --table-line: #3f4853;
+  --cell-text: #e6e9ed;
+  --row-alt: #2f3740;
+  --forced-bg: #7a5f12;
+  --fault-bg: #843030;
+
+  --backdrop: rgba(0, 0, 0, 0.6);
+  --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.5);
 }

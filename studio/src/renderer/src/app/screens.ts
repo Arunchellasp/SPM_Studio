@@ -6,6 +6,7 @@
 import type { ComponentType } from 'react'
 import type { IconName } from '../components/icon.view'
 import { ComponentsScreen } from '../features/components/components-screen.view'
+import { AdminScreen } from '../features/admin/admin-screen.view'
 
 export interface ScreenDef {
   id: string
@@ -76,7 +77,8 @@ export const ALL_SCREENS: ScreenDef[] = [
     icon: 'admin',
     label: 'Admin',
     title: 'Admin › Roles and audit',
-    purpose: 'Permissions per action and audit trail'
+    purpose: 'Permissions per action and audit trail',
+    view: AdminScreen
   },
   {
     id: 'components',
