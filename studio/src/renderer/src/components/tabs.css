@@ -1,0 +1,42 @@
+/* Tabs (N00): 34 px row on a 1 px grey base line; selected tab bold blue with a 3 px blue underline. */
+.tabs-list {
+  display: flex;
+  height: var(--tab-h);
+  border-bottom: 1px solid var(--border);
+}
+.tab {
+  position: relative;
+  height: var(--tab-h);
+  padding: 0 var(--tab-pad);
+  font: inherit;
+  font-size: var(--fs);
+  color: var(--muted);
+  background: none;
+  border: none;
+}
+.tab[aria-selected='true'] {
+  color: var(--accent);
+  font-weight: 700;
+}
+.tab[aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  left: var(--tab-inset);
+  right: var(--tab-inset);
+  bottom: -1px; /* sits on the grey base line */
+  height: var(--tab-line);
+  background: var(--accent);
+}
+.tab:hover:not(:disabled):not([aria-selected='true']) {
+  color: var(--text);
+}
+.tab:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+.tabs-panel {
+  padding-top: var(--card-pad);
+}
+.tabs-panel:focus-visible {
+  outline: 2px solid var(--focus);
+}

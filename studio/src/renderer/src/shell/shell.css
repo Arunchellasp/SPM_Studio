@@ -33,21 +33,7 @@
   text-overflow: ellipsis;
 }
 
-.header-modes {
-  display: flex;
-}
-.header-modes button {
-  width: 120px;
-  height: 32px;
-  color: var(--header-text);
-  background: var(--header-btn);
-  border: 1px solid var(--header-line);
-  margin-left: -1px;
-}
-.header-modes button.on {
-  background: var(--header-btn-on);
-  font-weight: 600;
-}
+/* .header-modes: the Segmented component (components/segmented.css, tone dark) */
 
 .header-commands {
   display: flex;

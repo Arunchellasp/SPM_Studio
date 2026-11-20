@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
+import { Segmented } from '../components/segmented.view'
 import { StatePill } from '../components/state-pill.view'
 import { useUi, type Mode } from '../stores/ui.store'
 
-const MODES: Mode[] = ['Auto', 'Manual', 'Maintenance']
+const MODES: readonly Mode[] = ['Auto', 'Manual', 'Maintenance']
 const COMMANDS = [
   { id: 'start', label: '▶  Start' },
   { id: 'hold', label: '❚❚  Hold' },
@@ -28,13 +29,8 @@ export function Header(): React.JSX.Element {
 
       <StatePill state={machineState} />
 
-      <div className="header-modes" role="radiogroup" aria-label="Machine mode">
-        {MODES.map((m) => (
-          <button key={m} role="radio" aria-checked={m === mode} className={m === mode ? 'on' : ''} onClick={() => setMode(m)}>
-            {m}
-          </button>
-        ))}
-      </div>
+      {/* since step 5 the shared Segmented component, dark tone */}
+      <Segmented label="Machine mode" tone="dark" className="header-modes" options={MODES} value={mode} onChange={setMode} />
 
       <div className="header-commands">
         {COMMANDS.map((c) => (

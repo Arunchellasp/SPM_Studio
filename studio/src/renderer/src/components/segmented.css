@@ -1,0 +1,54 @@
+/* Segmented switch (N00): joined square segments; the selected one is filled. */
+.seg {
+  display: inline-flex;
+}
+.seg-item {
+  height: var(--seg-h);
+  min-width: var(--seg-w);
+  padding: 0 12px;
+  margin-left: -1px; /* neighbours share one 1 px border */
+  font: inherit;
+  font-size: var(--fs-seg);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 0;
+}
+.seg-item:first-child {
+  margin-left: 0;
+}
+.seg-item[aria-checked='true'] {
+  position: relative; /* draw its border on top of the neighbours' */
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+.seg-item:hover:not(:disabled):not([aria-checked='true']) {
+  background: var(--panel);
+}
+.seg-item:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* dark version for the header bar (same look as step 1) */
+.seg-dark .seg-item {
+  min-width: var(--seg-w-header);
+  font-size: var(--fs);
+  background: var(--header-btn);
+  color: var(--header-text);
+  border-color: var(--header-line);
+}
+.seg-dark .seg-item[aria-checked='true'] {
+  background: var(--header-btn-on);
+  border-color: var(--header-line);
+  font-weight: 600;
+}
+.seg-dark .seg-item:hover:not(:disabled):not([aria-checked='true']) {
+  background: var(--header-btn-on);
+}
+.seg-dark .seg-item:focus-visible {
+  outline-color: var(--header-text);
+}

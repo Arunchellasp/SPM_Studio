@@ -3,7 +3,9 @@ import type { ScreenDef } from '../../app/screens'
 import { Button, type ButtonSize, type ButtonVariant } from '../../components/button.view'
 import { Card } from '../../components/card.view'
 import { Field } from '../../components/field.view'
+import { Segmented } from '../../components/segmented.view'
 import { Select, type SelectOption } from '../../components/select.view'
+import { Tabs } from '../../components/tabs.view'
 import { StatePill } from '../../components/state-pill.view'
 import './components-screen.css'
 
@@ -30,6 +32,9 @@ function checkPosition(text: string): string | undefined {
   return undefined
 }
 
+type DemoMode = 'Auto' | 'Manual' | 'Maint.'
+const DEMO_MODES: readonly DemoMode[] = ['Auto', 'Manual', 'Maint.']
+
 const SIZES: { s: ButtonSize; use: string }[] = [
   { s: 'sm', use: '28 px · alarm banner (Ack)' },
   { s: 'md', use: '32 px · toolbars, + New tag (default)' },
@@ -48,6 +53,9 @@ export function ComponentsScreen({ screen }: { screen: ScreenDef }): React.JSX.E
   const [recipe, setRecipe] = useState('A-12')
   const [speed, setSpeed] = useState('')
   const positionError = checkPosition(position)
+  const [demoMode, setDemoMode] = useState<DemoMode>('Auto')
+  const [view, setView] = useState<'list' | 'grid' | 'chart'>('list')
+  const [tab, setTab] = useState('overview')
 
   return (
     <div className="cmp">
@@ -56,6 +64,63 @@ export function ComponentsScreen({ screen }: { screen: ScreenDef }): React.JSX.E
           <span className="cmp-code">{screen.code}</span> {screen.title}
         </h1>
         <p className="cmp-purpose">{screen.purpose}</p>
+      </div>
+
+      {/* ---------------------------------------------------------- Segmented + Tabs (step 5) */}
+      <div className="cmp-grid">
+        <Card
+          title="Segmented (as in N00 › Buttons and inputs)"
+          actions={
+            <span className="cmp-note" data-testid="seg-echo">
+              mode {demoMode} · view {view}
+            </span>
+          }
+        >
+          <div className="cmp-row">
+            <Segmented label="Demo mode" options={DEMO_MODES} value={demoMode} onChange={setDemoMode} />
+            <span className="cmp-note">110 × 32 segments · the header mode switch is the same component (dark)</span>
+          </div>
+          <div className="cmp-row">
+            <Segmented
+              label="View"
+              options={[
+                { value: 'list', label: 'List' },
+                { value: 'grid', label: 'Grid' },
+                { value: 'chart', label: 'Chart (later)', disabled: true }
+              ]}
+              value={view}
+              onChange={setView}
+            />
+            <span className="cmp-note">a disabled option is skipped by the arrow keys</span>
+          </div>
+          <p className="cmp-note cmp-gap">Click a segment, or press Tab to reach the group and use ← → (selection follows the arrow).</p>
+        </Card>
+
+        <Card
+          title="Tabs (as in N00 › Buttons and inputs)"
+          actions={
+            <span className="cmp-note" data-testid="tab-echo">
+              tab {tab}
+            </span>
+          }
+        >
+          <Tabs
+            label="Station view"
+            value={tab}
+            onChange={setTab}
+            tabs={[
+              {
+                id: 'overview',
+                label: 'Overview',
+                content: <p className="cmp-note">Overview panel: state, counters and the 'why not faster' card go here (N01).</p>
+              },
+              { id: 'stations', label: 'Stations', content: <p className="cmp-note">Stations panel: one card per station.</p> },
+              { id: 'axes', label: 'Axes', content: <p className="cmp-note">Axes panel: position, jog and home per axis (step 30+).</p> },
+              { id: 'io', label: 'I/O', content: <p className="cmp-note">I/O panel: input and output lamps (step 25+).</p> },
+              { id: 'trace', label: 'Trace', content: null, disabled: true }
+            ]}
+          />
+        </Card>
       </div>
 
       {/* ---------------------------------------------------------- Field + Select (step 4) */}
