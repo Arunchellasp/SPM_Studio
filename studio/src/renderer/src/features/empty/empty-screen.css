@@ -1,0 +1,33 @@
+.empty {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+}
+.empty h1 {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: 600;
+}
+.empty-code {
+  color: var(--muted);
+  font-weight: 700;
+  margin-right: 6px;
+}
+.empty-purpose {
+  margin: 6px 0 20px;
+  color: var(--muted);
+}
+.empty-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--border-soft);
+  border-radius: var(--radius);
+  color: var(--muted);
+  font-size: var(--fs-md);
+}

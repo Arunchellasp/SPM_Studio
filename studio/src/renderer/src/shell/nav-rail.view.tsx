@@ -1,27 +1,24 @@
-import type { ScreenDef } from '../app/screens'
+import { SCREENS } from '../app/screens'
+import { useUi } from '../stores/ui.store'
 
-interface Props {
-  screens: ScreenDef[]
-  active: string
-  onSelect: (id: string) => void
-}
+/** Navigation rail (88 px): one button per task area, icon + label. */
+export function NavRail(): React.JSX.Element {
+  const active = useUi((s) => s.activeScreen)
+  const openScreen = useUi((s) => s.openScreen)
 
-export function NavRail({ screens, active, onSelect }: Props): React.JSX.Element {
-  const groups = [...new Set(screens.map((s) => s.group))]
   return (
-    <nav className="navrail">
-      {groups.map((g) => (
-        <div key={g} className="nav-group">
-          <div className="nav-group-title">{g}</div>
-          {screens
-            .filter((s) => s.group === g)
-            .map((s) => (
-              <button key={s.id} className={`nav-item ${s.id === active ? 'active' : ''}`} onClick={() => onSelect(s.id)}>
-                <span className="code">{s.code}</span>
-                {s.title}
-              </button>
-            ))}
-        </div>
+    <nav className="rail" aria-label="Task areas">
+      {SCREENS.map((s) => (
+        <button
+          key={s.id}
+          className={`rail-item ${s.id === active ? 'active' : ''}`}
+          aria-current={s.id === active ? 'page' : undefined}
+          title={`${s.code} ${s.title}`}
+          onClick={() => openScreen(s.id)}
+        >
+          <span className="rail-icon">{s.icon}</span>
+          <span className="rail-label">{s.label}</span>
+        </button>
       ))}
     </nav>
   )

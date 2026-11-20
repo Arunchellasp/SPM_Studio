@@ -1,0 +1,163 @@
+/* Shell layout: header / rail / content / banner (sizes from tokens.css). */
+.shell {
+  display: grid;
+  height: 100%;
+  grid-template-columns: var(--rail-w) 1fr;
+  grid-template-rows: var(--header-h) 1fr var(--banner-h);
+  grid-template-areas:
+    'header header'
+    'rail   content'
+    'banner banner';
+}
+
+/* ---------------------------------------------------------------- header */
+.header {
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 0 20px;
+  background: var(--header);
+  color: var(--header-text);
+}
+.header-product {
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}
+.header-cell {
+  font-size: var(--fs-md);
+  color: var(--header-muted);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-modes {
+  display: flex;
+}
+.header-modes button {
+  width: 120px;
+  height: 32px;
+  color: var(--header-text);
+  background: var(--header-btn);
+  border: 1px solid var(--header-line);
+  margin-left: -1px;
+}
+.header-modes button.on {
+  background: var(--header-btn-on);
+  font-weight: 600;
+}
+
+.header-commands {
+  display: flex;
+  gap: 8px;
+}
+.header-commands button {
+  width: 108px;
+  height: 36px;
+  color: var(--header-text);
+  background: var(--header-btn);
+  border: 1px solid var(--header-line);
+  border-radius: var(--radius);
+}
+
+.header-user {
+  color: var(--header-muted);
+  white-space: nowrap;
+}
+.mono {
+  font-family: var(--mono);
+}
+
+/* ---------------------------------------------------------------- rail */
+.rail {
+  grid-area: rail;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 6px;
+  background: var(--rail);
+  border-right: 1px solid var(--border-soft);
+  overflow-y: auto;
+}
+.rail-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 76px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+}
+.rail-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+.rail-item.active {
+  background: var(--accent-lt);
+  color: var(--accent);
+}
+.rail-item.active::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 8px;
+  bottom: 8px;
+  width: 4px;
+  background: var(--accent);
+}
+.rail-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+.rail-label {
+  font-size: var(--fs-xs);
+}
+
+/* ---------------------------------------------------------------- content */
+.content {
+  grid-area: content;
+  padding: var(--gap);
+  overflow: auto;
+}
+
+/* ---------------------------------------------------------------- alarm banner */
+.banner {
+  grid-area: banner;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  border-top: 1px solid var(--border-soft);
+}
+.banner-ok {
+  background: var(--panel);
+  color: var(--muted);
+  justify-content: center;
+}
+.banner-alarm {
+  background: var(--alarm-bg);
+  border-top-color: var(--alarm-line);
+}
+.banner-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.banner-btn {
+  width: 96px;
+  height: 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.banner-link {
+  background: none;
+  border: none;
+  color: var(--accent);
+}

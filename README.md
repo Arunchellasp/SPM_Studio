@@ -11,7 +11,19 @@ SPM_Studio/
 └─ docs/adr/    architecture decision records
 ```
 
-## Quick start (studio)
+## Quick start: GUI only (step 1)
+
+Double-click `start-studio.cmd` (Windows), or:
+
+```bash
+cd studio
+npm install
+npm run dev
+```
+
+The teaching notes for each step are in the mind_map repo → page **Teaching**.
+
+## Quick start (studio + mock runtime)
 
 Needs Node.js 22 LTS and Git.
 

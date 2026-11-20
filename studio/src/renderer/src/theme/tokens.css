@@ -1,28 +1,62 @@
-/* N00 design tokens (ISA-101: grey base, colour only for meaning). Change values here, never in components. */
+/*
+ * N00 design tokens (mind_map → Improved design → N00).
+ * ISA-101 style: grey base, colour only for state, alarms and interaction.
+ * Components use these variables only — never raw colour values.
+ */
 :root {
-  --bg: #1b2128;
-  --bg-panel: #232a33;
-  --bg-raised: #2c3540;
-  --line: #3a4552;
-  --text: #e6eaee;
-  --text-muted: #8d99a6;
-  --accent: #4a90d9;
+  /* surfaces */
+  --bg: #dcdfe3; /* page background */
+  --panel: #eef0f2; /* banner / quiet areas */
+  --surface: #ffffff; /* cards */
+  --rail: #e8eaed; /* navigation rail */
+  --header: #2f353d; /* top header bar */
+  --header-btn: #3a4048;
+  --header-btn-on: #4a5562;
+  --header-line: #59626d;
+  --header-text: #ffffff;
+  --header-muted: #d0d4da;
 
-  --ok: #2ecc71;
-  --warn: #f1c40f;
-  --alarm: #e74c3c;
-  --info: #3498db;
+  /* text and lines */
+  --text: #1f2328;
+  --muted: #5f6670;
+  --border: #b8bec6;
+  --border-soft: #c9ced4;
 
-  --font: 'Segoe UI', 'Inter', system-ui, sans-serif;
-  --mono: 'Cascadia Mono', 'Consolas', ui-monospace, monospace;
+  /* interaction (one accent colour only) */
+  --accent: #2b5fa8;
+  --accent-lt: #dce6f4;
+
+  /* machine state (PackML) */
+  --st-stopped: #9e9e9e;
+  --st-idle: #607d8b;
+  --st-starting: #2b5fa8;
+  --st-execute: #2e7d32;
+  --st-held: #f9a825;
+  --st-aborted: #d32f2f;
+  --st-complete: #455a64;
+
+  /* alarm priority — never used for anything else */
+  --p1: #d32f2f;
+  --p2: #f57c00;
+  --p3: #fbc02d;
+  --p4: #0288d1;
+  --alarm-bg: #f7e3e3;
+  --alarm-line: #e2b4b4;
+
+  /* type */
+  --font: 'Segoe UI', system-ui, sans-serif;
+  --mono: 'Cascadia Mono', Consolas, ui-monospace, monospace;
+  --fs-xs: 11px;
   --fs-sm: 12px;
-  --fs: 14px;
+  --fs: 13px;
+  --fs-md: 15px;
   --fs-lg: 18px;
   --fs-xl: 24px;
 
-  --gap: 12px;
+  /* layout (shell sizes from N00) */
+  --header-h: 56px;
+  --rail-w: 88px;
+  --banner-h: 36px;
+  --gap: 16px;
   --radius: 6px;
-  --topbar-h: 48px;
-  --statusbar-h: 28px;
-  --nav-w: 220px;
 }

@@ -11,11 +11,14 @@ src/
 │  └─ protocol.ts        runtime wire messages, validated with zod
 └─ renderer/             screens (React)
    └─ src/
-      ├─ app/            App + screen registry (N01–N10)
-      ├─ shell/          top bar, nav rail, status bar
-      ├─ features/       one folder per screen: <feature>.view.tsx, <feature>.store.ts …
-      ├─ stores/live.ts  single copy of runtime status / state / events
-      └─ theme/          N00 design tokens (tokens.css) + layout (app.css)
+      ├─ main.tsx              entry: draws <AppShell />
+      ├─ theme/                tokens.css (N00 colours, sizes) · base.css (reset)
+      ├─ app/screens.ts        screen registry N01–N10 (one line per screen)
+      ├─ stores/ui.store.ts    UI state: active screen, mode, machine state, alarms
+      ├─ shell/                common frame for every window:
+      │                        app-shell · header · nav-rail · alarm-banner (+ shell.css)
+      ├─ components/           small shared parts: state-pill, priority-icon
+      └─ features/             one folder per screen (step 1: empty placeholder only)
 tools/mock-runtime.mjs   fake runtime for development
 ```
 

@@ -16,7 +16,8 @@
     "dist:win": "npm run build && electron-builder --win",
     "dist:linux": "npm run build && electron-builder --linux",
     "web": "vite src/renderer --config vite.web.config.ts",
-    "build:web": "vite build src/renderer --config vite.web.config.ts"
+    "build:web": "vite build src/renderer --config vite.web.config.ts",
+    "postinstall": "node node_modules/electron/install.js || echo Electron program download skipped"
   },
   "author": "Arun P",
   "license": "UNLICENSED",

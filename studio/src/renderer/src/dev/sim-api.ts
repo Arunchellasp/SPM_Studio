@@ -1,3 +1,4 @@
+/* PARKED (not imported yet): browser simulator, used again in the runtime-link step. */
 /**
  * Browser simulator for window.spm.
  * Used only when the screens run outside Electron (plain browser preview, web demo).

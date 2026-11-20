@@ -1,3 +1,4 @@
+/* PARKED (not imported yet): connected to the screens in the runtime-link step. */
 /**
  * Live store: the single copy of runtime status, state and recent events in the renderer.
  * Components select only the slice they show, so only they re-render.

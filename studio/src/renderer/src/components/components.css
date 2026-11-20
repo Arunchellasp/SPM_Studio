@@ -1,0 +1,72 @@
+/* Shared small components (N00). */
+
+/* machine state pill */
+.state-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 150px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: var(--radius);
+  font-weight: 700;
+  font-size: var(--fs);
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: var(--st-stopped);
+}
+.st-idle {
+  background: var(--st-idle);
+}
+.st-starting {
+  background: var(--st-starting);
+}
+.st-execute {
+  background: var(--st-execute);
+}
+.st-held,
+.st-suspended {
+  background: var(--st-held);
+  color: #000;
+}
+.st-aborted {
+  background: var(--st-aborted);
+}
+.st-complete {
+  background: var(--st-complete);
+}
+
+/* alarm priority icon: diamond = 1, triangle = 2, square = 3, circle = 4 */
+.prio {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: #fff;
+  flex: none;
+}
+.prio-1 {
+  background: var(--p1);
+  transform: rotate(45deg);
+  width: 16px;
+  height: 16px;
+}
+.prio-1 > span {
+  transform: rotate(-45deg);
+}
+.prio-2 {
+  background: var(--p2);
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  padding-top: 5px;
+}
+.prio-3 {
+  background: var(--p3);
+  color: #000;
+}
+.prio-4 {
+  background: var(--p4);
+  border-radius: 50%;
+}
