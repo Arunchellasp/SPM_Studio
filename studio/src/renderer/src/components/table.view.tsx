@@ -49,7 +49,8 @@ export function Table<R>({
 }: TableProps<R>): React.JSX.Element {
   // column widths are measured between the grid-line centres, like draw.io does in the design;
   // the outer box is 1 px more (half of the 1 px outer line on each side)
-  const width = fill ? undefined : columns.reduce((sum, c) => sum + (c.width ?? 120), 0)
+  const total = columns.reduce((sum, c) => sum + (c.width ?? 120), 0)
+  const width = fill ? undefined : total
   const classes = ['tbl', striped ? 'tbl-striped' : '', fill ? 'tbl-fill' : '', className].filter(Boolean).join(' ')
   const alignClass = (c: Column<R>): string | undefined => (c.align && c.align !== 'center' ? `tbl-${c.align}` : undefined)
 
@@ -57,7 +58,9 @@ export function Table<R>({
     <table className={classes} aria-label={label} style={{ width }}>
       <colgroup>
         {columns.map((c) => (
-          <col key={c.key} style={{ width: c.width }} />
+          // fill: the design widths become proportions of the parent (e.g. 220 : 160 : 178), so the table
+          // shrinks with its card at 1366 / 1280 instead of sticking out (step 13, caught by UI-9.2 / 9.3)
+          <col key={c.key} style={{ width: fill ? `${((c.width ?? 120) / total) * 100}%` : c.width }} />
         ))}
       </colgroup>
       <thead>
@@ -90,6 +93,7 @@ export function Table<R>({
                     </span>
                   )}
                   {i === 0 && state === 'fault' && <span className="sr-only"> (fault)</span>}
+                  {i === 0 && state === 'warn' && <span className="sr-only"> (warning)</span>}
                 </td>
               ))}
             </tr>

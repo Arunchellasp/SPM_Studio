@@ -41,6 +41,10 @@
 .tbl-striped tbody tr.tbl-forced:nth-child(even) {
   background: var(--forced-bg);
 }
+.tbl tr.tbl-warn,
+.tbl-striped tbody tr.tbl-warn:nth-child(even) {
+  background: var(--warn-bg); /* step 13: amber like forced, but without ⓕ */
+}
 .tbl tr.tbl-fault,
 .tbl-striped tbody tr.tbl-fault:nth-child(even) {
   background: var(--fault-bg);

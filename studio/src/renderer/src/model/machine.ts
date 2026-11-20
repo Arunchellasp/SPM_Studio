@@ -8,8 +8,12 @@ export type MachineState = 'STOPPED' | 'IDLE' | 'STARTING' | 'EXECUTE' | 'HELD' 
 export type Mode = 'Auto' | 'Manual' | 'Maintenance'
 /** alarm priority P1 (critical) … P4 (low), ISA-18.2 */
 export type Priority = 1 | 2 | 3 | 4
-/** how a value is shown (N00 › Value states): colour only when a person must look */
-export type ValueState = 'normal' | 'forced' | 'fault'
+/**
+ * how a value is shown (N00 › Value states): colour only when a person must look
+ *   forced = a person overrode it (amber + ⓕ) · fault = bad value (light red)
+ *   warn   = value is fine but something is about to go wrong (amber, no ⓕ) — N01 'timeout soon' (step 13)
+ */
+export type ValueState = 'normal' | 'forced' | 'warn' | 'fault'
 
 export interface Alarm {
   code: string // E1202 (error) / W0310 (warning)

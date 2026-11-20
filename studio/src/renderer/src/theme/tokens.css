@@ -123,6 +123,7 @@
   /* value states — the only colours a value may get (ISA-101: colour = attention) */
   --forced-bg: #fff3cd; /* forced by a person: amber + ⓕ */
   --fault-bg: #fde2e2; /* bad quality / fault: light red */
+  --warn-bg: #fff3cd; /* about to go wrong (timeout soon): same amber, no ⓕ (N01 station 2) */
 
   /* icons (lucide SVG, 1em square: size = font size where they sit) */
   --icon-rail: 24px; /* rail glyphs in N00 are ~24 px */
@@ -134,6 +135,11 @@
   --fs-kpi: 14px; /* KPI line */
   --batch-bar-w: 900px;
   --batch-bar-h: 14px;
+
+  /* N01 station cards (step 13): 590 × 284, signal table 558 wide, buttons 170 × 36 */
+  --station-h: 284px;
+  --fs-step: 14px;
+  --station-btn-w: 170px;
   --icon-cmd: 14px; /* header Start / Hold / Stop / Reset */
   /* (theme) — see the dark set at the end of this file */
 
@@ -182,6 +188,7 @@
   --row-alt: #2f3740;
   --forced-bg: #7a5f12;
   --fault-bg: #843030;
+  --warn-bg: #7a5f12;
 
   --backdrop: rgba(0, 0, 0, 0.6);
   --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.5);

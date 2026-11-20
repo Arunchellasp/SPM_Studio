@@ -49,9 +49,9 @@ export const DEMO_OVERVIEW = {
       state: 'HELD',
       step: { id: 's3', text: 'Wait plasma ready', elapsedS: 12.4 },
       signals: [
-        { name: 'Plasma ready', value: false, note: 'blocks step' },
+        { name: 'Plasma ready', value: false, state: 'fault', note: 'blocks step' },
         { name: 'Plasma power', value: 'ON' },
-        { name: 'Step time', value: 12.4, unit: 's', limit: 15, note: 'timeout soon' }
+        { name: 'Step time', value: 12.4, unit: 's', limit: 15, state: 'warn', note: 'timeout soon' }
       ]
     },
     { id: 'st3', title: 'Station 3 · Dispense', state: 'EXECUTE', step: { id: 's7', text: 'Dispense path 2/4' }, signals: usual(1.24) },

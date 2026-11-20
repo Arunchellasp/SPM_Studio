@@ -79,3 +79,12 @@ describe('Table', () => {
     expect(screen.getByText('No rows').getAttribute('colspan')).toBe('2')
   })
 })
+
+describe('Table fill', () => {
+  it('fill turns the design widths into proportions (220 : 140 = 61.1 % : 38.9 %)', () => {
+    render(<Table label="T" columns={COLS} rows={ROWS} rowKey={(r) => r.tag} fill />)
+    const cols = Array.from(document.querySelectorAll('col')).map((c) => (c as HTMLElement).style.width)
+    expect(cols.map((w) => Math.round(parseFloat(w) * 10) / 10)).toEqual([61.1, 38.9])
+    expect(screen.getByRole('table').style.width).toBe('')
+  })
+})

@@ -1,6 +1,7 @@
 import type { ScreenDef } from '../../app/screens'
 import { DEMO_OVERVIEW } from '../../fixtures/demo'
 import { BatchCard } from './batch-card.view'
+import { StationCard } from './station-card.view'
 import { WhyNotFasterCard } from './why-card.view'
 import './overview.css'
 
@@ -21,7 +22,12 @@ export function OverviewScreen({ screen }: { screen: ScreenDef }): React.JSX.Ele
         <BatchCard batch={data.batch} />
         <WhyNotFasterCard why={data.whyNotFaster} />
       </div>
-      <div className="ovw-next">Station cards (step 13) and the alarm and event list (step 14) come here.</div>
+      <div className="ovw-stations">
+        {data.stations.map((s) => (
+          <StationCard key={s.id} station={s} />
+        ))}
+      </div>
+      <div className="ovw-next">The alarm and event list (step 14) comes here.</div>
     </div>
   )
 }

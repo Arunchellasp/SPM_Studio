@@ -57,10 +57,38 @@
   color: var(--muted);
 }
 
-/* steps 13 / 14 will fill this */
+/* station cards (step 13): 3 × 2 grid of 590 × 284 cards, 16 px apart */
+.ovw-stations {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gap);
+}
+.station-card {
+  height: var(--station-h);
+}
+.station-step {
+  height: 24px;
+  line-height: 24px;
+  margin-top: 6px; /* design: y + 48 */
+  font-size: var(--fs-step);
+}
+.station-signals {
+  margin-top: 12px; /* design: table at y + 84 */
+}
+.station-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 9px; /* design: buttons at y + 230 (+1 for the table outer line) */
+}
+.btn.station-btn {
+  width: var(--station-btn-w);
+  font-size: var(--fs-sm); /* 12 px in the design */
+}
+
+/* step 14 will fill this */
 .ovw-next {
   flex: 1;
-  min-height: 300px;
+  min-height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
