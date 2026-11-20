@@ -123,4 +123,10 @@
   /* icons (lucide SVG, 1em square: size = font size where they sit) */
   --icon-rail: 24px; /* rail glyphs in N00 are ~24 px */
   --icon-cmd: 14px; /* header Start / Hold / Stop / Reset */
+
+  /* dialog + toast (GUI templates › Dialog 420 px wide, drawn like an N00 card) */
+  --dialog-w: 420px;
+  --toast-w: 360px;
+  --backdrop: rgba(31, 35, 40, 0.45); /* dims the screen behind a dialog */
+  --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.22); /* only things that float above the screen get a shadow */
 }

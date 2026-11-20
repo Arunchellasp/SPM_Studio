@@ -4,6 +4,7 @@ import { Button, type ButtonSize, type ButtonVariant } from '../../components/bu
 import { Card } from '../../components/card.view'
 import { Field } from '../../components/field.view'
 import { Icon } from '../../components/icon.view'
+import { confirmDialog, toast } from '../../stores/feedback.store'
 import { Segmented } from '../../components/segmented.view'
 import { Select, type SelectOption } from '../../components/select.view'
 import { Tabs } from '../../components/tabs.view'
@@ -93,6 +94,27 @@ export function ComponentsScreen({ screen }: { screen: ScreenDef }): React.JSX.E
   const [demoMode, setDemoMode] = useState<DemoMode>('Auto')
   const [view, setView] = useState<'list' | 'grid' | 'chart'>('list')
   const [tab, setTab] = useState('overview')
+  const [answer, setAnswer] = useState('–')
+
+  async function deleteRecipe(): Promise<void> {
+    const ok = await confirmDialog({
+      title: 'Delete recipe A-13?',
+      message: 'The recipe and its 12 parameter values are removed.\nThis cannot be undone.',
+      confirmLabel: 'Delete',
+      danger: true
+    })
+    setAnswer(ok ? 'Delete' : 'Cancel')
+    if (ok) toast('Recipe A-13 deleted', 'done')
+  }
+  async function saveDraft(): Promise<void> {
+    const ok = await confirmDialog({
+      title: 'Save draft?',
+      message: 'Save the changed values of recipe A-12 as a draft.',
+      confirmLabel: 'Save draft'
+    })
+    setAnswer(ok ? 'Save draft' : 'Cancel')
+    if (ok) toast('Draft saved', 'done')
+  }
   const [forced, setForced] = useState<string[]>(['Station.ClampFwd'])
   const [filter, setFilter] = useState<TagFilter>('All')
   const tagState = (r: TagRow): ValueState => (r.fault ? 'fault' : forced.includes(r.tag) ? 'forced' : 'normal')
@@ -131,6 +153,34 @@ export function ComponentsScreen({ screen }: { screen: ScreenDef }): React.JSX.E
         </h1>
         <p className="cmp-purpose">{screen.purpose}</p>
       </div>
+
+      {/* ---------------------------------------------------------- Dialog + toast (step 8) */}
+      <Card
+        title="Dialog + toast (in-app, never the browser's alert)"
+        actions={
+          <span className="cmp-note" data-testid="dlg-echo">
+            answer {answer}
+          </span>
+        }
+      >
+        <div className="cmp-row">
+          <Button variant="danger" onClick={deleteRecipe}>
+            Delete recipe…
+          </Button>
+          <Button variant="primary" onClick={saveDraft}>
+            Save draft…
+          </Button>
+          <Button variant="quiet" icon={<Icon name="info" />} onClick={() => toast('Recipe A-12 loaded')}>
+            Info toast
+          </Button>
+          <Button variant="quiet" icon={<Icon name="error" />} onClick={() => toast('Export failed: USB stick not found', 'error')}>
+            Error toast
+          </Button>
+          <span className="cmp-note">
+            Dialog: Tab / Shift+Tab stay inside, Esc = Cancel, Enter = focused button. Toasts hide after 4 s (bottom-right).
+          </span>
+        </div>
+      </Card>
 
       {/* ---------------------------------------------------------- Table (step 6) */}
       <div className="cmp-grid cmp-tables">

@@ -5,11 +5,14 @@ import {
   ChartColumn,
   ChevronDown,
   ChevronRight,
+  CircleAlert,
+  CircleCheck,
   ClipboardList,
   Component,
   Gauge,
   Hash,
   House,
+  Info,
   Move,
   Pause,
   Play,
@@ -19,6 +22,7 @@ import {
   Square,
   TriangleAlert,
   Workflow,
+  X,
   type LucideIcon
 } from 'lucide-react'
 import './icon.css'
@@ -63,7 +67,12 @@ export const ICONS = {
   home: House,
   next: ChevronRight,
   caret: ChevronDown, // ▾ in selects
-  forced: Forced // ⓕ
+  forced: Forced, // ⓕ
+  // dialog and toasts (step 8)
+  close: X, // ✕
+  info: Info,
+  done: CircleCheck,
+  error: CircleAlert
 } satisfies Record<string, LucideIcon>
 
 export type IconName = keyof typeof ICONS

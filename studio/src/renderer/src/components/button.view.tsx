@@ -1,4 +1,4 @@
-import type { ComponentPropsWithoutRef, ReactNode } from 'react'
+import type { ComponentPropsWithRef, ReactNode } from 'react'
 import './button.css'
 
 /** The 5 button styles of N00. Pick by meaning, not by colour. */
@@ -16,7 +16,8 @@ export type ButtonSize = 'sm' | 'md' | 'lg' | 'xl'
  * Everything a normal <button> accepts (onClick, disabled, title, type …) plus
  * variant, size and an optional icon. Unknown props are passed straight through.
  */
-export interface ButtonProps extends ComponentPropsWithoutRef<'button'> {
+export interface ButtonProps extends ComponentPropsWithRef<'button'> {
+  // WithRef: a screen may hold a ref to the button (React 19 passes ref like any prop), e.g. to focus it
   variant?: ButtonVariant
   size?: ButtonSize
   icon?: ReactNode

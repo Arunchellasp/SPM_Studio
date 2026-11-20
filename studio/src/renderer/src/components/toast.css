@@ -1,0 +1,54 @@
+/* Toasts: bottom-right above the alarm banner, white panel with a coloured edge and icon by kind. */
+.toasts {
+  position: fixed;
+  right: var(--gap);
+  bottom: calc(var(--banner-h) + var(--gap));
+  z-index: 90; /* under a dialog */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none; /* the empty area does not block clicks */
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: var(--toast-w);
+  min-height: 44px;
+  padding: 0 4px 0 12px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-pop);
+  pointer-events: auto;
+}
+.toast-done {
+  border-left-color: var(--st-execute);
+}
+.toast-error {
+  border-left-color: var(--error);
+}
+.toast-icon {
+  font-size: 18px;
+  color: var(--accent);
+}
+.toast-done .toast-icon {
+  color: var(--st-execute);
+}
+.toast-error .toast-icon {
+  color: var(--error);
+}
+.toast-text {
+  flex: 1;
+}
+.toast-x {
+  color: var(--muted);
+}
+
+/* icon-only ghost button: square, no minimum width of the text buttons */
+.btn.toast-x {
+  min-width: 0;
+  width: var(--btn-h-sm);
+  padding: 0;
+}

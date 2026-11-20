@@ -1,4 +1,6 @@
 import { SCREENS } from '../app/screens'
+import { ConfirmDialogHost } from '../components/dialog.view'
+import { ToastHost } from '../components/toast.view'
 import { EmptyScreen } from '../features/empty/empty-screen.view'
 import { useUi } from '../stores/ui.store'
 import { AlarmBanner } from './alarm-banner.view'
@@ -26,6 +28,9 @@ export function AppShell(): React.JSX.Element {
         <View screen={screen} />
       </main>
       <AlarmBanner />
+      {/* step 8: floating layers, drawn above everything else */}
+      <ToastHost />
+      <ConfirmDialogHost />
     </div>
   )
 }

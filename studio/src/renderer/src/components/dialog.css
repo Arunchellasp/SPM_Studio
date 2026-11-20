@@ -1,0 +1,55 @@
+/* Dialog (GUI templates › Dialog, drawn with N00 tokens): 420 px white panel, title row + ✕, body, actions. */
+.dlg-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--backdrop);
+}
+.dlg {
+  width: var(--dialog-w);
+  max-width: calc(100vw - 32px);
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-pop);
+  outline: none;
+}
+.dlg-head {
+  display: flex;
+  align-items: center;
+  height: var(--card-head-h);
+  padding: 0 8px 0 var(--card-pad);
+}
+.dlg-title {
+  flex: 1;
+  margin: 0;
+  font-size: var(--fs-title);
+  font-weight: 700;
+}
+.dlg-x {
+  font-size: 16px; /* icon size */
+  color: var(--muted);
+}
+.dlg-body {
+  margin: 0;
+  padding: 0 var(--card-pad) var(--card-pad);
+  color: var(--text);
+  white-space: pre-line; /* \n in the message starts a new line */
+}
+.dlg-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px var(--card-pad) var(--card-pad);
+  border-top: 1px solid var(--border-soft);
+}
+
+/* icon-only ghost button: square, no minimum width of the text buttons */
+.btn.dlg-x {
+  min-width: 0;
+  width: var(--btn-h-sm);
+  padding: 0;
+}
