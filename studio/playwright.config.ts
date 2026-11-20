@@ -9,6 +9,7 @@ const PORT = 5180
 
 export default defineConfig({
   testDir: 'e2e',
+  outputDir: 'test-results/ui-artifacts', // keep Playwright from wiping the unit report in test-results/
   fullyParallel: true,
   reporter: [['list'], ['json', { outputFile: 'test-results/ui-report.json' }]],
   use: {
