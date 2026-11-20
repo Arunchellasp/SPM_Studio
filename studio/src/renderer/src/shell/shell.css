@@ -1,7 +1,8 @@
 /* Shell layout: header / rail / content / banner (sizes from tokens.css). */
 .shell {
   display: grid;
-  height: 100%;
+  height: 100%; /* overwritten by the inline width / height / zoom of useScreenScale */
+  overflow: hidden;
   grid-template-columns: var(--rail-w) 1fr;
   grid-template-rows: var(--header-h) 1fr var(--banner-h);
   grid-template-areas:

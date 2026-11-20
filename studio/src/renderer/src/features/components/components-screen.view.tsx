@@ -5,6 +5,7 @@ import { Card } from '../../components/card.view'
 import { Field } from '../../components/field.view'
 import { Icon } from '../../components/icon.view'
 import { confirmDialog, toast } from '../../stores/feedback.store'
+import { useScreenScale } from '../../app/screen-scale'
 import { Segmented } from '../../components/segmented.view'
 import { Select, type SelectOption } from '../../components/select.view'
 import { Tabs } from '../../components/tabs.view'
@@ -95,6 +96,7 @@ export function ComponentsScreen({ screen }: { screen: ScreenDef }): React.JSX.E
   const [view, setView] = useState<'list' | 'grid' | 'chart'>('list')
   const [tab, setTab] = useState('overview')
   const [answer, setAnswer] = useState('–')
+  const scale = useScreenScale()
 
   async function deleteRecipe(): Promise<void> {
     const ok = await confirmDialog({
@@ -152,6 +154,10 @@ export function ComponentsScreen({ screen }: { screen: ScreenDef }): React.JSX.E
           <span className="cmp-code">{screen.code}</span> {screen.title}
         </h1>
         <p className="cmp-purpose">{screen.purpose}</p>
+        <p className="cmp-note" data-testid="scale-echo">
+          window {Math.round(scale.width * scale.zoom)} × {Math.round(scale.height * scale.zoom)} px · zoom {Math.round(scale.zoom * 100)} %
+          · layout {scale.width} × {scale.height} design px
+        </p>
       </div>
 
       {/* ---------------------------------------------------------- Dialog + toast (step 8) */}
