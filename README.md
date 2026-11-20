@@ -31,6 +31,10 @@ The status bar turns green when the studio is connected; N01 Overview shows live
 | `npm run mock-runtime` | stand-in for `spm_rt` until phase P3 |
 | `npm run dist:win` | Windows installer in `studio/dist/` |
 
+## Develop in the browser (GitHub Codespaces)
+
+Code → Codespaces → *New with options* (4-core). Everything is installed automatically; the Electron window opens in a browser tab on port 6080 (password `spm`). Full guide: [docs/codespaces.md](docs/codespaces.md).
+
 ## Runtime
 
 ```bash

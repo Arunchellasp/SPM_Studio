@@ -11,6 +11,9 @@ import { RuntimeBridge } from './runtime/bridge'
 const RUNTIME_URL = process.env.SPM_RUNTIME_URL ?? 'ws://127.0.0.1:7600'
 const isDev = !app.isPackaged
 
+// Machines / containers without a usable GPU (e.g. Codespaces): software rendering
+if (process.env.SPM_DISABLE_GPU === '1') app.disableHardwareAcceleration()
+
 let win: BrowserWindow | null = null
 const bridge = new RuntimeBridge(RUNTIME_URL)
 

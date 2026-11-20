@@ -1,0 +1,48 @@
+{
+  "name": "SPM Studio",
+  "build": { "dockerfile": "Dockerfile" },
+
+  // Small Linux desktop you open in a browser tab (noVNC) to see the Electron window
+  "features": {
+    "ghcr.io/devcontainers/features/desktop-lite:1": {
+      "password": "spm",
+      "webPort": "6080",
+      "vncPort": "5901"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  "forwardPorts": [6080, 7600],
+  "portsAttributes": {
+    "6080": { "label": "Desktop (Electron window)", "onAutoForward": "notify" },
+    "7600": { "label": "Runtime WebSocket", "onAutoForward": "silent" },
+    "5173": { "label": "Vite dev server", "onAutoForward": "silent" }
+  },
+
+  "containerEnv": {
+    // Container only: Chromium's setuid sandbox cannot run inside the container.
+    // The renderer sandbox (webPreferences.sandbox) is unaffected.
+    "ELECTRON_DISABLE_SANDBOX": "1",
+    // No GPU in Codespaces: software rendering
+    "SPM_DISABLE_GPU": "1"
+  },
+
+  "hostRequirements": { "cpus": 4, "memory": "8gb" },
+
+  "postCreateCommand": "cd studio && npm ci && cd .. && cmake -S runtime -B runtime/build && cmake --build runtime/build",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "usernamehw.errorlens",
+        "eamodio.gitlens",
+        "llvm-vs-code-extensions.vscode-clangd",
+        "ms-vscode.cmake-tools",
+        "hediet.vscode-drawio",
+        "vitest.explorer"
+      ]
+    }
+  }
+}
