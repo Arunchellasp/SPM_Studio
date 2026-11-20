@@ -41,6 +41,9 @@ The status bar turns green when the studio is connected; N01 Overview shows live
 | `npm run dev` | studio with hot reload (screens) and auto-restart (main) |
 | `npm run check` | typecheck + lint + unit tests + build (same as CI) |
 | `npm run test:ui` | automated UI tests (Playwright, Chromium at 1920 × 1080) |
+| `npm run test:watch` | unit tests re-run on every save (press `h` for keys) |
+| `npm run test:ui:headed` | UI tests with the browser visible |
+| `npm run test:ui:debug` | Playwright UI mode: pick, run and step through UI tests |
 
 Windows: double-click `run-tests.cmd` to install, run unit + UI tests, typecheck, lint and build in one go.
 | `npm run mock-runtime` | stand-in for `spm_rt` until phase P3 |

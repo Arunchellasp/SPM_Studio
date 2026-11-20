@@ -18,7 +18,10 @@
     "web": "vite src/renderer --config vite.web.config.ts",
     "build:web": "vite build src/renderer --config vite.web.config.ts",
     "postinstall": "node node_modules/electron/install.js || echo Electron program download skipped",
-    "test:ui": "playwright test"
+    "test:ui": "playwright test",
+    "test:watch": "vitest",
+    "test:ui:headed": "playwright test --headed",
+    "test:ui:debug": "playwright test --ui"
   },
   "author": "Arun P",
   "license": "UNLICENSED",
