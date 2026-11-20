@@ -12,7 +12,7 @@
   font-weight: 700;
   font-size: var(--fs);
   letter-spacing: 0.04em;
-  color: #fff;
+  color: var(--on-state);
   background: var(--st-stopped);
 }
 .st-idle {
@@ -27,7 +27,7 @@
 .st-held,
 .st-suspended {
   background: var(--st-held);
-  color: #000;
+  color: var(--on-amber);
 }
 .st-aborted {
   background: var(--st-aborted);
@@ -45,7 +45,7 @@
   height: 20px;
   font-size: var(--fs-xs);
   font-weight: 700;
-  color: #fff;
+  color: var(--on-state);
   flex: none;
 }
 .prio-1 {
@@ -64,7 +64,7 @@
 }
 .prio-3 {
   background: var(--p3);
-  color: #000;
+  color: var(--on-amber);
 }
 .prio-4 {
   background: var(--p4);

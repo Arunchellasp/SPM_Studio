@@ -25,6 +25,11 @@ describe('Button', () => {
     expect(b.className).toContain('btn-lg')
   })
 
+  it('supports the xl size used for form actions', () => {
+    render(<Button size="xl">Acknowledge</Button>)
+    expect(screen.getByRole('button', { name: 'Acknowledge' }).className).toContain('btn-xl')
+  })
+
   it('calls onClick', () => {
     const onClick = vi.fn()
     render(<Button onClick={onClick}>Ack</Button>)

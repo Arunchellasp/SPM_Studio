@@ -9,7 +9,8 @@ export type ButtonVariant =
   | 'ghost' // link-like actions (All alarms)
   | 'danger' // actions that destroy or stop something (Delete, Abort)
 
-export type ButtonSize = 'sm' | 'md' | 'lg'
+/** Heights from the design: sm 28 (banner) · md 32 (toolbars, default) · lg 36 (inside cards) · xl 40 (form actions) */
+export type ButtonSize = 'sm' | 'md' | 'lg' | 'xl'
 
 /**
  * Everything a normal <button> accepts (onClick, disabled, title, type …) plus

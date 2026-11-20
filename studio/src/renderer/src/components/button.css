@@ -1,4 +1,4 @@
-/* Button (N00). Colours only from tokens.css. */
+/* Button (N00 › Buttons and inputs). Every colour and size comes from tokens.css. */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -6,9 +6,9 @@
   gap: 8px;
   padding: 0 16px;
   border: 1px solid transparent;
-  border-radius: var(--radius);
+  border-radius: var(--radius); /* 6 px, as in N00 */
   font: inherit;
-  font-weight: 500;
+  font-weight: 400; /* N00 button labels are regular weight */
   white-space: nowrap;
   cursor: pointer;
   transition:
@@ -16,20 +16,27 @@
     border-color 80ms;
 }
 
-/* sizes */
+/* sizes: heights + minimum widths from tokens.css; label 12 px on sm, 13 px otherwise */
 .btn-sm {
   height: var(--btn-h-sm);
+  min-width: var(--btn-w-sm);
   padding: 0 12px;
   font-size: var(--fs-sm);
 }
 .btn-md {
   height: var(--btn-h-md);
+  min-width: var(--btn-w-md);
   font-size: var(--fs);
 }
 .btn-lg {
   height: var(--btn-h-lg);
-  font-size: var(--fs-md);
-  padding: 0 20px;
+  min-width: var(--btn-w-lg);
+  font-size: var(--fs);
+}
+.btn-xl {
+  height: var(--btn-h-xl);
+  min-width: var(--btn-w-xl);
+  font-size: var(--fs);
 }
 .btn-block {
   display: flex;
@@ -41,49 +48,44 @@
   line-height: 1;
 }
 
-/* variants */
+/* variants: fill / border / text exactly as N00 */
 .btn-primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
-.btn-primary:hover:not(:disabled) {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
-}
-
 .btn-default {
   background: var(--surface);
   border-color: var(--border);
   color: var(--text);
 }
-.btn-default:hover:not(:disabled) {
-  background: var(--panel);
-}
-
 .btn-quiet {
   background: var(--panel);
   border-color: var(--border);
   color: var(--text);
 }
-.btn-quiet:hover:not(:disabled) {
-  background: var(--hover);
-}
-
 .btn-ghost {
   background: transparent;
+  border-color: transparent;
   color: var(--accent);
-  padding-left: 8px;
-  padding-right: 8px;
 }
-.btn-ghost:hover:not(:disabled) {
-  background: var(--hover);
-}
-
 .btn-danger {
   background: var(--surface);
   border-color: var(--p1);
   color: var(--p1);
+}
+
+/* hover (not drawn in N00; kept subtle so the design colours stay recognisable) */
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+.btn-default:hover:not(:disabled) {
+  background: var(--panel);
+}
+.btn-quiet:hover:not(:disabled),
+.btn-ghost:hover:not(:disabled) {
+  background: var(--hover);
 }
 .btn-danger:hover:not(:disabled) {
   background: var(--danger-lt);

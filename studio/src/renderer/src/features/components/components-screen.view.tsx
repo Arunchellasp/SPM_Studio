@@ -10,7 +10,12 @@ const VARIANTS: { v: ButtonVariant; use: string }[] = [
   { v: 'ghost', use: 'link-like actions' },
   { v: 'danger', use: 'delete, abort, reset data' }
 ]
-const SIZES: ButtonSize[] = ['sm', 'md', 'lg']
+const SIZES: { s: ButtonSize; use: string }[] = [
+  { s: 'sm', use: '28 px · alarm banner (Ack)' },
+  { s: 'md', use: '32 px · toolbars, + New tag (default)' },
+  { s: 'lg', use: '36 px · inside cards (Open sequence, Home)' },
+  { s: 'xl', use: '40 px · form actions (Save draft, Acknowledge)' }
+]
 
 /**
  * N00 Components — developer screen that shows every shared building block.
@@ -27,11 +32,13 @@ export function ComponentsScreen({ screen }: { screen: ScreenDef }): React.JSX.E
       <p className="cmp-purpose">{screen.purpose}</p>
 
       <div className="cmp-block">
-        <h2>Button · variants</h2>
+        <h2>Button · variants (as in N00 › Buttons and inputs)</h2>
         <div className="cmp-row">
           {VARIANTS.map(({ v, use }) => (
             <div key={v} className="cmp-item">
-              <Button variant={v}>{v[0].toUpperCase() + v.slice(1)}</Button>
+              <Button variant={v} size="xl">
+                {v[0].toUpperCase() + v.slice(1)}
+              </Button>
               <span className="cmp-note">{use}</span>
             </div>
           ))}
@@ -39,17 +46,16 @@ export function ComponentsScreen({ screen }: { screen: ScreenDef }): React.JSX.E
       </div>
 
       <div className="cmp-block">
-        <h2>Button · sizes (sm 28 · md 36 · lg 40 px)</h2>
+        <h2>Button · sizes (heights used in the Improved design)</h2>
         <div className="cmp-row">
-          {SIZES.map((s) => (
-            <Button key={s} variant="primary" size={s}>
-              Size {s}
-            </Button>
-          ))}
-          {SIZES.map((s) => (
-            <Button key={`d-${s}`} size={s}>
-              Size {s}
-            </Button>
+          {SIZES.map(({ s, use }) => (
+            <div key={s} className="cmp-item">
+              <Button variant="primary" size={s}>
+                Size {s}
+              </Button>
+              <Button size={s}>Size {s}</Button>
+              <span className="cmp-note">{use}</span>
+            </div>
           ))}
         </div>
       </div>

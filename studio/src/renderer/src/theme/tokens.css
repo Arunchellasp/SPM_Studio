@@ -25,6 +25,7 @@
   /* interaction (one accent colour only) */
   --accent: #2b5fa8;
   --accent-lt: #dce6f4;
+  --on-accent: #ffffff; /* text on accent-coloured surfaces (primary button) */
   --accent-hover: #234f8c; /* primary button hover */
   --hover: rgba(0, 0, 0, 0.05); /* light hover on default / quiet / ghost */
   --danger-lt: #fbe9e9; /* danger button hover */
@@ -38,6 +39,8 @@
   --st-held: #f9a825;
   --st-aborted: #d32f2f;
   --st-complete: #455a64;
+  --on-state: #ffffff; /* text on state pills and priority icons */
+  --on-amber: #000000; /* text on amber (HELD, SUSPENDED, P3) for contrast */
 
   /* alarm priority — never used for anything else */
   --p1: #d32f2f;
@@ -64,8 +67,14 @@
   --gap: 16px;
   --radius: 6px;
 
-  /* buttons (N00: sm 28 · md 36 · lg 40 px high) */
+  /* buttons — heights used in the Improved design screens:
+     28 banner (Ack) · 32 toolbars and primary actions · 36 actions inside cards · 40 form actions */
   --btn-h-sm: 28px;
-  --btn-h-md: 36px;
-  --btn-h-lg: 40px;
+  --btn-h-md: 32px;
+  --btn-h-lg: 36px;
+  --btn-h-xl: 40px;
+  --btn-w-sm: 96px; /* minimum widths, so short labels (Ack, Home) keep the design proportions */
+  --btn-w-md: 112px;
+  --btn-w-lg: 120px;
+  --btn-w-xl: 150px;
 }
