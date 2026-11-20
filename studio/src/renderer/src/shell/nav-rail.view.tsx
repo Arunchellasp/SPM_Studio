@@ -1,4 +1,5 @@
 import { SCREENS } from '../app/screens'
+import { Icon } from '../components/icon.view'
 import { useUi } from '../stores/ui.store'
 
 /** Navigation rail (88 px): one button per task area, icon + label. */
@@ -16,7 +17,7 @@ export function NavRail(): React.JSX.Element {
           title={`${s.code} ${s.title}`}
           onClick={() => openScreen(s.id)}
         >
-          <span className="rail-icon">{s.icon}</span>
+          <Icon name={s.icon} className="rail-icon" />
           <span className="rail-label">{s.label}</span>
         </button>
       ))}

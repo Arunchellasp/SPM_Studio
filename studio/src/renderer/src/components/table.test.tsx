@@ -39,11 +39,11 @@ describe('Table', () => {
     expect(screen.getByRole('table').style.width).toBe('360px')
   })
 
-  it('forced row: amber class and ⓕ marker after the first cell', () => {
+  it('forced row: amber class and ⓕ marker (SVG icon) after the first cell', () => {
     draw()
     const row = screen.getByText('Clamp.Fwd').closest('tr')!
     expect(row.className).toBe('tbl-forced')
-    expect(within(row).getByRole('img', { name: 'forced' }).textContent).toBe('ⓕ')
+    expect(within(row).getByRole('img', { name: 'forced' }).tagName.toLowerCase()).toBe('svg')
   })
 
   it('fault row: red class, "fault" for screen readers, no ⓕ', () => {

@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
+import { Icon, type IconName } from '../components/icon.view'
 import { Segmented } from '../components/segmented.view'
 import { StatePill } from '../components/state-pill.view'
 import { useUi, type Mode } from '../stores/ui.store'
 
 const MODES: readonly Mode[] = ['Auto', 'Manual', 'Maintenance']
-const COMMANDS = [
-  { id: 'start', label: '▶  Start' },
-  { id: 'hold', label: '❚❚  Hold' },
-  { id: 'stop', label: '■  Stop' },
-  { id: 'reset', label: '↺  Reset' }
+const COMMANDS: { id: IconName; label: string }[] = [
+  { id: 'start', label: 'Start' },
+  { id: 'hold', label: 'Hold' },
+  { id: 'stop', label: 'Stop' },
+  { id: 'reset', label: 'Reset' }
 ]
 
 /**
@@ -36,7 +37,7 @@ export function Header(): React.JSX.Element {
         {COMMANDS.map((c) => (
           // Step 1: no runtime yet, so commands are shown but disabled
           <button key={c.id} disabled title="Connected to the runtime in a later step">
-            {c.label}
+            <Icon name={c.id} /> {c.label}
           </button>
         ))}
       </div>

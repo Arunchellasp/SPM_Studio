@@ -34,7 +34,7 @@ test('UI-6.3 normal row white, forced row amber with ⓕ, fault row light red', 
   const row = (t: string) => table.getByRole('row').filter({ hasText: t })
   expect(await row('Plasma.Ready').evaluate(bg)).toBe('rgba(0, 0, 0, 0)') // transparent → white table shows through
   expect(await row('Clamp.Fwd').evaluate(bg)).toBe('rgb(255, 243, 205)')
-  await expect(row('Clamp.Fwd').getByRole('img', { name: 'forced' })).toHaveText('ⓕ')
+  await expect(row('Clamp.Fwd').getByRole('img', { name: 'forced' })).toBeVisible() // ⓕ marker (SVG since step 7)
   expect(await row('Axis2.Pos').evaluate(bg)).toBe('rgb(253, 226, 226)')
 })
 
@@ -43,7 +43,7 @@ test('UI-6.4 force / release a tag changes its row to amber and back', async ({ 
   const tags = page.getByRole('table', { name: 'Tags' })
   const settle = tags.getByRole('row').filter({ hasText: 'Station.Settle' })
   await expect(settle).toHaveAttribute('data-state', 'normal')
-  await settle.getByRole('button', { name: 'ⓕ Force' }).click()
+  await settle.getByRole('button', { name: 'Force', exact: true }).click()
   await expect(settle).toHaveAttribute('data-state', 'forced')
   expect(await settle.evaluate(bg)).toBe('rgb(255, 243, 205)')
   await expect(page.getByTestId('tbl-echo')).toContainText('2 forced')

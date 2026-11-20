@@ -3,6 +3,7 @@ import type { ScreenDef } from '../../app/screens'
 import { Button, type ButtonSize, type ButtonVariant } from '../../components/button.view'
 import { Card } from '../../components/card.view'
 import { Field } from '../../components/field.view'
+import { Icon } from '../../components/icon.view'
 import { Segmented } from '../../components/segmented.view'
 import { Select, type SelectOption } from '../../components/select.view'
 import { Tabs } from '../../components/tabs.view'
@@ -110,8 +111,13 @@ export function ComponentsScreen({ screen }: { screen: ScreenDef }): React.JSX.E
         r.fault ? (
           '–'
         ) : (
-          <Button size="sm" variant={forced.includes(r.tag) ? 'default' : 'quiet'} onClick={() => toggleForce(r.tag)}>
-            {forced.includes(r.tag) ? 'Release' : 'ⓕ Force'}
+          <Button
+            size="sm"
+            variant={forced.includes(r.tag) ? 'default' : 'quiet'}
+            icon={forced.includes(r.tag) ? undefined : <Icon name="forced" />}
+            onClick={() => toggleForce(r.tag)}
+          >
+            {forced.includes(r.tag) ? 'Release' : 'Force'}
           </Button>
         )
     }
@@ -313,13 +319,13 @@ export function ComponentsScreen({ screen }: { screen: ScreenDef }): React.JSX.E
 
         <Card title="Button · icon, disabled, full width, try it" actions={<span className="cmp-note">clicked {clicks}×</span>}>
           <div className="cmp-row">
-            <Button variant="primary" icon="+">
+            <Button variant="primary" icon={<Icon name="plus" />}>
               New tag
             </Button>
-            <Button variant="quiet" icon="⌂">
+            <Button variant="quiet" icon={<Icon name="home" />}>
               Home
             </Button>
-            <Button variant="ghost" icon="›">
+            <Button variant="ghost" icon={<Icon name="next" />}>
               All alarms
             </Button>
             <Button variant="primary" disabled>

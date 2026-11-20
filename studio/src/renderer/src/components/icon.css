@@ -1,0 +1,6 @@
+/* SVG icons: sit on the text line, take colour from the text, never shrink in flex rows */
+.icon {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: -0.125em;
+}

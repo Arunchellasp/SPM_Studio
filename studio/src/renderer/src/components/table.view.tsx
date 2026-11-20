@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Icon } from './icon.view'
 import './table.css'
 
 /** How a value is shown (N00 › Value states). Colour only when a person must look. */
@@ -82,8 +83,8 @@ export function Table<R>({
                 <td key={c.key} className={alignClass(c)}>
                   {c.render ? c.render(r) : String((r as Record<string, unknown>)[c.key] ?? '')}
                   {i === 0 && state === 'forced' && (
-                    <span className="tbl-mark" role="img" aria-label="forced" title="Forced by a person">
-                      ⓕ
+                    <span className="tbl-mark" title="Forced by a person">
+                      <Icon name="forced" label="forced" />
                     </span>
                   )}
                   {i === 0 && state === 'fault' && <span className="sr-only"> (fault)</span>}

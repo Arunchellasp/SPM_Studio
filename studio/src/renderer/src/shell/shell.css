@@ -40,6 +40,10 @@
   gap: 8px;
 }
 .header-commands button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px; /* two spaces between glyph and word in the design */
   width: 108px;
   height: 36px;
   color: var(--header-text);
@@ -101,8 +105,7 @@
   border: 1px dashed var(--border);
 }
 .rail-icon {
-  font-size: 24px;
-  line-height: 1;
+  font-size: var(--icon-rail); /* the SVG is 1em, so this is its size */
 }
 .rail-label {
   font-size: var(--fs-xs);
@@ -138,4 +141,8 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.header-commands .icon {
+  font-size: var(--icon-cmd);
 }

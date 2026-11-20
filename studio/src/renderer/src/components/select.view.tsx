@@ -1,4 +1,5 @@
 import { useId, type ComponentPropsWithoutRef, type ReactNode } from 'react'
+import { Icon } from './icon.view'
 import './field.css'
 
 export interface SelectOption {
@@ -63,7 +64,7 @@ export function Select({
           ))}
         </select>
         <span className="select-caret" aria-hidden="true">
-          ▾
+          <Icon name="caret" />
         </span>
       </div>
       {msg && (

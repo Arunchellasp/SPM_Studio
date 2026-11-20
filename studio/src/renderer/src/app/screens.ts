@@ -4,12 +4,13 @@
  * One entry = one rail button + one screen. Adding a screen is one new line here.
  */
 import type { ComponentType } from 'react'
+import type { IconName } from '../components/icon.view'
 import { ComponentsScreen } from '../features/components/components-screen.view'
 
 export interface ScreenDef {
   id: string
   code: string // N01 … N10, same codes as the mind map
-  icon: string // rail icon (text glyph for now; SVG icons in a later step)
+  icon: IconName // rail icon: a name from components/icon.view.tsx (SVG since step 7)
   label: string // rail label
   title: string // breadcrumb shown in the content area
   purpose: string // one line: what the screen is for
@@ -17,22 +18,29 @@ export interface ScreenDef {
   devOnly?: boolean // shown only in development builds (npm run dev)
 }
 
-const ALL_SCREENS: ScreenDef[] = [
-  { id: 'operate', code: 'N01', icon: '▣', label: 'Operate', title: 'Operate › Overview', purpose: 'State, why not running, what next' },
+export const ALL_SCREENS: ScreenDef[] = [
+  {
+    id: 'operate',
+    code: 'N01',
+    icon: 'operate',
+    label: 'Operate',
+    title: 'Operate › Overview',
+    purpose: 'State, why not running, what next'
+  },
   {
     id: 'program',
     code: 'N02',
-    icon: '⧉',
+    icon: 'program',
     label: 'Program',
     title: 'Program › Sequence editor',
     purpose: 'Tree · canvas with live values · properties'
   },
-  { id: 'tags', code: 'N03', icon: '#', label: 'Tags', title: 'Tags › Tag database', purpose: 'One typed, named table for every tag' },
-  { id: 'io', code: 'N04', icon: '⇄', label: 'I/O', title: 'I/O › Cards, mapping, diagnostics', purpose: 'Simulate / force per channel' },
+  { id: 'tags', code: 'N03', icon: 'tags', label: 'Tags', title: 'Tags › Tag database', purpose: 'One typed, named table for every tag' },
+  { id: 'io', code: 'N04', icon: 'io', label: 'I/O', title: 'I/O › Cards, mapping, diagnostics', purpose: 'Simulate / force per channel' },
   {
     id: 'motion',
     code: 'N05',
-    icon: '↔',
+    icon: 'motion',
     label: 'Motion',
     title: 'Motion › Axes, jog, teach',
     purpose: 'Axes, jog and point teaching in one place'
@@ -40,7 +48,7 @@ const ALL_SCREENS: ScreenDef[] = [
   {
     id: 'recipes',
     code: 'N06',
-    icon: '☰',
+    icon: 'recipes',
     label: 'Recipes',
     title: 'Recipes › Parameter sets',
     purpose: 'Versioned sets with compare and approval'
@@ -48,7 +56,7 @@ const ALL_SCREENS: ScreenDef[] = [
   {
     id: 'alarms',
     code: 'N07',
-    icon: '⚠',
+    icon: 'alarms',
     label: 'Alarms',
     title: 'Alarms › Active and history',
     purpose: 'Priority, state, first-out, shelving'
@@ -56,16 +64,16 @@ const ALL_SCREENS: ScreenDef[] = [
   {
     id: 'trace',
     code: 'N08',
-    icon: '∿',
+    icon: 'trace',
     label: 'Trace',
     title: 'Trace › Scope',
     purpose: 'Record signals and step changes with a trigger'
   },
-  { id: 'data', code: 'N09', icon: '▤', label: 'Data', title: 'Data › Production and OEE', purpose: 'Production, OEE and traceability' },
+  { id: 'data', code: 'N09', icon: 'data', label: 'Data', title: 'Data › Production and OEE', purpose: 'Production, OEE and traceability' },
   {
     id: 'admin',
     code: 'N10',
-    icon: '⚙',
+    icon: 'admin',
     label: 'Admin',
     title: 'Admin › Roles and audit',
     purpose: 'Permissions per action and audit trail'
@@ -73,7 +81,7 @@ const ALL_SCREENS: ScreenDef[] = [
   {
     id: 'components',
     code: 'N00',
-    icon: '◧',
+    icon: 'components',
     label: 'N00 Dev',
     title: 'Components › Shared building blocks',
     purpose: 'Every shared component in all its variants (development builds only)',

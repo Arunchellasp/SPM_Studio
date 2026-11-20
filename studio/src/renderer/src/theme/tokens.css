@@ -119,4 +119,8 @@
   /* value states — the only colours a value may get (ISA-101: colour = attention) */
   --forced-bg: #fff3cd; /* forced by a person: amber + ⓕ */
   --fault-bg: #fde2e2; /* bad quality / fault: light red */
+
+  /* icons (lucide SVG, 1em square: size = font size where they sit) */
+  --icon-rail: 24px; /* rail glyphs in N00 are ~24 px */
+  --icon-cmd: 14px; /* header Start / Hold / Stop / Reset */
 }
