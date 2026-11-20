@@ -14,7 +14,9 @@
     "mock-runtime": "node tools/mock-runtime.mjs",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build",
     "dist:win": "npm run build && electron-builder --win",
-    "dist:linux": "npm run build && electron-builder --linux"
+    "dist:linux": "npm run build && electron-builder --linux",
+    "web": "vite src/renderer --config vite.web.config.ts",
+    "build:web": "vite build src/renderer --config vite.web.config.ts"
   },
   "author": "Arun P",
   "license": "UNLICENSED",
