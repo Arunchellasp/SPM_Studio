@@ -9,3 +9,6 @@ runtime/build/
 .env
 test-results/
 playwright-report/
+
+# throw-away scripts (measurements, screenshots) — never committed, never linted
+studio/scratch/

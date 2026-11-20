@@ -6,6 +6,7 @@ on:
 jobs:
   studio:
     strategy:
+      fail-fast: false # a failure on one OS must not cancel (and hide) the result of the other
       matrix:
         os: [windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
@@ -13,8 +14,8 @@ jobs:
       run:
         working-directory: studio
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -31,8 +32,8 @@ jobs:
       run:
         working-directory: studio
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -40,7 +41,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:ui
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: ui-report
@@ -48,10 +49,11 @@ jobs:
 
   runtime:
     strategy:
+      fail-fast: false # a failure on one OS must not cancel (and hide) the result of the other
       matrix:
         os: [windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: cmake -S runtime -B runtime/build
       - run: cmake --build runtime/build --config Release
