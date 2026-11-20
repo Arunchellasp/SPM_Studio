@@ -1,7 +1,11 @@
 /**
- * Screen registry: the 10 task areas of the navigation rail (N01–N10).
+ * Screen registry: the 10 task areas of the navigation rail (N01–N10),
+ * plus N00 Components, a developer-only screen.
  * One entry = one rail button + one screen. Adding a screen is one new line here.
  */
+import type { ComponentType } from 'react'
+import { ComponentsScreen } from '../features/components/components-screen.view'
+
 export interface ScreenDef {
   id: string
   code: string // N01 … N10, same codes as the mind map
@@ -9,9 +13,11 @@ export interface ScreenDef {
   label: string // rail label
   title: string // breadcrumb shown in the content area
   purpose: string // one line: what the screen is for
+  view?: ComponentType<{ screen: ScreenDef }> // screen component; empty placeholder when not set
+  devOnly?: boolean // shown only in development builds (npm run dev)
 }
 
-export const SCREENS: ScreenDef[] = [
+const ALL_SCREENS: ScreenDef[] = [
   { id: 'operate', code: 'N01', icon: '▣', label: 'Operate', title: 'Operate › Overview', purpose: 'State, why not running, what next' },
   {
     id: 'program',
@@ -63,5 +69,18 @@ export const SCREENS: ScreenDef[] = [
     label: 'Admin',
     title: 'Admin › Roles and audit',
     purpose: 'Permissions per action and audit trail'
+  },
+  {
+    id: 'components',
+    code: 'N00',
+    icon: '◧',
+    label: 'N00 Dev',
+    title: 'Components › Shared building blocks',
+    purpose: 'Every shared component in all its variants (development builds only)',
+    view: ComponentsScreen,
+    devOnly: true
   }
 ]
+
+/** Screens shown in this build: developer screens are left out of the installed app. */
+export const SCREENS: ScreenDef[] = ALL_SCREENS.filter((s) => !s.devOnly || import.meta.env.DEV)

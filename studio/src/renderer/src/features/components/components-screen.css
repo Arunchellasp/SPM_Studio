@@ -1,0 +1,53 @@
+.cmp {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  min-height: 100%;
+}
+.cmp h1 {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: 600;
+}
+.cmp-code {
+  color: var(--muted);
+  font-weight: 700;
+  margin-right: 6px;
+}
+.cmp-purpose {
+  margin: 6px 0 12px;
+  color: var(--muted);
+}
+.cmp-block {
+  padding: 16px 0;
+  border-top: 1px solid var(--border-soft);
+}
+.cmp-block h2 {
+  margin: 0 0 12px;
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+.cmp-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+.cmp-row + .cmp-row {
+  margin-top: 12px;
+}
+.cmp-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 200px;
+}
+.cmp-note {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+.cmp-narrow {
+  max-width: 420px;
+}

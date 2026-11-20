@@ -11,7 +11,7 @@ export function NavRail(): React.JSX.Element {
       {SCREENS.map((s) => (
         <button
           key={s.id}
-          className={`rail-item ${s.id === active ? 'active' : ''}`}
+          className={`rail-item ${s.id === active ? 'active' : ''} ${s.devOnly ? 'rail-dev' : ''}`}
           aria-current={s.id === active ? 'page' : undefined}
           title={`${s.code} ${s.title}`}
           onClick={() => openScreen(s.id)}

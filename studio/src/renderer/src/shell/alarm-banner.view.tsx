@@ -1,3 +1,4 @@
+import { Button } from '../components/button.view'
 import { PriorityIcon } from '../components/priority-icon.view'
 import { useUi } from '../stores/ui.store'
 
@@ -24,12 +25,12 @@ export function AlarmBanner(): React.JSX.Element {
         <b>{top.code}</b> {top.text} · {top.time}
         {more > 0 && ` · ${more} more active`}
       </span>
-      <button className="banner-btn" disabled={top.acked} onClick={ack}>
+      <Button size="sm" disabled={top.acked} onClick={ack}>
         Ack
-      </button>
-      <button className="banner-link" onClick={() => openScreen('alarms')}>
+      </Button>
+      <Button size="sm" variant="ghost" onClick={() => openScreen('alarms')}>
         All alarms
-      </button>
+      </Button>
     </footer>
   )
 }

@@ -16,14 +16,14 @@ import './shell.css'
 export function AppShell(): React.JSX.Element {
   const activeId = useUi((s) => s.activeScreen)
   const screen = SCREENS.find((s) => s.id === activeId) ?? SCREENS[0]
+  const View = screen.view ?? EmptyScreen // screens without their own view use the placeholder
 
   return (
     <div className="shell">
       <Header />
       <NavRail />
       <main className="content">
-        {/* Step 1: every screen is the same empty placeholder */}
-        <EmptyScreen screen={screen} />
+        <View screen={screen} />
       </main>
       <AlarmBanner />
     </div>

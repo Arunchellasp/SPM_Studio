@@ -63,5 +63,5 @@ cmake -S runtime -B runtime/build && cmake --build runtime/build
 
 ## Status
 
-Phase **P0** (tools and repository) — done: secure Electron shell, runtime bridge with reconnect and request ids, live store, N01 Overview, placeholders N02–N10, mock runtime, C runtime skeleton, CI.
+Steps 0–2 done (setup, window frame, Button). Roadmap and teaching notes: mind_map → Teaching page.
 Next: **P1** contracts (config / tags / program schemas, demo project, generated types).
