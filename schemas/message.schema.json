@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "spm.message/1",
+  "title": "Runtime <-> studio WebSocket message",
+  "oneOf": [
+    { "type": "object", "required": ["t"], "properties": { "t": { "const": "ping" } } },
+    {
+      "type": "object", "required": ["t"],
+      "properties": { "t": { "const": "pong" }, "version": { "type": "string" }, "cycle_us": { "type": "number" }, "cycle_max_us": { "type": "number" } }
+    },
+    {
+      "type": "object", "required": ["t", "id", "op"],
+      "properties": { "t": { "const": "cmd" }, "id": { "type": "integer" }, "op": { "type": "string", "pattern": "^[a-z_]{1,32}$" } }
+    },
+    {
+      "type": "object", "required": ["t", "id", "ok"],
+      "properties": { "t": { "const": "res" }, "id": { "type": "integer" }, "ok": { "type": "boolean" }, "err": { "type": "string" }, "msg": { "type": "string" } }
+    },
+    {
+      "type": "object", "required": ["t", "seq"],
+      "properties": {
+        "t": { "const": "state" }, "seq": { "type": "integer" },
+        "v": { "type": "object", "additionalProperties": { "type": ["number", "boolean", "string"] } },
+        "pc": { "type": "object", "additionalProperties": { "type": "integer" } }
+      }
+    },
+    {
+      "type": "object", "required": ["t", "ev", "ts"],
+      "properties": { "t": { "const": "evt" }, "ev": { "type": "string" }, "ts": { "type": "number" } }
+    }
+  ]
+}

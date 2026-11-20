@@ -1,0 +1,28 @@
+/* N00 design tokens (ISA-101: grey base, colour only for meaning). Change values here, never in components. */
+:root {
+  --bg: #1b2128;
+  --bg-panel: #232a33;
+  --bg-raised: #2c3540;
+  --line: #3a4552;
+  --text: #e6eaee;
+  --text-muted: #8d99a6;
+  --accent: #4a90d9;
+
+  --ok: #2ecc71;
+  --warn: #f1c40f;
+  --alarm: #e74c3c;
+  --info: #3498db;
+
+  --font: 'Segoe UI', 'Inter', system-ui, sans-serif;
+  --mono: 'Cascadia Mono', 'Consolas', ui-monospace, monospace;
+  --fs-sm: 12px;
+  --fs: 14px;
+  --fs-lg: 18px;
+  --fs-xl: 24px;
+
+  --gap: 12px;
+  --radius: 6px;
+  --topbar-h: 48px;
+  --statusbar-h: 28px;
+  --nav-w: 220px;
+}

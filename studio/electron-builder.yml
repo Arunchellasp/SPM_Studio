@@ -1,0 +1,20 @@
+appId: com.mecpl.spmstudio
+productName: SPM Studio
+directories:
+  buildResources: build
+  output: dist
+files:
+  - out/**
+  - package.json
+asarUnpack:
+  - '**/*.node'
+win:
+  target: nsis
+  artifactName: ${productName}-${version}-setup.${ext}
+nsis:
+  oneClick: false
+  perMachine: true
+  allowToChangeInstallationDirectory: true
+linux:
+  target: AppImage
+  category: Development

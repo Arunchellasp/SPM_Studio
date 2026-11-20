@@ -1,0 +1,6 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[c]": { "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd" },
+  "typescript.tsdk": "studio/node_modules/typescript/lib"
+}
