@@ -6,5 +6,5 @@
     "outDir": "node_modules/.tsbuild/node",
     "tsBuildInfoFile": "node_modules/.tsbuild/node.tsbuildinfo"
   },
-  "include": ["electron.vite.config.ts", "vitest.config.ts", "vite.web.config.ts", "src/main/**/*", "src/preload/**/*", "src/shared/**/*"]
+  "include": ["electron.vite.config.ts", "vitest.config.ts", "vite.web.config.ts", "src/main/**/*", "src/preload/**/*", "src/shared/**/*", "tools/**/*.ts"]
 }

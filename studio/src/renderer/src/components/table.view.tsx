@@ -2,8 +2,10 @@ import type { ReactNode } from 'react'
 import { Icon } from './icon.view'
 import './table.css'
 
-/** How a value is shown (N00 › Value states). Colour only when a person must look. */
-export type ValueState = 'normal' | 'forced' | 'fault'
+import type { ValueState } from '../model/machine'
+
+/** ValueState lives in model/machine.ts since step 11 (shared with the runtime data) */
+export type { ValueState }
 
 /**
  * One column. 'key' reads row[key]; 'render' draws anything else (a lamp, a button).

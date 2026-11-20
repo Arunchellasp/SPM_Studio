@@ -2,21 +2,12 @@
  * UI store: the state every shell element reads (one place, no prop drilling).
  * Step 1 = local placeholder values only. In a later step the machine state,
  * mode and alarms come from the C runtime instead of these defaults.
+ * Types: model/machine.ts · sample values: fixtures/demo.ts (step 11).
  */
 import { create } from 'zustand'
 import { applyTheme, loadTheme, saveTheme, type Theme } from '../app/theme'
-
-export type MachineState = 'STOPPED' | 'IDLE' | 'STARTING' | 'EXECUTE' | 'HELD' | 'SUSPENDED' | 'ABORTED' | 'COMPLETE'
-export type Mode = 'Auto' | 'Manual' | 'Maintenance'
-export type Priority = 1 | 2 | 3 | 4
-
-export interface Alarm {
-  code: string
-  text: string
-  priority: Priority
-  time: string
-  acked: boolean
-}
+import { DEMO_CELL } from '../fixtures/demo'
+import type { Alarm, MachineState, Mode } from '../model/machine'
 
 interface UiState {
   // shell context
@@ -37,8 +28,8 @@ interface UiState {
 }
 
 export const useUi = create<UiState>((set) => ({
-  cellName: 'Line 3 · Trim dispensing cell',
-  userName: 'A. Engineer',
+  cellName: DEMO_CELL.name, // from the sample data (step 11), later from the project file
+  userName: DEMO_CELL.user,
   // a plain id, not SCREENS[0].id: screens.ts imports screen views that use this store,
   // so importing screens.ts here would be a circle (found in step 10)
   activeScreen: 'operate',

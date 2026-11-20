@@ -1,4 +1,4 @@
-import type { MachineState } from '../stores/ui.store'
+import type { MachineState } from '../model/machine'
 import './components.css'
 
 /**

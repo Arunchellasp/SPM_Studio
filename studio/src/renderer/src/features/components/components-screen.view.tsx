@@ -6,11 +6,23 @@ import { Field } from '../../components/field.view'
 import { Icon } from '../../components/icon.view'
 import { confirmDialog, toast } from '../../stores/feedback.store'
 import { useScreenScale } from '../../app/screen-scale'
+import { formatCount } from '../../app/format'
 import { Segmented } from '../../components/segmented.view'
-import { Select, type SelectOption } from '../../components/select.view'
+import { Select } from '../../components/select.view'
 import { Tabs } from '../../components/tabs.view'
 import { Table, type Column, type ValueState } from '../../components/table.view'
 import { StatePill } from '../../components/state-pill.view'
+import {
+  N00_AXES,
+  N00_CYCLE_COUNTER,
+  N00_FORCED_AT_START,
+  N00_POSITION,
+  N00_RECIPES,
+  N00_STATE_ROWS,
+  N00_TAG_ROWS,
+  type StateRow,
+  type TagRow
+} from '../../fixtures/n00'
 import './components-screen.css'
 
 const VARIANTS: { v: ButtonVariant; use: string }[] = [
@@ -20,55 +32,23 @@ const VARIANTS: { v: ButtonVariant; use: string }[] = [
   { v: 'ghost', use: 'link-like actions' },
   { v: 'danger', use: 'delete, abort, reset data' }
 ]
-const RECIPES: SelectOption[] = [
-  { value: 'A-12', label: 'Recipe A-12' },
-  { value: 'A-13', label: 'Recipe A-13' },
-  { value: 'B-01', label: 'Recipe B-01' },
-  { value: 'old', label: 'Recipe X-00 (archived)', disabled: true }
-]
-
-/** demo rule for the position field: a number from 0 to 600 mm */
+/** demo rule for the position field: a number inside N00_POSITION's range (mm) */
 function checkPosition(text: string): string | undefined {
+  const { min, max } = N00_POSITION
   if (text.trim() === '') return 'Enter a position'
   const n = Number(text)
   if (Number.isNaN(n)) return 'Not a number'
-  if (n < 0 || n > 600) return 'Allowed range 0 … 600 mm'
+  if (n < min || n > max) return `Allowed range ${min} … ${max} mm`
   return undefined
 }
 
-/** N00 › Value states: the three rows exactly as drawn */
-interface StateRow {
-  tag: string
-  value: string
-  state: ValueState
-  note: string
-}
-const STATE_ROWS: StateRow[] = [
-  { tag: 'Plasma.Ready', value: 'TRUE', state: 'normal', note: 'normal (no colour)' },
-  { tag: 'Clamp.Fwd', value: 'TRUE', state: 'forced', note: 'forced: amber + ⓕ' },
-  { tag: 'Axis2.Pos', value: 'ERR', state: 'fault', note: 'bad quality / fault' }
-]
 const STATE_COLS: Column<StateRow>[] = [
   { key: 'tag', header: 'Tag', width: 220 },
   { key: 'value', header: 'Value', width: 140 },
   { key: 'note', header: 'State', width: 220 }
 ]
 
-/** N03 Tags style: 5 columns, comment left-aligned; the force button changes the row state */
-interface TagRow {
-  tag: string
-  type: string
-  value: string
-  comment: string
-  fault?: boolean
-}
-const TAG_ROWS: TagRow[] = [
-  { tag: 'Station.ClampOut', type: 'BOOL', value: 'TRUE', comment: 'Clamp solenoid O0.04' },
-  { tag: 'Station.ClampFwd', type: 'BOOL', value: 'TRUE', comment: 'Clamp forward sensor I0.02' },
-  { tag: 'Station.Settle', type: 'TIME', value: '300 ms', comment: 'Recipe value' },
-  { tag: 'Axis2.Pos', type: 'REAL', value: 'ERR', comment: 'Encoder cable fault', fault: true },
-  { tag: 'Plasma.Ready', type: 'BOOL', value: 'FALSE', comment: 'Generator ready' }
-]
+/** N03 Tags style: 5 columns, comment left-aligned; the force button changes the row state (rows: fixtures/n00.ts) */
 type TagFilter = 'All' | 'Forced' | 'Fault'
 
 type DemoMode = 'Auto' | 'Manual' | 'Maint.'
@@ -88,7 +68,7 @@ const SIZES: { s: ButtonSize; use: string }[] = [
  */
 export function ComponentsScreen({ screen }: { screen: ScreenDef }): React.JSX.Element {
   const [clicks, setClicks] = useState(0)
-  const [position, setPosition] = useState('482.382')
+  const [position, setPosition] = useState(N00_POSITION.start)
   const [recipe, setRecipe] = useState('A-12')
   const [speed, setSpeed] = useState('')
   const positionError = checkPosition(position)
@@ -117,11 +97,11 @@ export function ComponentsScreen({ screen }: { screen: ScreenDef }): React.JSX.E
     setAnswer(ok ? 'Save draft' : 'Cancel')
     if (ok) toast('Draft saved', 'done')
   }
-  const [forced, setForced] = useState<string[]>(['Station.ClampFwd'])
+  const [forced, setForced] = useState<string[]>(N00_FORCED_AT_START)
   const [filter, setFilter] = useState<TagFilter>('All')
   const tagState = (r: TagRow): ValueState => (r.fault ? 'fault' : forced.includes(r.tag) ? 'forced' : 'normal')
   const toggleForce = (tag: string): void => setForced((f) => (f.includes(tag) ? f.filter((t) => t !== tag) : [...f, tag]))
-  const shownTags = TAG_ROWS.filter((r) => filter === 'All' || tagState(r) === filter.toLowerCase())
+  const shownTags = N00_TAG_ROWS.filter((r) => filter === 'All' || tagState(r) === filter.toLowerCase())
   const tagCols: Column<TagRow>[] = [
     { key: 'tag', header: 'Tag', width: 260, align: 'left' },
     { key: 'type', header: 'Type', width: 100 },
@@ -191,7 +171,7 @@ export function ComponentsScreen({ screen }: { screen: ScreenDef }): React.JSX.E
       {/* ---------------------------------------------------------- Table (step 6) */}
       <div className="cmp-grid cmp-tables">
         <Card title="Table · value states (as in N00 › Value states)">
-          <Table label="Value states" columns={STATE_COLS} rows={STATE_ROWS} rowKey={(r) => r.tag} rowState={(r) => r.state} />
+          <Table label="Value states" columns={STATE_COLS} rows={N00_STATE_ROWS} rowKey={(r) => r.tag} rowState={(r) => r.state} />
           <p className="cmp-note cmp-gap">
             Colour only when a person must look: amber + ⓕ = forced by a person, light red = bad value / fault.
           </p>
@@ -294,7 +274,7 @@ export function ComponentsScreen({ screen }: { screen: ScreenDef }): React.JSX.E
             onChange={(e) => setPosition(e.target.value)}
             error={positionError}
           />
-          <Select label="Recipe" options={RECIPES} value={recipe} onChange={(e) => setRecipe(e.target.value)} />
+          <Select label="Recipe" options={N00_RECIPES} value={recipe} onChange={(e) => setRecipe(e.target.value)} />
           <Field
             label="Jog speed"
             unit="mm/s"
@@ -303,16 +283,8 @@ export function ComponentsScreen({ screen }: { screen: ScreenDef }): React.JSX.E
             value={speed}
             onChange={(e) => setSpeed(e.target.value)}
           />
-          <Select
-            label="Axis (choose)"
-            placeholder="Choose axis…"
-            defaultValue=""
-            options={[
-              { value: 'X1', label: 'Slide X1' },
-              { value: 'X2', label: 'Slide X2' }
-            ]}
-          />
-          <Field label="Cycle counter (read only)" value="12 480" disabled />
+          <Select label="Axis (choose)" placeholder="Choose axis…" defaultValue="" options={N00_AXES} />
+          <Field label="Cycle counter (read only)" value={formatCount(N00_CYCLE_COUNTER)} disabled />
         </div>
         <p className="cmp-note">
           Type a value above 600 or a letter in “Target position” to see the error state. Tab moves between boxes; in a select use ↑ ↓ or

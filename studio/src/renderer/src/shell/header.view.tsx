@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { Icon, type IconName } from '../components/icon.view'
 import { Segmented } from '../components/segmented.view'
 import { StatePill } from '../components/state-pill.view'
-import { useUi, type Mode } from '../stores/ui.store'
+import type { Mode } from '../model/machine'
+import { useUi } from '../stores/ui.store'
 
 const MODES: readonly Mode[] = ['Auto', 'Manual', 'Maintenance']
 const COMMANDS: { id: IconName; label: string }[] = [

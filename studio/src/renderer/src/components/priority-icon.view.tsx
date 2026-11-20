@@ -1,4 +1,4 @@
-import type { Priority } from '../stores/ui.store'
+import type { Priority } from '../model/machine'
 import './components.css'
 
 /**
