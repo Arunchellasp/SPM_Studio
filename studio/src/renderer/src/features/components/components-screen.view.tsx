@@ -139,7 +139,7 @@ export function ComponentsScreen({ screen }: { screen: ScreenDef }): React.JSX.E
           actions={
             <>
               <span className="cmp-note" data-testid="tbl-echo">
-                {shownTags.length} rows · {forced.length} forced
+                {shownTags.length} {shownTags.length === 1 ? 'row' : 'rows'} · {forced.length} forced
               </span>
               <Segmented label="Tag filter" options={['All', 'Forced', 'Fault'] as const} value={filter} onChange={setFilter} />
             </>
