@@ -63,5 +63,5 @@ cmake -S runtime -B runtime/build && cmake --build runtime/build
 
 ## Status
 
-Steps 0–2 done (setup, window frame, Button). Roadmap and teaching notes: mind_map → Teaching page.
+Steps 0–3 done (setup, window frame, Button, Card). Roadmap and teaching notes: mind_map → Teaching page.
 Next: **P1** contracts (config / tags / program schemas, demo project, generated types).

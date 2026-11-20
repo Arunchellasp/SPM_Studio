@@ -1,0 +1,51 @@
+/* Card (N00): white surface, soft border, 8 px corners, no shadow. */
+.card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* lets long content shrink inside grids */
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-card);
+}
+.card-fill {
+  height: 100%;
+}
+
+/* header: title left (16 px in, 8 px down in the design), actions right */
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--card-head-h);
+  padding: 0 var(--card-pad);
+}
+.card-title {
+  flex: 1;
+  margin: 0;
+  font-size: var(--fs-title);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* body */
+.card-body {
+  flex: 1;
+  min-height: 0;
+}
+.card-pad-md {
+  padding: var(--card-pad);
+}
+.card-head + .card-pad-md {
+  padding-top: 0; /* the header already gives the space above */
+}
+.card-pad-none {
+  padding: 0;
+}

@@ -1,10 +1,7 @@
-.empty {
+/* The white panel, border and corners now come from Card; only the inside is styled here. */
+.empty .card-body {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius);
   padding: 20px 24px;
 }
 .empty h1 {
@@ -27,7 +24,7 @@
   align-items: center;
   justify-content: center;
   border: 2px dashed var(--border-soft);
-  border-radius: var(--radius);
+  border-radius: var(--radius-card);
   color: var(--muted);
   font-size: var(--fs-md);
 }

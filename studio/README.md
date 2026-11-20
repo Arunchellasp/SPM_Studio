@@ -17,7 +17,7 @@ src/
       ├─ stores/ui.store.ts    UI state: active screen, mode, machine state, alarms
       ├─ shell/                common frame for every window:
       │                        app-shell · header · nav-rail · alarm-banner (+ shell.css)
-      ├─ components/           shared parts: button, state-pill, priority-icon
+      ├─ components/           shared parts: button, card, state-pill, priority-icon
       └─ features/             one folder per screen (components = N00 dev screen, empty = placeholder)
 tools/mock-runtime.mjs   fake runtime for development
 ```

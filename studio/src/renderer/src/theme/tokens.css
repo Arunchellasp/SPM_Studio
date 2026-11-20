@@ -64,8 +64,20 @@
   --header-h: 56px;
   --rail-w: 88px;
   --banner-h: 36px;
-  --gap: 16px;
-  --radius: 6px;
+  --gap: 16px; /* space between cards (N01: 1200 + 16 + 584) */
+  --radius: 6px; /* buttons, pills */
+
+  /* state pill: header 150 × 32 · inside cards 134 × 26 */
+  --pill-w: 150px;
+  --pill-h: 32px;
+  --pill-w-sm: 134px;
+  --pill-h-sm: 26px;
+
+  /* cards (N00 card: white, soft border, 8 px corners, no shadow, bold 14 px title at 16 / 8 px) */
+  --radius-card: 8px;
+  --card-pad: 16px;
+  --card-head-h: 42px;
+  --fs-title: 14px;
 
   /* buttons — heights used in the Improved design screens:
      28 banner (Ack) · 32 toolbars and primary actions · 36 actions inside cards · 40 form actions */

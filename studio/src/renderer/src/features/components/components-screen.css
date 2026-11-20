@@ -1,11 +1,10 @@
+/* N00 screen layout: grey content area with cards, 16 px apart (like the real screens). */
 .cmp {
-  background: var(--surface);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius);
-  padding: 20px 24px;
-  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
 }
-.cmp h1 {
+.cmp-head h1 {
   margin: 0;
   font-size: var(--fs-xl);
   font-weight: 600;
@@ -16,17 +15,16 @@
   margin-right: 6px;
 }
 .cmp-purpose {
-  margin: 6px 0 12px;
+  margin: 4px 0 0;
   color: var(--muted);
 }
-.cmp-block {
-  padding: 16px 0;
-  border-top: 1px solid var(--border-soft);
+.cmp-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gap);
 }
-.cmp-block h2 {
-  margin: 0 0 12px;
-  font-size: var(--fs-md);
-  font-weight: 600;
+.cmp-cards {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 .cmp-row {
   display: flex;
@@ -42,12 +40,22 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 6px;
-  width: 200px;
+  width: 190px;
 }
 .cmp-note {
+  margin: 0;
   color: var(--muted);
   font-size: var(--fs-sm);
 }
-.cmp-narrow {
-  max-width: 420px;
+.cmp-cards .cmp-note + .cmp-row {
+  margin-top: 12px;
+}
+.cmp-edge {
+  height: 100%;
+  padding: 24px 16px;
+  background: var(--panel);
+  border-top: 1px solid var(--border-soft);
+  border-radius: 0 0 var(--radius-card) var(--radius-card);
+  color: var(--muted);
+  font-size: var(--fs-sm);
 }
