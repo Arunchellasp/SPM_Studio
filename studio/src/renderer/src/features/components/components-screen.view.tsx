@@ -6,6 +6,7 @@ import { Field } from '../../components/field.view'
 import { Segmented } from '../../components/segmented.view'
 import { Select, type SelectOption } from '../../components/select.view'
 import { Tabs } from '../../components/tabs.view'
+import { Table, type Column, type ValueState } from '../../components/table.view'
 import { StatePill } from '../../components/state-pill.view'
 import './components-screen.css'
 
@@ -32,6 +33,41 @@ function checkPosition(text: string): string | undefined {
   return undefined
 }
 
+/** N00 › Value states: the three rows exactly as drawn */
+interface StateRow {
+  tag: string
+  value: string
+  state: ValueState
+  note: string
+}
+const STATE_ROWS: StateRow[] = [
+  { tag: 'Plasma.Ready', value: 'TRUE', state: 'normal', note: 'normal (no colour)' },
+  { tag: 'Clamp.Fwd', value: 'TRUE', state: 'forced', note: 'forced: amber + ⓕ' },
+  { tag: 'Axis2.Pos', value: 'ERR', state: 'fault', note: 'bad quality / fault' }
+]
+const STATE_COLS: Column<StateRow>[] = [
+  { key: 'tag', header: 'Tag', width: 220 },
+  { key: 'value', header: 'Value', width: 140 },
+  { key: 'note', header: 'State', width: 220 }
+]
+
+/** N03 Tags style: 5 columns, comment left-aligned; the force button changes the row state */
+interface TagRow {
+  tag: string
+  type: string
+  value: string
+  comment: string
+  fault?: boolean
+}
+const TAG_ROWS: TagRow[] = [
+  { tag: 'Station.ClampOut', type: 'BOOL', value: 'TRUE', comment: 'Clamp solenoid O0.04' },
+  { tag: 'Station.ClampFwd', type: 'BOOL', value: 'TRUE', comment: 'Clamp forward sensor I0.02' },
+  { tag: 'Station.Settle', type: 'TIME', value: '300 ms', comment: 'Recipe value' },
+  { tag: 'Axis2.Pos', type: 'REAL', value: 'ERR', comment: 'Encoder cable fault', fault: true },
+  { tag: 'Plasma.Ready', type: 'BOOL', value: 'FALSE', comment: 'Generator ready' }
+]
+type TagFilter = 'All' | 'Forced' | 'Fault'
+
 type DemoMode = 'Auto' | 'Manual' | 'Maint.'
 const DEMO_MODES: readonly DemoMode[] = ['Auto', 'Manual', 'Maint.']
 
@@ -56,6 +92,30 @@ export function ComponentsScreen({ screen }: { screen: ScreenDef }): React.JSX.E
   const [demoMode, setDemoMode] = useState<DemoMode>('Auto')
   const [view, setView] = useState<'list' | 'grid' | 'chart'>('list')
   const [tab, setTab] = useState('overview')
+  const [forced, setForced] = useState<string[]>(['Station.ClampFwd'])
+  const [filter, setFilter] = useState<TagFilter>('All')
+  const tagState = (r: TagRow): ValueState => (r.fault ? 'fault' : forced.includes(r.tag) ? 'forced' : 'normal')
+  const toggleForce = (tag: string): void => setForced((f) => (f.includes(tag) ? f.filter((t) => t !== tag) : [...f, tag]))
+  const shownTags = TAG_ROWS.filter((r) => filter === 'All' || tagState(r) === filter.toLowerCase())
+  const tagCols: Column<TagRow>[] = [
+    { key: 'tag', header: 'Tag', width: 260, align: 'left' },
+    { key: 'type', header: 'Type', width: 100 },
+    { key: 'value', header: 'Value', width: 120 },
+    { key: 'comment', header: 'Comment', width: 280, align: 'left' },
+    {
+      key: 'force',
+      header: 'Force',
+      width: 120,
+      render: (r) =>
+        r.fault ? (
+          '–'
+        ) : (
+          <Button size="sm" variant={forced.includes(r.tag) ? 'default' : 'quiet'} onClick={() => toggleForce(r.tag)}>
+            {forced.includes(r.tag) ? 'Release' : 'ⓕ Force'}
+          </Button>
+        )
+    }
+  ]
 
   return (
     <div className="cmp">
@@ -64,6 +124,37 @@ export function ComponentsScreen({ screen }: { screen: ScreenDef }): React.JSX.E
           <span className="cmp-code">{screen.code}</span> {screen.title}
         </h1>
         <p className="cmp-purpose">{screen.purpose}</p>
+      </div>
+
+      {/* ---------------------------------------------------------- Table (step 6) */}
+      <div className="cmp-grid cmp-tables">
+        <Card title="Table · value states (as in N00 › Value states)">
+          <Table label="Value states" columns={STATE_COLS} rows={STATE_ROWS} rowKey={(r) => r.tag} rowState={(r) => r.state} />
+          <p className="cmp-note cmp-gap">
+            Colour only when a person must look: amber + ⓕ = forced by a person, light red = bad value / fault.
+          </p>
+        </Card>
+        <Card
+          title="Table · tag list (like N03 Tags)"
+          actions={
+            <>
+              <span className="cmp-note" data-testid="tbl-echo">
+                {shownTags.length} rows · {forced.length} forced
+              </span>
+              <Segmented label="Tag filter" options={['All', 'Forced', 'Fault'] as const} value={filter} onChange={setFilter} />
+            </>
+          }
+        >
+          <Table
+            label="Tags"
+            columns={tagCols}
+            rows={shownTags}
+            rowKey={(r) => r.tag}
+            rowState={tagState}
+            striped
+            empty="No tags match the filter"
+          />
+        </Card>
       </div>
 
       {/* ---------------------------------------------------------- Segmented + Tabs (step 5) */}

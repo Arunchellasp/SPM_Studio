@@ -73,3 +73,8 @@
 .cmp-gap {
   margin-top: 12px;
 }
+
+/* step 6: the tag table card is wider than the value-states card */
+.cmp-tables {
+  grid-template-columns: 640px minmax(0, 1fr);
+}

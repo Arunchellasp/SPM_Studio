@@ -108,4 +108,15 @@
   --tab-pad: 16px;
   --tab-line: 3px;
   --tab-inset: 6px;
+
+  /* tables (N00 › Value states, N03 Tags, N04 I/O): 34 px rows, dark header, thin blue-grey grid */
+  --row-h: 34px;
+  --table-line: #c3ceda; /* grid lines between all cells */
+  --table-head: #4a5562; /* header row fill (white bold text on it) */
+  --cell-text: #1a1a1a;
+  --row-alt: #f3f6f9; /* zebra rows (I/O lists) */
+
+  /* value states — the only colours a value may get (ISA-101: colour = attention) */
+  --forced-bg: #fff3cd; /* forced by a person: amber + ⓕ */
+  --fault-bg: #fde2e2; /* bad quality / fault: light red */
 }

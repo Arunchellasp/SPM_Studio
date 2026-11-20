@@ -1,0 +1,64 @@
+/* Table (N00 › Value states, N03 Tags, N04 I/O): dark header, 34 px rows, 1 px #C3CEDA grid. */
+.tbl {
+  border-collapse: collapse;
+  table-layout: fixed; /* column widths come from the column definitions, not from the content */
+  background: var(--surface);
+  font-size: var(--fs);
+  color: var(--cell-text);
+}
+.tbl-fill {
+  width: 100%;
+}
+.tbl th,
+.tbl td {
+  height: var(--row-h);
+  padding: 0 4px; /* spacingLeft 4 in the design */
+  border: 1px solid var(--table-line);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tbl th {
+  background: var(--table-head);
+  color: var(--header-text);
+  font-weight: 700;
+}
+.tbl .tbl-left {
+  text-align: left;
+  padding-left: 8px;
+}
+.tbl .tbl-right {
+  text-align: right;
+  padding-right: 8px;
+}
+.tbl-striped tbody tr:nth-child(even) {
+  background: var(--row-alt);
+}
+
+/* value states: the whole row is tinted, like the design */
+.tbl tr.tbl-forced,
+.tbl-striped tbody tr.tbl-forced:nth-child(even) {
+  background: var(--forced-bg);
+}
+.tbl tr.tbl-fault,
+.tbl-striped tbody tr.tbl-fault:nth-child(even) {
+  background: var(--fault-bg);
+}
+.tbl-mark {
+  margin-left: 6px; /* two spaces before ⓕ in the design */
+}
+
+.tbl-empty {
+  color: var(--muted);
+}
+
+/* screen-reader-only text (fault rows say "fault" without changing the look) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
