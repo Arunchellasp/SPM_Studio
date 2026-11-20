@@ -89,4 +89,11 @@
   --btn-w-md: 112px;
   --btn-w-lg: 120px;
   --btn-w-xl: 150px;
+
+  /* fields and selects (N00 › Buttons and inputs: label 11 px grey, box 260 × 32, 4 px corners) */
+  --field-w: 260px;
+  --field-h: 32px;
+  --radius-input: 4px;
+  --label-h: 18px; /* label row above the box, 2 px gap */
+  --error: #d32f2f; /* invalid value: same red as danger / P1, used for the border and the message */
 }

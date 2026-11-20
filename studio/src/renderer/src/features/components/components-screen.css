@@ -59,3 +59,12 @@
   color: var(--muted);
   font-size: var(--fs-sm);
 }
+
+/* step 4: fields sit 20 px apart and line up at the top (error text may add a line) */
+.cmp-fields {
+  align-items: flex-start;
+  gap: 20px;
+}
+.cmp-fields + .cmp-note {
+  margin-top: 12px;
+}

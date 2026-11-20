@@ -2,6 +2,8 @@ import { useState } from 'react'
 import type { ScreenDef } from '../../app/screens'
 import { Button, type ButtonSize, type ButtonVariant } from '../../components/button.view'
 import { Card } from '../../components/card.view'
+import { Field } from '../../components/field.view'
+import { Select, type SelectOption } from '../../components/select.view'
 import { StatePill } from '../../components/state-pill.view'
 import './components-screen.css'
 
@@ -12,6 +14,22 @@ const VARIANTS: { v: ButtonVariant; use: string }[] = [
   { v: 'ghost', use: 'link-like actions' },
   { v: 'danger', use: 'delete, abort, reset data' }
 ]
+const RECIPES: SelectOption[] = [
+  { value: 'A-12', label: 'Recipe A-12' },
+  { value: 'A-13', label: 'Recipe A-13' },
+  { value: 'B-01', label: 'Recipe B-01' },
+  { value: 'old', label: 'Recipe X-00 (archived)', disabled: true }
+]
+
+/** demo rule for the position field: a number from 0 to 600 mm */
+function checkPosition(text: string): string | undefined {
+  if (text.trim() === '') return 'Enter a position'
+  const n = Number(text)
+  if (Number.isNaN(n)) return 'Not a number'
+  if (n < 0 || n > 600) return 'Allowed range 0 … 600 mm'
+  return undefined
+}
+
 const SIZES: { s: ButtonSize; use: string }[] = [
   { s: 'sm', use: '28 px · alarm banner (Ack)' },
   { s: 'md', use: '32 px · toolbars, + New tag (default)' },
@@ -26,6 +44,10 @@ const SIZES: { s: ButtonSize; use: string }[] = [
  */
 export function ComponentsScreen({ screen }: { screen: ScreenDef }): React.JSX.Element {
   const [clicks, setClicks] = useState(0)
+  const [position, setPosition] = useState('482.382')
+  const [recipe, setRecipe] = useState('A-12')
+  const [speed, setSpeed] = useState('')
+  const positionError = checkPosition(position)
 
   return (
     <div className="cmp">
@@ -35,6 +57,50 @@ export function ComponentsScreen({ screen }: { screen: ScreenDef }): React.JSX.E
         </h1>
         <p className="cmp-purpose">{screen.purpose}</p>
       </div>
+
+      {/* ---------------------------------------------------------- Field + Select (step 4) */}
+      <Card
+        title="Field + Select (as in N00 › Buttons and inputs)"
+        actions={
+          <span className="cmp-note" data-testid="form-echo">
+            position {positionError ? '—' : `${position} mm`} · recipe {recipe}
+          </span>
+        }
+      >
+        <div className="cmp-row cmp-fields">
+          <Field
+            label="Target position"
+            unit="mm"
+            inputMode="decimal"
+            value={position}
+            onChange={(e) => setPosition(e.target.value)}
+            error={positionError}
+          />
+          <Select label="Recipe" options={RECIPES} value={recipe} onChange={(e) => setRecipe(e.target.value)} />
+          <Field
+            label="Jog speed"
+            unit="mm/s"
+            placeholder="e.g. 50"
+            hint="Empty = machine default"
+            value={speed}
+            onChange={(e) => setSpeed(e.target.value)}
+          />
+          <Select
+            label="Axis (choose)"
+            placeholder="Choose axis…"
+            defaultValue=""
+            options={[
+              { value: 'X1', label: 'Slide X1' },
+              { value: 'X2', label: 'Slide X2' }
+            ]}
+          />
+          <Field label="Cycle counter (read only)" value="12 480" disabled />
+        </div>
+        <p className="cmp-note">
+          Type a value above 600 or a letter in “Target position” to see the error state. Tab moves between boxes; in a select use ↑ ↓ or
+          the first letter.
+        </p>
+      </Card>
 
       {/* ---------------------------------------------------------- Card (step 3) */}
       <div className="cmp-grid cmp-cards">

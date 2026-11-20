@@ -1,0 +1,101 @@
+/* Field and Select (N00 › Buttons and inputs): grey 11 px label, white 260 × 32 box, 4 px corners. */
+.field {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  width: var(--field-w);
+  vertical-align: top;
+}
+.field-block {
+  display: flex;
+  width: 100%;
+}
+.field-label {
+  height: var(--label-h);
+  line-height: var(--label-h);
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* the box: input or select, with a unit or caret drawn inside on the right */
+.field-box {
+  position: relative;
+  display: flex;
+}
+.field-control {
+  width: 100%;
+  height: var(--field-h);
+  margin: 0;
+  padding: 0 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-input);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs);
+  user-select: text; /* the body turns selection off; typing fields need it back */
+  outline: none;
+}
+.field-control:focus {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 1px var(--focus); /* 2 px blue edge while typing, like the button focus ring */
+}
+.field-control:disabled {
+  background: var(--panel);
+  color: var(--muted);
+  cursor: default;
+}
+.field-has-unit .field-control {
+  padding-right: 44px; /* space for the unit (44 px box in the design) */
+}
+.field-unit {
+  position: absolute;
+  right: 6px;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  pointer-events: none; /* clicks go to the input */
+}
+
+/* select: native list, own caret ▾ (the browser arrow is hidden so it looks the same everywhere) */
+.select-control {
+  appearance: none;
+  padding-right: 28px;
+  cursor: pointer;
+  user-select: none;
+}
+.select-caret {
+  position: absolute;
+  right: 4px;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+/* error: red border and red message under the box */
+.field-error .field-control {
+  border-color: var(--error);
+}
+.field-error .field-control:focus {
+  box-shadow: 0 0 0 1px var(--error);
+}
+.field-msg {
+  font-size: var(--fs-xs);
+  line-height: 16px;
+  color: var(--muted);
+}
+.field-error .field-msg {
+  color: var(--error);
+}
