@@ -7,3 +7,5 @@ runtime/build/
 .DS_Store
 *.log
 .env
+test-results/
+playwright-report/

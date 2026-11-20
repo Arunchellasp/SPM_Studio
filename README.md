@@ -39,7 +39,8 @@ The status bar turns green when the studio is connected; N01 Overview shows live
 | Command (in `studio/`) | What it does |
 |---|---|
 | `npm run dev` | studio with hot reload (screens) and auto-restart (main) |
-| `npm run check` | typecheck + lint + tests + build (same as CI) |
+| `npm run check` | typecheck + lint + unit tests + build (same as CI) |
+| `npm run test:ui` | automated UI tests (Playwright, Chromium at 1920 × 1080) |
 | `npm run mock-runtime` | stand-in for `spm_rt` until phase P3 |
 | `npm run dist:win` | Windows installer in `studio/dist/` |
 
