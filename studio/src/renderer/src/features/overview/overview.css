@@ -1,0 +1,79 @@
+/* N01 Operate › Overview (Improved design › N01): 1200 + 16 + 584 = 1800 px at 1920 × 1080 */
+.ovw {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+.ovw-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1200fr) minmax(0, 584fr); /* the design widths as proportions */
+  gap: var(--gap);
+}
+
+/* batch card: 120 px high, content 20 px in */
+.batch-card {
+  height: var(--ovw-top-h);
+  padding: 10px var(--batch-pad) 0;
+}
+.batch-title {
+  height: 30px;
+  line-height: 30px;
+  font-size: var(--fs-batch);
+}
+.batch-title b {
+  font-weight: 700;
+}
+.batch-bar {
+  width: 100%;
+  max-width: var(--batch-bar-w);
+  height: var(--batch-bar-h);
+  margin-top: 12px; /* y + 52 in the design */
+  background: var(--panel);
+  border-radius: calc(var(--batch-bar-h) / 2);
+  overflow: hidden;
+}
+.batch-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: inherit;
+}
+.batch-kpis {
+  height: 30px;
+  line-height: 30px;
+  margin-top: 8px; /* y + 96 */
+  font-size: var(--fs-kpi);
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* why-not-faster card */
+.why-card {
+  height: var(--ovw-top-h);
+}
+.why-text {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* steps 13 / 14 will fill this */
+.ovw-next {
+  flex: 1;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--border-soft);
+  border-radius: var(--radius-card);
+  color: var(--muted-on-bg);
+  font-size: var(--fs-md);
+}
+.sr-only-h1 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

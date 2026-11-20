@@ -126,6 +126,14 @@
 
   /* icons (lucide SVG, 1em square: size = font size where they sit) */
   --icon-rail: 24px; /* rail glyphs in N00 are ~24 px */
+
+  /* N01 top row (step 12): batch card 1200 × 120, why-not-faster 584 × 120 */
+  --ovw-top-h: 120px;
+  --batch-pad: 20px;
+  --fs-batch: 16px; /* 'Batch A-12 · …' */
+  --fs-kpi: 14px; /* KPI line */
+  --batch-bar-w: 900px;
+  --batch-bar-h: 14px;
   --icon-cmd: 14px; /* header Start / Hold / Stop / Reset */
   /* (theme) — see the dark set at the end of this file */
 

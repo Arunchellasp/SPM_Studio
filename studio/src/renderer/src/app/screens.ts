@@ -7,6 +7,7 @@ import type { ComponentType } from 'react'
 import type { IconName } from '../components/icon.view'
 import { ComponentsScreen } from '../features/components/components-screen.view'
 import { AdminScreen } from '../features/admin/admin-screen.view'
+import { OverviewScreen } from '../features/overview/overview-screen.view'
 
 export interface ScreenDef {
   id: string
@@ -26,7 +27,8 @@ export const ALL_SCREENS: ScreenDef[] = [
     icon: 'operate',
     label: 'Operate',
     title: 'Operate › Overview',
-    purpose: 'State, why not running, what next'
+    purpose: 'State, why not running, what next',
+    view: OverviewScreen
   },
   {
     id: 'program',

@@ -40,6 +40,7 @@ test('UI-3.4 cards in a row are 16 px apart', async ({ page }) => {
 })
 
 test('UI-3.5 empty screens are full-height cards', async ({ page }) => {
+  await page.getByRole('button', { name: /Tags/ }).click() // since step 12 N01 (start screen) has real content
   const card = page.locator('.content > .card')
   await expect(card).toHaveClass(/card-fill/)
   const [content, c] = [await page.locator('.content').boundingBox(), await card.boundingBox()]
