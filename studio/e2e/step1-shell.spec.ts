@@ -12,7 +12,8 @@ test('UI-1.1 shell shows header, rail, content and banner at the design sizes', 
   expect((await header.boundingBox())?.height).toBe(56)
   expect((await page.locator('.rail').boundingBox())?.width).toBe(88)
   expect((await page.locator('.banner').boundingBox())?.height).toBe(36)
-  await expect(page.locator('.banner')).toHaveText('No active alarms')
+  // since step 14 the sample alarms are active, so the banner shows the top one (grey 'No active alarms' when empty: unit test)
+  await expect(page.locator('.banner')).toContainText('E1202')
 })
 
 test('UI-1.2 rail lists N01–N10 (+ N00 Dev in development)', async ({ page }) => {

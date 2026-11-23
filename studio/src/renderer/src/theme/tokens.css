@@ -140,6 +140,10 @@
   --station-h: 284px;
   --fs-step: 14px;
   --station-btn-w: 170px;
+
+  /* N01 alarm and event table (step 14): 1670 wide, columns 60 · 120 · 170 · 900 · 220 · 200 */
+  --alarm-table-w: 1670px;
+  --alarm-card-h: 210px;
   --icon-cmd: 14px; /* header Start / Hold / Stop / Reset */
   /* (theme) — see the dark set at the end of this file */
 

@@ -14,14 +14,24 @@ describe('ui store', () => {
     expect(useUi.getState().mode).toBe('Manual')
   })
 
-  it('acknowledges only the first alarm', () => {
+  it('acknowledges only the top alarm (highest priority, wherever it is in the list)', () => {
     useUi.setState({
       alarms: [
-        { code: 'E1202', text: 'Plasma ready lost', priority: 1, time: '12:37:51', acked: false },
-        { code: 'W0310', text: 'Glue level low', priority: 3, time: '12:31:02', acked: false }
-      ]
+        { code: 'W0310', text: 'Glue level low', priority: 3, time: '12:31:02', acked: false },
+        { code: 'E1202', text: 'Plasma ready lost', priority: 1, time: '12:37:51', acked: false }
+      ],
+      events: []
     })
     useUi.getState().ackTopAlarm()
-    expect(useUi.getState().alarms.map((a) => a.acked)).toEqual([true, false])
+    expect(useUi.getState().alarms.map((a) => [a.code, a.acked])).toEqual([
+      ['W0310', false],
+      ['E1202', true]
+    ])
+  })
+
+  it('starts with the sample alarms, sorted (step 14)', async () => {
+    const { DEMO_OVERVIEW } = await import('../fixtures/demo')
+    const { sortAlarms } = await import('../features/alarms/alarms')
+    expect(sortAlarms(DEMO_OVERVIEW.alarms).map((a) => a.code)).toEqual(['E1202', 'W0310'])
   })
 })

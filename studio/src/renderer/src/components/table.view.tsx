@@ -17,6 +17,8 @@ export interface Column<R> {
   width?: number
   align?: 'center' | 'left' | 'right'
   render?: (row: R) => ReactNode
+  /** colour ONE cell instead of the whole row (N01 alarms: only 'Active · unacked' is red) — step 14 */
+  cellState?: (row: R) => ValueState
 }
 
 export interface TableProps<R> {
@@ -53,6 +55,10 @@ export function Table<R>({
   const width = fill ? undefined : total
   const classes = ['tbl', striped ? 'tbl-striped' : '', fill ? 'tbl-fill' : '', className].filter(Boolean).join(' ')
   const alignClass = (c: Column<R>): string | undefined => (c.align && c.align !== 'center' ? `tbl-${c.align}` : undefined)
+  const cellClass = (c: Column<R>, r: R): string | undefined => {
+    const st = c.cellState?.(r)
+    return [alignClass(c), st && st !== 'normal' ? `tbl-cell-${st}` : ''].filter(Boolean).join(' ') || undefined
+  }
 
   return (
     <table className={classes} aria-label={label} style={{ width }}>
@@ -85,7 +91,7 @@ export function Table<R>({
           return (
             <tr key={rowKey(r)} className={state === 'normal' ? undefined : `tbl-${state}`} data-state={state}>
               {columns.map((c, i) => (
-                <td key={c.key} className={alignClass(c)}>
+                <td key={c.key} className={cellClass(c, r)}>
                   {c.render ? c.render(r) : String((r as Record<string, unknown>)[c.key] ?? '')}
                   {i === 0 && state === 'forced' && (
                     <span className="tbl-mark" title="Forced by a person">

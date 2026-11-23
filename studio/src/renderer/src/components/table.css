@@ -49,6 +49,13 @@
 .tbl-striped tbody tr.tbl-fault:nth-child(even) {
   background: var(--fault-bg);
 }
+.tbl td.tbl-cell-fault {
+  background: var(--fault-bg);
+}
+.tbl td.tbl-cell-warn,
+.tbl td.tbl-cell-forced {
+  background: var(--warn-bg);
+}
 .tbl-mark {
   margin-left: 6px; /* two spaces before ⓕ in the design */
 }

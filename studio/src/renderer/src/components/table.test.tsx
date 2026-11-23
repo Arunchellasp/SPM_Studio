@@ -88,3 +88,19 @@ describe('Table fill', () => {
     expect(screen.getByRole('table').style.width).toBe('')
   })
 })
+
+describe('Table cellState', () => {
+  it('colours one cell, not the row (step 14)', () => {
+    render(
+      <Table
+        label="T"
+        columns={[COLS[0], { ...COLS[1], cellState: (r: Row) => (r.state === 'fault' ? 'fault' : 'normal') }]}
+        rows={ROWS}
+        rowKey={(r) => r.tag}
+      />
+    )
+    const cell = screen.getByText('ERR')
+    expect(cell.className).toBe('tbl-left tbl-cell-fault') // align class + cell state
+    expect(screen.getAllByText('TRUE', { selector: 'td' }).map((c) => c.className)).toEqual(['tbl-left', 'tbl-left']) // no state class
+  })
+})

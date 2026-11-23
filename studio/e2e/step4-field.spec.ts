@@ -38,16 +38,17 @@ test('UI-4.3 unit "mm" sits inside the box on the right', async ({ page }) => {
 })
 
 test('UI-4.4 typing out of range shows the red error; fixing it clears it', async ({ page }) => {
+  // the field's alert only: since step 14 the red alarm banner is also role=alert
   await openN00(page)
   const input = page.getByLabel('Target position')
   await input.fill('700')
   await expect(input).toHaveAttribute('aria-invalid', 'true')
-  await expect(page.getByRole('alert')).toHaveText('Allowed range 0 … 600 mm')
+  await expect(page.locator('.field').getByRole('alert')).toHaveText('Allowed range 0 … 600 mm')
   expect(await input.evaluate((e) => getComputedStyle(e).borderTopColor)).toBe('rgb(211, 47, 47)')
   await expect(page.getByTestId('form-echo')).toContainText('position —')
   await input.fill('120.5')
   await expect(input).not.toHaveAttribute('aria-invalid', 'true')
-  await expect(page.getByRole('alert')).toHaveCount(0)
+  await expect(page.locator('.field').getByRole('alert')).toHaveCount(0)
   await expect(page.getByTestId('form-echo')).toContainText('position 120.5 mm')
 })
 

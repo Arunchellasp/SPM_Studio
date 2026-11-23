@@ -1,5 +1,6 @@
 import { Button } from '../components/button.view'
 import { PriorityIcon } from '../components/priority-icon.view'
+import { topAlarm } from '../features/alarms/alarms'
 import { useUi } from '../stores/ui.store'
 
 /**
@@ -15,7 +16,7 @@ export function AlarmBanner(): React.JSX.Element {
     return <footer className="banner banner-ok">No active alarms</footer>
   }
 
-  const top = [...alarms].sort((a, b) => a.priority - b.priority)[0]
+  const top = topAlarm(alarms)! // same order as the N01 list and N07 (step 14)
   const more = alarms.length - 1
 
   return (
@@ -25,7 +26,7 @@ export function AlarmBanner(): React.JSX.Element {
         <b>{top.code}</b> {top.text} · {top.time}
         {more > 0 && ` · ${more} more active`}
       </span>
-      <Button size="sm" disabled={top.acked} onClick={ack}>
+      <Button size="sm" disabled={top.acked} onClick={ack} aria-label={`Acknowledge ${top.code}`}>
         Ack
       </Button>
       <Button size="sm" variant="ghost" onClick={() => openScreen('alarms')}>

@@ -1,5 +1,6 @@
 import type { ScreenDef } from '../../app/screens'
 import { DEMO_OVERVIEW } from '../../fixtures/demo'
+import { AlarmCard } from './alarm-card.view'
 import { BatchCard } from './batch-card.view'
 import { StationCard } from './station-card.view'
 import { WhyNotFasterCard } from './why-card.view'
@@ -8,6 +9,7 @@ import './overview.css'
 /**
  * N01 Operate › Overview — built piece by piece in phase B:
  * step 12 top row (batch + why not faster) · step 13 station cards · step 14 alarms and events.
+ * Alarms and events come from the store (they change: Ack), the rest straight from the sample data.
  * Data: fixtures/demo.ts today, the runtime later (same types).
  */
 export function OverviewScreen({ screen }: { screen: ScreenDef }): React.JSX.Element {
@@ -27,7 +29,7 @@ export function OverviewScreen({ screen }: { screen: ScreenDef }): React.JSX.Ele
           <StationCard key={s.id} station={s} />
         ))}
       </div>
-      <div className="ovw-next">The alarm and event list (step 14) comes here.</div>
+      <AlarmCard />
     </div>
   )
 }

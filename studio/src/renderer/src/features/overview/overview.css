@@ -85,17 +85,28 @@
   font-size: var(--fs-sm); /* 12 px in the design */
 }
 
-/* step 14 will fill this */
-.ovw-next {
-  flex: 1;
-  min-height: 200px;
-  display: flex;
+/* alarm and event card (step 14): 1800 wide, table 1670 like the design (shrinks at 1366 / 1280) */
+.alm-card {
+  min-height: var(--alarm-card-h); /* 210 in the design; grows if more rows come */
+}
+.alm-card .card-body {
+  padding: 0 var(--batch-pad) var(--card-pad); /* table 20 px in, like the batch card */
+}
+.alm-table {
+  max-width: var(--alarm-table-w);
+}
+.alm-table .prio {
+  vertical-align: middle;
+}
+.alm-actions {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  border: 2px dashed var(--border-soft);
-  border-radius: var(--radius-card);
-  color: var(--muted-on-bg);
-  font-size: var(--fs-md);
+  gap: 2px;
+}
+.btn.alm-btn {
+  min-width: 0;
+  height: 26px;
+  padding: 0 8px;
 }
 .sr-only-h1 {
   position: absolute;
