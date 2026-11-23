@@ -44,7 +44,7 @@ test('UI-23.2 Start above End, not linked; mini-map shows both', async ({ page }
   const e = (await node(page, 'end').boundingBox())!
   expect(s.y).toBeLessThan(e.y)
   await expect(page.locator('.react-flow__edge')).toHaveCount(0)
-  await expect(page.getByTestId('seq-status')).toHaveText('Offline · link Start to End')
+  await expect(page.getByTestId('seq-status')).toHaveText('Offline · 2 nodes · 0 links') // text since step 24: counts
   await expect(page.locator('.react-flow__minimap')).toBeVisible()
   await expect(page.locator('.react-flow__minimap-node')).toHaveCount(2)
 })
@@ -53,7 +53,7 @@ test('UI-23.3 drag from Start to End links them (arrow); a second link is refuse
   await drag(page, node(page, 'start').locator('.react-flow__handle.source'), node(page, 'end').locator('.react-flow__handle.target'))
   await expect(page.locator('.react-flow__edge')).toHaveCount(1)
   await expect(page.locator('.react-flow__edge path[marker-end]')).toHaveCount(1)
-  await expect(page.getByTestId('seq-status')).toHaveText('Offline · Start → End linked')
+  await expect(page.getByTestId('seq-status')).toHaveText('Offline · 2 nodes · 1 link')
   await drag(page, node(page, 'start').locator('.react-flow__handle.source'), node(page, 'end').locator('.react-flow__handle.target'))
   await expect(page.locator('.react-flow__edge')).toHaveCount(1)
 })

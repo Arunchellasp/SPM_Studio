@@ -5,6 +5,7 @@ import { Icon } from '../../components/icon.view'
 import { Tabs } from '../../components/tabs.view'
 import { useSequence } from '../../stores/sequence.store'
 import { SequenceCanvas } from './canvas.view'
+import { NodePalette } from './palette.view'
 import './sequence-screen.css'
 
 /** the canvas toolbar of the design — all need the runtime (phase G) */
@@ -23,6 +24,7 @@ const later = (what: string, step: string): React.JSX.Element => (
  */
 export function SequenceScreen({ screen }: { screen: ScreenDef }): React.JSX.Element {
   const edges = useSequence((s) => s.edges)
+  const nodes = useSequence((s) => s.nodes)
   const reset = useSequence((s) => s.reset)
   return (
     <div className="seq">
@@ -31,6 +33,9 @@ export function SequenceScreen({ screen }: { screen: ScreenDef }): React.JSX.Ele
         {screen.code} {screen.title}
       </h1>
       <Card title="Project" className="seq-tree">
+        <h2 className="seq-sub">Nodes</h2>
+        <NodePalette />
+        <h2 className="seq-sub">Sequences</h2>
         {later('Sequences, functions, modes and the tag tree', 'step 27 (save / load + tree)')}
       </Card>
 
@@ -43,7 +48,7 @@ export function SequenceScreen({ screen }: { screen: ScreenDef }): React.JSX.Ele
             </Button>
           ))}
           <span className="seq-status" data-testid="seq-status">
-            Offline · {edges.length ? 'Start → End linked' : 'link Start to End'}
+            Offline · {nodes.length} nodes · {edges.length} {edges.length === 1 ? 'link' : 'links'}
           </span>
           <Button size="md" variant="quiet" icon={<Icon name="reset" />} aria-label="New flow" title="New flow (Start and End only)" onClick={reset} />
         </div>

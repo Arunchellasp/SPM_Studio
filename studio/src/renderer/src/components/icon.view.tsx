@@ -12,6 +12,7 @@ import {
   Copy,
   FolderOpen,
   Gauge,
+  Hourglass,
   Hash,
   House,
   Info,
@@ -24,6 +25,8 @@ import {
   Save,
   Settings,
   Square,
+  Timer,
+  ToggleRight,
   Trash2,
   TriangleAlert,
   Undo2,
@@ -86,7 +89,11 @@ export const ICONS = {
   undo: Undo2,
   redo: Redo2,
   copy: Copy,
-  trash: Trash2
+  trash: Trash2,
+  // N02 node types (step 24)
+  wait: Hourglass,
+  output: ToggleRight,
+  delay: Timer
 } satisfies Record<string, LucideIcon>
 
 export type IconName = keyof typeof ICONS

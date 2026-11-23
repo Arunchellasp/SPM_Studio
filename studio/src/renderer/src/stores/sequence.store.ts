@@ -4,7 +4,7 @@
  */
 import { create } from 'zustand'
 import { addEdge, MarkerType, type Connection, type Edge, type EdgeChangeset, type NodeChangeset } from '@xyflow/react'
-import { connectProblem, edgeId, newFlow, type FlowNode } from '../features/sequence/flow'
+import { connectProblem, edgeId, makeStep, newFlow, type FlowNode, type StepKind } from '../features/sequence/flow'
 import { toast } from './feedback.store'
 
 interface SequenceState {
@@ -16,6 +16,8 @@ interface SequenceState {
   /** a link drawn by the user; refused ones say why */
   connect: (c: Connection) => boolean
   reset: () => void
+  /** step 24: a node from the palette — at the drop point, or below the lowest node; returns its id */
+  addStep: (type: StepKind, at?: { x: number; y: number }) => string
 }
 
 export const useSequence = create<SequenceState>((set, get) => ({
@@ -31,5 +33,11 @@ export const useSequence = create<SequenceState>((set, get) => ({
     set({ edges: addEdge({ ...c, id: edgeId(c), type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed } }, get().edges) })
     return true
   },
-  reset: () => set(newFlow())
+  reset: () => set(newFlow()),
+  addStep: (type, at) => {
+    const n = makeStep(type, get().nodes, at)
+    // the new node is the selected one (property panel, step 25)
+    set({ nodes: [...get().nodes.map((x) => (x.selected ? { ...x, selected: false } : x)), { ...n, selected: true }] })
+    return n.id
+  }
 }))

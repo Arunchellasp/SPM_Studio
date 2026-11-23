@@ -55,3 +55,71 @@
   outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
+
+/* step 24 — steps: 260 × 54 like the design. process = rectangle, condition = hexagon, delay = D shape */
+.seq-step {
+  position: relative;
+  width: var(--seq-step-w);
+  height: var(--seq-step-h);
+  padding: 6px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: var(--text);
+}
+.seq-step.seq-shape-process {
+  background: var(--surface);
+  border: 2px solid var(--text);
+  border-radius: var(--radius-input);
+}
+.seq-step .seq-outline {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: visible;
+}
+.seq-step .seq-outline polygon,
+.seq-step .seq-outline path {
+  fill: var(--surface);
+  stroke: var(--text);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.seq-step.seq-shape-condition .seq-outline polygon {
+  fill: var(--bg); /* transitions are grey in the design (#EEF0F2); --bg is that grey and follows dark */
+}
+.seq-step-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.seq-step-sum {
+  font-family: var(--mono);
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* parameters still open ('?'): dashed outline — to be filled in the property panel (step 25) */
+.seq-step.seq-open.seq-shape-process {
+  border-style: dashed;
+}
+.seq-step.seq-open .seq-outline polygon,
+.seq-step.seq-open .seq-outline path {
+  stroke-dasharray: 6 4;
+}
+.seq-step.seq-shape-process.seq-selected {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+/* hexagon / D shape: the shape itself turns blue (a box around it would hide the shape) */
+.seq-step.seq-selected .seq-outline polygon,
+.seq-step.seq-selected .seq-outline path {
+  stroke: var(--accent);
+  stroke-width: 4;
+}
