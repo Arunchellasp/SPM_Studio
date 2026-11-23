@@ -1,8 +1,15 @@
-/* N03 Tags (step 16): page head on the grey background like N10, project facts, kind summary */
+/* N03 Tags. No project: page head + Project card (step 16).
+   Project open (step 18): project bar · toolbar (design: search 420, Scope 200, Type 200, 7 kind buttons × 100, + New tag)
+   · grid (fills the rest) + Tag details panel 384 on the right. */
 .tgs {
   display: flex;
   flex-direction: column;
   gap: var(--gap);
+}
+.tgs-open {
+  height: 100%;
+  min-height: 0;
+  gap: 12px;
 }
 .tgs-head h1 {
   margin: 0;
@@ -18,27 +25,6 @@
   margin: 4px 0 0;
   color: var(--muted-on-bg);
 }
-.tgs-facts {
-  display: grid;
-  grid-template-columns: 120px minmax(0, 1fr);
-  row-gap: 8px;
-  margin: 0;
-}
-.tgs-facts dt {
-  color: var(--muted);
-}
-.tgs-facts dd {
-  margin: 0;
-  font-weight: 600;
-}
-.tgs-facts dd.tgs-path {
-  font-family: var(--mono);
-  font-weight: 400;
-  overflow-wrap: anywhere;
-}
-.tgs-kinds {
-  align-self: flex-start;
-}
 .tgs-note {
   margin: 12px 0 0;
   color: var(--muted);
@@ -46,4 +32,99 @@
 }
 .tgs-project .tgs-note {
   margin: 0;
+}
+
+/* project bar: one line on the grey background */
+.tgs-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--field-h);
+  color: var(--text);
+}
+.tgs-bar-label {
+  color: var(--muted-on-bg);
+}
+.tgs-path {
+  font-family: var(--mono);
+  color: var(--muted-on-bg);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tgs-bar-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* toolbar: fields without a visible label (the placeholder / 'Scope: all' says it), shrink on small windows */
+.tgs-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.tgs-nolabel .field-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.tgs-search {
+  flex: 0 1 var(--tag-search-w);
+  min-width: 200px;
+}
+.tgs-select {
+  flex: 0 1 var(--tag-select-w);
+  min-width: 140px;
+}
+.tgs-kinds .seg-item {
+  min-width: var(--tag-seg-w);
+  padding: 0 8px;
+}
+.tgs-count {
+  margin-left: auto;
+  color: var(--muted-on-bg);
+  white-space: nowrap;
+}
+
+/* grid + details */
+.tgs-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: var(--gap);
+}
+.tag-grid {
+  flex: 1;
+  min-width: 0;
+}
+.tgs-details {
+  flex: 0 0 var(--tag-details-w);
+  align-self: flex-start;
+  max-height: 100%;
+  overflow: auto;
+}
+.tgs-detail-list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tgs-detail dt {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  margin-bottom: 2px;
+}
+.tgs-detail dd {
+  margin: 0;
+  min-height: var(--field-h);
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-input);
+  background: var(--surface);
+  overflow-wrap: anywhere;
 }

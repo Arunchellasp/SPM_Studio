@@ -1,0 +1,77 @@
+/* N03 tag grid: Tabulator's stock look replaced by the app's table tokens (same as components/table.css),
+   so the grid matches every other table and follows the dark theme. Only colours, lines and sizes here. */
+.tag-grid.tabulator {
+  border: 1px solid var(--table-line);
+  background: var(--surface);
+  color: var(--cell-text);
+  font-size: var(--fs);
+  font-family: var(--font);
+}
+.tag-grid.tabulator .tabulator-tableholder,
+.tag-grid.tabulator .tabulator-tableholder .tabulator-table {
+  background: var(--surface);
+  color: var(--cell-text); /* Tabulator's own css sets #333 here — unreadable in dark (found in step 18) */
+}
+.tag-grid.tabulator .tabulator-header {
+  background: var(--table-head);
+  color: var(--header-text);
+  border-bottom: 1px solid var(--table-line);
+  font-weight: 700;
+}
+.tag-grid.tabulator .tabulator-header .tabulator-col {
+  background: var(--table-head);
+  border-right: 1px solid var(--table-line);
+  min-height: var(--grid-row-h);
+}
+.tag-grid.tabulator .tabulator-header .tabulator-col .tabulator-col-content {
+  padding: 0 8px;
+  height: var(--grid-row-h);
+  display: flex;
+  align-items: center;
+}
+.tag-grid.tabulator .tabulator-header .tabulator-col .tabulator-col-title-holder {
+  flex: 1;
+}
+.tag-grid.tabulator .tabulator-header .tabulator-col.tabulator-sortable.tabulator-col-sorter-element:hover {
+  background: var(--table-head);
+  filter: brightness(1.15);
+}
+.tag-grid.tabulator .tabulator-header .tabulator-col .tabulator-col-sorter .tabulator-arrow {
+  border-bottom-color: var(--header-text);
+  opacity: 0.45;
+}
+.tag-grid.tabulator .tabulator-header .tabulator-col[aria-sort='ascending'] .tabulator-col-sorter .tabulator-arrow,
+.tag-grid.tabulator .tabulator-header .tabulator-col[aria-sort='descending'] .tabulator-col-sorter .tabulator-arrow {
+  opacity: 1;
+  border-bottom-color: var(--header-text);
+  border-top-color: var(--header-text);
+}
+
+.tag-grid.tabulator .tabulator-row {
+  min-height: var(--grid-row-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--table-line);
+}
+.tag-grid.tabulator .tabulator-row.tabulator-row-even {
+  background: var(--row-alt);
+}
+.tag-grid.tabulator .tabulator-row.tabulator-selectable:hover {
+  background: var(--accent-lt);
+  cursor: pointer;
+}
+.tag-grid.tabulator .tabulator-row.tabulator-selected,
+.tag-grid.tabulator .tabulator-row.tabulator-selected:hover {
+  background: var(--accent-lt);
+  box-shadow: inset 3px 0 0 var(--accent); /* blue bar on the left: selected without colour alone */
+}
+.tag-grid.tabulator .tabulator-row .tabulator-cell {
+  height: calc(var(--grid-row-h) - 1px); /* + 1 px line under the row = 38 */
+  line-height: calc(var(--grid-row-h) - 1px);
+  padding: 0 8px;
+  border-right: 1px solid var(--table-line);
+}
+.tag-grid.tabulator .tabulator-placeholder .tabulator-placeholder-contents {
+  color: var(--muted);
+  font-size: var(--fs);
+  font-weight: 400;
+}

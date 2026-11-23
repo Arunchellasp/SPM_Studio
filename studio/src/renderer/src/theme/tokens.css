@@ -119,6 +119,11 @@
   --table-head: #4a5562; /* header row fill (white bold text on it) */
   --cell-text: #1a1a1a;
   --row-alt: #f3f6f9; /* zebra rows (I/O lists) */
+  --grid-row-h: 38px; /* N03 tag grid rows (Improved design › N03) — step 18 */
+  --tag-details-w: 384px; /* N03 'Tag details' panel */
+  --tag-search-w: 420px; /* N03 search box (shrinks to 200 on small windows) */
+  --tag-select-w: 200px; /* N03 Scope / Type lists */
+  --tag-seg-w: 100px; /* N03 kind groups: 7 × 100 in the design */
 
   /* value states — the only colours a value may get (ISA-101: colour = attention) */
   --forced-bg: #fff3cd; /* forced by a person: amber + ⓕ */

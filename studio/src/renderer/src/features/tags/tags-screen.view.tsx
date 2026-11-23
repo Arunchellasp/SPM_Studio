@@ -1,21 +1,22 @@
+import { useMemo, useState } from 'react'
 import type { ScreenDef } from '../../app/screens'
 import { Button } from '../../components/button.view'
 import { Card } from '../../components/card.view'
+import { Field } from '../../components/field.view'
 import { Icon } from '../../components/icon.view'
-import { Table, type Column } from '../../components/table.view'
+import { Segmented } from '../../components/segmented.view'
+import { Select } from '../../components/select.view'
 import { useProject } from '../../stores/project.store'
-import { kindRows, tagCountText, type KindRow } from './tags'
+import { TagDetails } from './tag-details.view'
+import { countText, KIND_GROUPS, NO_FILTER, optionsOf, toGridRow, type GridFilter, type KindGroup } from './tag-grid'
+import { TagGrid } from './tag-grid.view'
+import { tagCountText } from './tags'
 import './tags-screen.css'
 
-const KIND_COLUMNS: Column<KindRow>[] = [
-  { key: 'kind', header: 'Kind', width: 120 },
-  { key: 'label', header: 'Meaning', width: 260, align: 'left' },
-  { key: 'count', header: 'Tags', width: 100 }
-]
-
 /**
- * N03 Tags. Step 16: which project is open (File › Open project…, Ctrl+O) and what its tags.json holds.
- * The tag table of the design (search, filters, + New tag, details) is built in phase D.
+ * N03 Tags › Tag database (Improved design › N03).
+ * Step 16: project bar (open / save). Step 18: toolbar (search, scope, type, kind groups), the tag grid
+ * (Tabulator, sort by any column, virtual rows) and the details panel — read only; editing is step 19.
  */
 export function TagsScreen({ screen }: { screen: ScreenDef }): React.JSX.Element {
   const project = useProject((s) => s.project)
@@ -23,53 +24,97 @@ export function TagsScreen({ screen }: { screen: ScreenDef }): React.JSX.Element
   const open = useProject((s) => s.open)
   const save = useProject((s) => s.save)
 
-  return (
-    <div className="tgs">
-      <div className="tgs-head">
-        <h1>
-          <span className="tgs-code">{screen.code}</span> {screen.title}
-        </h1>
-        <p className="tgs-purpose">{screen.purpose}</p>
-      </div>
+  const [filter, setFilter] = useState<GridFilter>(NO_FILTER)
+  const [selected, setSelected] = useState<string | null>(null)
+  const [shown, setShown] = useState(0)
 
-      <Card
-        title="Project"
-        className="tgs-project"
-        actions={
-          <>
-            <Button size="md" icon={<Icon name="open" />} onClick={() => void open()} disabled={busy}>
-              Open project…
-            </Button>
-            <Button size="md" icon={<Icon name="save" />} onClick={() => void save()} disabled={busy || !project}>
-              Save
-            </Button>
-          </>
-        }
-      >
-        {project ? (
-          <dl className="tgs-facts" aria-label="Open project">
-            <dt>Name</dt>
-            <dd data-testid="project-name">{project.name}</dd>
-            <dt>Folder</dt>
-            <dd className="tgs-path">{project.dir}</dd>
-            <dt>tags.json</dt>
-            <dd data-testid="project-count">
-              {tagCountText(project.tags.tags.length)} · format {project.tags.schema}
-            </dd>
-          </dl>
-        ) : (
+  const rows = useMemo(() => (project ? project.tags.tags.map(toGridRow) : []), [project])
+  const scopes = useMemo(() => optionsOf(rows, 'scope'), [rows])
+  const types = useMemo(() => optionsOf(rows, 'type'), [rows])
+  const selTag = project?.tags.tags.find((t) => t.name === selected) ?? null
+  const selRow = rows.find((r) => r.name === selected) ?? null
+
+  const buttons = (
+    <>
+      <Button size="md" icon={<Icon name="open" />} onClick={() => void open()} disabled={busy}>
+        Open project…
+      </Button>
+      <Button size="md" icon={<Icon name="save" />} onClick={() => void save()} disabled={busy || !project}>
+        Save
+      </Button>
+    </>
+  )
+
+  if (!project) {
+    return (
+      <div className="tgs">
+        <div className="tgs-head">
+          <h1>
+            <span className="tgs-code">{screen.code}</span> {screen.title}
+          </h1>
+          <p className="tgs-purpose">{screen.purpose}</p>
+        </div>
+        <Card title="Project" className="tgs-project" actions={buttons}>
           <p className="tgs-note" data-testid="project-none">
             No project open. Open a project folder (the folder that holds tags.json) with Open project…, or File › Open project… (Ctrl+O).
           </p>
-        )}
-      </Card>
-
-      {project && (
-        <Card title="Tags by kind" className="tgs-kinds">
-          <Table label="Tags by kind" columns={KIND_COLUMNS} rows={kindRows(project)} rowKey={(r) => r.kind} striped />
-          <p className="tgs-note">The full tag table (search, filters, + New tag, details) comes in phase D.</p>
         </Card>
-      )}
+      </div>
+    )
+  }
+
+  const set = (patch: Partial<GridFilter>): void => setFilter((f) => ({ ...f, ...patch }))
+
+  return (
+    <div className="tgs tgs-open">
+      <div className="tgs-bar" aria-label="Open project">
+        <span className="tgs-bar-label">Project</span>
+        <b data-testid="project-name">{project.name}</b>
+        <span className="tgs-path" title={project.dir}>
+          {project.dir}
+        </span>
+        <span data-testid="project-count">
+          {tagCountText(project.tags.tags.length)} · format {project.tags.schema}
+        </span>
+        <span className="tgs-bar-actions">{buttons}</span>
+      </div>
+
+      <div className="tgs-toolbar">
+        <Field
+          label="Search tags"
+          className="tgs-nolabel tgs-search"
+          placeholder="Search tags…"
+          type="search"
+          value={filter.text}
+          onChange={(e) => set({ text: e.target.value })}
+        />
+        <Select
+          label="Scope"
+          className="tgs-nolabel tgs-select"
+          value={filter.scope}
+          onChange={(e) => set({ scope: e.target.value })}
+          options={[{ value: 'all', label: 'Scope: all' }, ...scopes.map((s) => ({ value: s, label: `Scope: ${s}` }))]}
+        />
+        <Select
+          label="Type"
+          className="tgs-nolabel tgs-select"
+          value={filter.type}
+          onChange={(e) => set({ type: e.target.value })}
+          options={[{ value: 'all', label: 'Type: all' }, ...types.map((t) => ({ value: t, label: `Type: ${t}` }))]}
+        />
+        <Segmented<KindGroup> label="Kind" className="tgs-kinds" options={KIND_GROUPS} value={filter.group} onChange={(group) => set({ group })} />
+        <span className="tgs-count" data-testid="grid-count" aria-live="polite">
+          {countText(shown, rows.length)}
+        </span>
+        <Button variant="primary" size="md" icon={<Icon name="plus" />} disabled title="Adding tags comes in step 21">
+          New tag
+        </Button>
+      </div>
+
+      <div className="tgs-body">
+        <TagGrid rows={rows} filter={filter} selected={selected} onSelect={setSelected} onCount={setShown} />
+        <TagDetails project={project} tag={selTag} row={selRow} />
+      </div>
     </div>
   )
 }
