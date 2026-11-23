@@ -5,8 +5,8 @@
  * Results are shown as toasts — never window.alert.
  */
 import { create } from 'zustand'
-import type { Addr, MenuCommand, ProjectInfo, StudioApi } from '@shared/ipc'
-import { applyAddress, applyEdit, applyScale, type EditField, type EditResult } from '../features/tags/tag-edit'
+import type { Addr, MenuCommand, ProjectInfo, StudioApi, Tag, TagKind } from '@shared/ipc'
+import { applyAdd, applyAddress, applyDelete, applyDuplicate, applyEdit, applyScale, type EditField, type EditResult } from '../features/tags/tag-edit'
 import { checkTags, issueText } from '@shared/tags-rules'
 import { makeSimProject } from '../dev/sim-project'
 import { confirmDialog, toast } from './feedback.store'
@@ -21,8 +21,13 @@ function api(): Pick<StudioApi, 'project' | 'onMenu'> {
 interface ProjectState {
   project: ProjectInfo | null
   busy: boolean
-  /** edits not written to tags.json yet (step 19) */
+  /** edits not written to tags.json yet (step 19) = the table differs from the one last opened / saved */
   dirty: boolean
+  /** step 21: earlier tables (newest last, at most UNDO_STEPS) and undone ones for redo */
+  past: Tag[][]
+  future: Tag[][]
+  /** the table as it is on disk (after open / save) */
+  saved: Tag[] | null
   /** ask main for a folder and load its tags.json */
   open: () => Promise<void>
   /** write the current tag table back to tags.json */
@@ -33,7 +38,16 @@ interface ProjectState {
   setAddress: (name: string, addr: Addr) => EditResult
   /** the scaling dialog's result (AI / AO) */
   setScale: (name: string, scale: { raw: [number, number]; eng: [number, number] }) => EditResult
+  /** step 21 */
+  add: (kind: TagKind, name?: string) => EditResult
+  duplicate: (name: string) => EditResult
+  remove: (name: string) => EditResult
+  undo: () => boolean
+  redo: () => boolean
 }
+
+/** how many changes can be undone (roadmap: 20) */
+export const UNDO_STEPS = 20
 
 /** first error + how many more, short enough for a toast */
 function firstError(errors: string[]): string {
@@ -44,6 +58,9 @@ export const useProject = create<ProjectState>((set, get) => ({
   project: null,
   busy: false,
   dirty: false,
+  past: [],
+  future: [],
+  saved: null,
 
   open: async () => {
     if (get().busy) return
@@ -60,7 +77,7 @@ export const useProject = create<ProjectState>((set, get) => ({
     try {
       const res = await api().project.open()
       if (res.ok) {
-        set({ project: res.project, dirty: false })
+        set({ project: res.project, dirty: false, past: [], future: [], saved: res.project.tags.tags })
         toast(`Opened ${res.project.name} · ${res.project.tags.tags.length} tags`, 'done')
       } else if (!res.cancelled) {
         toast(`Could not open the project: ${firstError(res.errors)}`, 'error', 8000)
@@ -89,7 +106,7 @@ export const useProject = create<ProjectState>((set, get) => ({
       const res = await api().project.save(p.tags)
       if (!res.ok) toast(`Not saved: ${firstError(res.errors)}`, 'error', 8000)
       else {
-        set({ dirty: false })
+        set({ dirty: false, saved: p.tags.tags })
         toast(res.changed ? `Saved ${res.file}` : 'No changes — tags.json is already up to date', res.changed ? 'done' : 'info')
       }
     } finally {
@@ -99,17 +116,48 @@ export const useProject = create<ProjectState>((set, get) => ({
 
   edit: (name, field, value) => apply(applyEdit(get().project?.tags.tags ?? [], name, field, value)),
   setAddress: (name, addr) => apply(applyAddress(get().project?.tags.tags ?? [], name, addr)),
-  setScale: (name, scale) => apply(applyScale(get().project?.tags.tags ?? [], name, scale))
+  setScale: (name, scale) => apply(applyScale(get().project?.tags.tags ?? [], name, scale)),
+  add: (kind, name) => apply(applyAdd(get().project?.tags.tags ?? [], kind, name)),
+  duplicate: (name) => apply(applyDuplicate(get().project?.tags.tags ?? [], name)),
+  remove: (name) => apply(applyDelete(get().project?.tags.tags ?? [], name)),
+
+  undo: () => {
+    const { project: p, past, future, saved } = get()
+    const prev = past.at(-1)
+    if (!p || !prev) return false
+    set({ project: withTags(p, prev), past: past.slice(0, -1), future: [...future, p.tags.tags], dirty: prev !== saved })
+    return true
+  },
+  redo: () => {
+    const { project: p, past, future, saved } = get()
+    const next = future.at(-1)
+    if (!p || !next) return false
+    set({ project: withTags(p, next), past: [...past, p.tags.tags].slice(-UNDO_STEPS), future: future.slice(0, -1), dirty: next !== saved })
+    return true
+  }
 }))
 
-/** a good edit replaces the tag table (new objects → React redraws) and marks the project dirty; a refused one says why */
+function withTags(p: ProjectInfo, tags: Tag[]): ProjectInfo {
+  return { ...p, tags: { ...p.tags, tags } }
+}
+
+/**
+ * A good edit replaces the tag table (new objects → React redraws), keeps the old table for undo
+ * (step 21: tables share every unchanged tag, so a step costs one array) and clears redo. A refused one says why.
+ */
 function apply(res: EditResult): EditResult {
-  const p = useProject.getState().project
+  const { project: p, past, saved } = useProject.getState()
   if (!res.ok || !p) {
     if (!res.ok) toast(`Not changed: ${res.error}`, 'error', 6000)
     return res
   }
-  useProject.setState({ project: { ...p, tags: { ...p.tags, tags: res.tags } }, dirty: true })
+  if (res.tags === p.tags.tags) return res // nothing changed (e.g. same value typed again)
+  useProject.setState({
+    project: withTags(p, res.tags),
+    past: [...past, p.tags.tags].slice(-UNDO_STEPS),
+    future: [],
+    dirty: res.tags !== saved
+  })
   if (res.note) toast(res.note, 'info')
   return res
 }

@@ -1,6 +1,7 @@
 import type { ProjectInfo, Tag, TagKind } from '@shared/ipc'
 import { KIND_RULES, type TagIssue } from '@shared/tags-rules'
 import { Button } from '../../components/button.view'
+import { Icon } from '../../components/icon.view'
 import { Card } from '../../components/card.view'
 import { Select } from '../../components/select.view'
 import { Table, type Column } from '../../components/table.view'
@@ -25,6 +26,8 @@ export interface TagDetailsProps {
   onPickAddress: (name: string) => void
   onPickScale: (name: string) => void
   onKind: (kind: TagKind) => void
+  onDuplicate: (name: string) => void
+  onDelete: (name: string) => void
 }
 
 /**
@@ -32,7 +35,7 @@ export interface TagDetailsProps {
  * (step 20), 'Change…' for address (step 19) and scaling (step 20), the rest read only.
  * Nothing selected → the tag count per kind of the open project (step 16).
  */
-export function TagDetails({ project, tag, row, issues, onPickAddress, onPickScale, onKind }: TagDetailsProps): React.JSX.Element {
+export function TagDetails({ project, tag, row, issues, onPickAddress, onPickScale, onKind, onDuplicate, onDelete }: TagDetailsProps): React.JSX.Element {
   if (!tag || !row) {
     return (
       <Card title="Tags by kind" className="tgs-details">
@@ -70,7 +73,17 @@ export function TagDetails({ project, tag, row, issues, onPickAddress, onPickSca
   }
 
   return (
-    <Card title={`Tag details · ${tag.name}`} className="tgs-details" aria-label="Tag details">
+    <Card
+      title={`Tag details · ${tag.name}`}
+      className="tgs-details"
+      aria-label="Tag details"
+      actions={
+        <>
+          <Button size="sm" variant="quiet" icon={<Icon name="copy" />} aria-label="Duplicate" title="Duplicate" onClick={() => onDuplicate(tag.name)} />
+          <Button size="sm" variant="quiet" icon={<Icon name="trash" />} aria-label="Delete (Del)" title="Delete (Del)" onClick={() => onDelete(tag.name)} />
+        </>
+      }
+    >
       {issues.length > 0 && (
         <ul className="tgs-issues" aria-label="Problems">
           {issues.map((i, n) => (

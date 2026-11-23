@@ -35,7 +35,9 @@ export function Button({
   children,
   ...rest
 }: ButtonProps): React.JSX.Element {
-  const classes = ['btn', `btn-${variant}`, `btn-${size}`, block ? 'btn-block' : '', className].filter(Boolean).join(' ')
+  // icon only (no text, e.g. Undo / Redo — step 21): square, without the minimum width of a text button
+  const square = icon !== undefined && (children === undefined || children === null || children === false)
+  const classes = ['btn', `btn-${variant}`, `btn-${size}`, block ? 'btn-block' : '', square ? 'btn-square' : '', className].filter(Boolean).join(' ')
   return (
     <button type={type} className={classes} {...rest}>
       {icon && (

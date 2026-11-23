@@ -43,12 +43,15 @@ test('UI-19.3 list editor for Type on a register; no editor where the type is fi
   await expect(editor(page)).toHaveCount(0)
 })
 
-test('UI-19.4 Retain toggles with a click where allowed (register), not on an input', async ({ page }) => {
-  await cell(page, 'R_S1_Step', 'retain').click()
-  await expect(cell(page, 'R_S1_Step', 'retain')).toHaveText('✓')
-  await cell(page, 'R_S1_Step', 'retain').click()
+test('UI-19.4 Retain toggles with a double-click where allowed (register), not on an input; one click only selects', async ({ page }) => {
+  await cell(page, 'R_S1_Step', 'retain').click() // since step 21: a single click selects, nothing else
   await expect(cell(page, 'R_S1_Step', 'retain')).toHaveText('')
-  await cell(page, 'DI_S1_PartPresent', 'retain').click()
+  await expect(page.getByTestId('project-dirty')).toHaveCount(0)
+  await cell(page, 'R_S1_Step', 'retain').dblclick()
+  await expect(cell(page, 'R_S1_Step', 'retain')).toHaveText('✓')
+  await cell(page, 'R_S1_Step', 'retain').dblclick()
+  await expect(cell(page, 'R_S1_Step', 'retain')).toHaveText('')
+  await cell(page, 'DI_S1_PartPresent', 'retain').dblclick()
   await expect(cell(page, 'DI_S1_PartPresent', 'retain')).toHaveText('')
 })
 

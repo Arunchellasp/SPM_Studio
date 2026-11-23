@@ -72,7 +72,7 @@ function columns(scopes: () => string[]): ColumnDefinition[] {
     },
     { title: 'Unit', field: 'unit', widthGrow: 7, ...text },
     { title: 'Init', field: 'init', widthGrow: 8, ...text },
-    { title: 'Retain', field: 'retain', widthGrow: 7 }, // click toggles (when allowed)
+    { title: 'Retain', field: 'retain', widthGrow: 7 }, // double-click toggles (when allowed)
     { title: 'Mapped to', field: 'mappedTo', widthGrow: 17, headerSort: false },
     { title: 'Live value', field: 'live', widthGrow: 14, headerSort: false },
     { title: 'Comment', field: 'comment', widthGrow: 34, hozAlign: 'left', headerHozAlign: 'left', ...text }
@@ -136,13 +136,12 @@ export function TagGrid({ rows, scopes, filter, selected, onSelect, onCount, onE
       if (!field || cell.getValue() === cell.getOldValue()) return
       if (!cb.current.onEdit(name, field, String(cell.getValue() ?? ''))) cell.restoreOldValue()
     })
-    t.on('cellClick', (_e: UIEvent, cell: CellComponent) => {
-      const row = cell.getRow().getData() as GridRow
-      if (cell.getField() === 'retain' && canEdit(row, 'retain')) cb.current.onEdit(row.name, 'retain', row.retain !== '✓')
-    })
+    // Retain toggles on DOUBLE-click like every other editor: a single click in the middle of a row
+    // (= the Retain column) only selects — found in step 21, where selecting a row changed it
     t.on('cellDblClick', (_e: UIEvent, cell: CellComponent) => {
       const row = cell.getRow().getData() as GridRow
       if (cell.getField() === 'address' && canEdit(row, 'address')) cb.current.onPickAddress(row.name)
+      if (cell.getField() === 'retain' && canEdit(row, 'retain')) cb.current.onEdit(row.name, 'retain', row.retain !== '✓')
     })
     host.current.setAttribute('aria-label', 'Tags')
     return () => {

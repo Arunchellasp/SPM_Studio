@@ -9,6 +9,7 @@ import {
   CircleCheck,
   ClipboardList,
   Component,
+  Copy,
   FolderOpen,
   Gauge,
   Hash,
@@ -18,11 +19,14 @@ import {
   Pause,
   Play,
   Plus,
+  Redo2,
   RotateCcw,
   Save,
   Settings,
   Square,
+  Trash2,
   TriangleAlert,
+  Undo2,
   Workflow,
   X,
   type LucideIcon
@@ -77,7 +81,12 @@ export const ICONS = {
   error: CircleAlert,
   // project files (step 16)
   open: FolderOpen,
-  save: Save
+  save: Save,
+  // add / delete / undo (step 21)
+  undo: Undo2,
+  redo: Redo2,
+  copy: Copy,
+  trash: Trash2
 } satisfies Record<string, LucideIcon>
 
 export type IconName = keyof typeof ICONS

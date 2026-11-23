@@ -221,3 +221,103 @@ export function applyScale(tags: Tag[], name: string, scale: { raw: [number, num
   const tag = { ...old, scale: { raw: [scale.raw[0], scale.raw[1]] as [number, number], eng: [scale.eng[0], scale.eng[1]] as [number, number] } }
   return { ok: true, tags: replace(tags, old, tag), tag }
 }
+
+// ---------------------------------------------------------------- step 21: add, duplicate, delete
+
+/** kinds offered by '+ New tag'. UDT needs its member tags first (comes with structures in N02). */
+export const NEW_KINDS: TagKind[] = ['DI', 'DO', 'AI', 'AO', 'AXIS', 'POINT', 'REG', 'TIMER', 'COUNTER', 'ALARM', 'RECIPE']
+
+const PREFIX_TEXT: Record<string, string> = Object.fromEntries(Object.entries(PREFIX).map(([k, p]) => [k, p.replace('^', '')]))
+
+/** 'R_New_1', 'R_New_2' … — or base, base_2, base_3 … — whichever is free */
+export function uniqueName(tags: Tag[], base: string): string {
+  const used = new Set(tags.map((t) => t.name))
+  if (!used.has(base)) return base
+  const stem = base.replace(/_\d+$/, '')
+  for (let i = 2; ; i++) if (!used.has(`${stem}_${i}`)) return `${stem}_${i}`
+}
+
+/** first free channel on the simulated card (bus sim, slave 0) — a new I/O tag starts without a clash */
+function freeChannel(tags: Tag[], slave = 0): Addr {
+  const used = new Set(tags.filter((t) => t.addr?.bus === 'sim' && t.addr.slave === slave).map((t) => t.addr!.ch))
+  for (let ch = 0; ch <= 255; ch++) if (!used.has(ch)) return { bus: 'sim', slave, ch }
+  return freeChannel(tags, slave + 1)
+}
+
+/** first sim slave that nothing uses (a drive owns its whole slave) */
+function freeSlave(tags: Tag[]): Addr {
+  const used = new Set(tags.filter((t) => t.addr?.bus === 'sim').map((t) => t.addr!.slave))
+  let s = 1
+  while (used.has(s)) s++
+  return { bus: 'sim', slave: s }
+}
+
+/** a new tag of this kind with defaults that pass the rules (so it does not start red) */
+export function newTag(tags: Tag[], kind: TagKind, name?: string): Tag {
+  const n = name?.trim() || uniqueName(tags, `${PREFIX_TEXT[kind] ?? ''}New_1`)
+  const firstAxis = tags.find((t) => t.kind === 'AXIS')?.name
+  switch (kind) {
+    case 'DI':
+    case 'DO':
+      return { name: n, kind, dtype: 'BOOL', scope: 'global', addr: freeChannel(tags) }
+    case 'AI':
+    case 'AO':
+      return { name: n, kind, dtype: 'REAL', scope: 'global', addr: freeChannel(tags), scale: { raw: [0, 32767], eng: [0, 100] }, unit: '%' }
+    case 'AXIS':
+      return { name: n, kind, dtype: 'STRUCT', scope: 'global', addr: freeSlave(tags), unit: 'mm', ppu: 1000, vmax: 100, acc: 1000 }
+    case 'POINT':
+      return { name: n, kind, dtype: 'REAL', scope: 'global', axes: firstAxis ? [firstAxis] : ['AX_missing'], values: [0], teach: true }
+    case 'TIMER':
+      return { name: n, kind, dtype: 'STRUCT', scope: 'global', preset_ms: 100 }
+    case 'COUNTER':
+      return { name: n, kind, dtype: 'STRUCT', scope: 'global', preset: 10 }
+    case 'ALARM': {
+      const used = new Set(tags.map((t) => t.code).filter((c) => c !== undefined))
+      let code = 900
+      while (used.has(code)) code++
+      return { name: n, kind, dtype: 'STRUCT', scope: 'global', code, text: 'New alarm', severity: 3 }
+    }
+    case 'RECIPE':
+      return { name: n, kind, dtype: 'INT', default: 0 }
+    default:
+      return { name: n, kind: 'REG', dtype: 'INT', scope: 'global', init: 0 }
+  }
+}
+
+export function applyAdd(tags: Tag[], kind: TagKind, name?: string): EditResult {
+  if (!NEW_KINDS.includes(kind)) return { ok: false, error: `new ${kind} tags are not offered here` }
+  const tag = newTag(tags, kind, name)
+  if (!NAME_RE.test(tag.name)) return { ok: false, error: `'${tag.name}' — use A–Z a–z 0–9 _ like DI_S1_PartPresent` }
+  if (PREFIX[kind] && !new RegExp(PREFIX[kind]).test(tag.name)) return { ok: false, error: `a ${kind} name must start with ${PREFIX_TEXT[kind]}` }
+  if (tags.some((t) => t.name === tag.name)) return { ok: false, error: `'${tag.name}' is already used by another tag` }
+  return { ok: true, tags: [...tags, tag], tag }
+}
+
+/** a copy with a free name; I/O moves to the next free channel of the same card, a drive to a free slave */
+export function applyDuplicate(tags: Tag[], name: string): EditResult {
+  const old = tags.find((t) => t.name === name)
+  if (!old) return { ok: false, error: `no tag '${name}'` }
+  const copy: Tag = structuredClone(old)
+  copy.name = uniqueName(tags, `${old.name.replace(/_\d+$/, '')}_2`)
+  if (old.addr && old.kind === 'AXIS') copy.addr = freeSlave(tags)
+  else if (old.addr) {
+    const same = tags.filter((t) => t.addr?.bus === old.addr!.bus && t.addr.slave === old.addr!.slave).map((t) => t.addr!.ch)
+    let ch = 0
+    while (same.includes(ch)) ch++
+    copy.addr = ch <= 255 ? { ...old.addr, ch } : freeChannel(tags)
+  }
+  if (copy.kind === 'ALARM') {
+    const used = new Set(tags.map((t) => t.code))
+    let code = (old.code ?? 900) + 1
+    while (used.has(code)) code++
+    copy.code = code
+  }
+  const i = tags.indexOf(old)
+  return { ok: true, tags: [...tags.slice(0, i + 1), copy, ...tags.slice(i + 1)], tag: copy }
+}
+
+export function applyDelete(tags: Tag[], name: string): EditResult {
+  const old = tags.find((t) => t.name === name)
+  if (!old) return { ok: false, error: `no tag '${name}'` }
+  return { ok: true, tags: tags.filter((t) => t !== old), tag: old }
+}

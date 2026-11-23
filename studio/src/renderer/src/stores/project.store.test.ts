@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest'
 import { useFeedback } from './feedback.store'
-import { useProject } from './project.store'
+import { UNDO_STEPS, useProject } from './project.store'
 
 beforeEach(() => {
-  useProject.setState({ project: null, busy: false, dirty: false })
+  useProject.setState({ project: null, busy: false, dirty: false, past: [], future: [], saved: null })
   useFeedback.setState({ toasts: [] })
 })
 const lastToast = (): { text: string; kind: string } | undefined => useFeedback.getState().toasts.at(-1)
@@ -90,5 +90,54 @@ describe('project store — rules (step 20)', () => {
     await useProject.getState().save()
     expect(lastToast()?.text).toMatch(/^(Saved |No changes)/)
     expect(useProject.getState().dirty).toBe(false)
+  })
+})
+
+describe('project store — undo / redo (step 21)', () => {
+  const comment = (): string | undefined => useProject.getState().project!.tags.tags.find((t) => t.name === 'R_S1_Step')!.desc
+
+  it('U-21.4 20-step undo / redo: 21 edits → 20 can be undone, then redo walks forward again', async () => {
+    await useProject.getState().open()
+    for (let i = 1; i <= 21; i++) useProject.getState().edit('R_S1_Step', 'comment', `edit ${i}`)
+    expect(UNDO_STEPS).toBe(20)
+    let n = 0
+    while (useProject.getState().undo()) n++
+    expect(n).toBe(20)
+    expect(comment()).toBe('edit 1') // the oldest one is out of the history
+    for (let i = 0; i < 20; i++) expect(useProject.getState().redo()).toBe(true)
+    expect(comment()).toBe('edit 21')
+    expect(useProject.getState().redo()).toBe(false)
+  })
+
+  it('U-21.5 a new edit after undo clears redo', async () => {
+    await useProject.getState().open()
+    useProject.getState().edit('R_S1_Step', 'comment', 'a')
+    useProject.getState().edit('R_S1_Step', 'comment', 'b')
+    useProject.getState().undo()
+    expect(useProject.getState().future).toHaveLength(1)
+    useProject.getState().edit('R_S1_Step', 'comment', 'c')
+    expect(useProject.getState().future).toHaveLength(0)
+    expect(useProject.getState().redo()).toBe(false)
+  })
+
+  it('U-21.6 undo back to the saved table is not "unsaved"; delete + undo brings the tag back', async () => {
+    await useProject.getState().open()
+    useProject.getState().remove('AX_S1_Z')
+    expect(useProject.getState().project!.tags.tags).toHaveLength(19)
+    expect(useProject.getState().dirty).toBe(true)
+    useProject.getState().undo()
+    expect(useProject.getState().project!.tags.tags.map((t) => t.name)).toContain('AX_S1_Z')
+    expect(useProject.getState().dirty).toBe(false)
+    useProject.getState().redo()
+    expect(useProject.getState().dirty).toBe(true)
+  })
+
+  it('U-21.7 opening a project starts a fresh history', async () => {
+    await useProject.getState().open()
+    useProject.getState().add('REG')
+    await useProject.getState().save()
+    await useProject.getState().open()
+    expect(useProject.getState().past).toEqual([])
+    expect(useProject.getState().future).toEqual([])
   })
 })

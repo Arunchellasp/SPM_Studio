@@ -42,6 +42,12 @@
   display: flex;
   width: 100%;
 }
+.btn.btn-square {
+  min-width: 0;
+  aspect-ratio: 1;
+  padding: 0;
+  justify-content: center;
+}
 .btn-icon {
   display: inline-flex;
   font-size: 1.1em;

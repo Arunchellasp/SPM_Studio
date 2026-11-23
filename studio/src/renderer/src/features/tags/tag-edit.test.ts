@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import demo from '../../../../../../projects/demo/tags.json'
 import type { Tag, TagFile } from '@shared/ipc'
-import { applyAddress, applyEdit, applyScale, canEdit, changeKind, parseValue } from './tag-edit'
+import { applyAdd, applyAddress, applyDelete, applyDuplicate, applyEdit, applyScale, canEdit, changeKind, NEW_KINDS, parseValue, uniqueName } from './tag-edit'
 import { checkTags } from '@shared/tags-rules'
 
 const tags = (demo as TagFile).tags
@@ -96,5 +96,39 @@ describe('N03 cell editing', () => {
     expect(back.ok && checkTags(back.tags).map((i) => i.message)).toEqual(['raw range 100 … 0 must rise'])
     expect(err(applyScale(tags, 'AI_Sealer_Temp', { raw: [0, NaN], eng: [0, 1] }))).toBe('all four scaling values must be numbers')
     expect(err(applyScale(tags, 'DI_S1_PartPresent', { raw: [0, 1], eng: [0, 1] }))).toBe('a DI tag has no scaling')
+  })
+
+  it('U-21.1 + New tag: every offered kind starts clean (no rule fails), names are free', () => {
+    let t = tags
+    for (const k of NEW_KINDS) {
+      const r = applyAdd(t, k)
+      if (!r.ok) throw new Error(r.error)
+      t = r.tags
+    }
+    expect(t).toHaveLength(20 + NEW_KINDS.length)
+    expect(checkTags(t)).toEqual([])
+    expect(t.slice(20).map((x) => x.name)).toEqual(['DI_New_1', 'DO_New_1', 'AI_New_1', 'AO_New_1', 'AX_New_1', 'P_New_1', 'R_New_1', 'T_New_1', 'C_New_1', 'A_New_1', 'RP_New_1'])
+    expect(get(t, 'DI_New_1').addr).toEqual({ bus: 'sim', slave: 0, ch: 0 })
+    expect(get(t, 'DO_New_1').addr).toEqual({ bus: 'sim', slave: 0, ch: 1 })
+    expect(get(t, 'AX_New_1').addr).toEqual({ bus: 'sim', slave: 1 })
+    expect(uniqueName(t, 'R_New_1')).toBe('R_New_2')
+    expect(err(applyAdd(tags, 'DI', 'R_Wrong'))).toBe('a DI name must start with DI_')
+    expect(err(applyAdd(tags, 'REG', 'R_S1_Step'))).toBe("'R_S1_Step' is already used by another tag")
+  })
+
+  it('U-21.2 duplicate: free name, next free channel / slave / alarm code, placed after the original', () => {
+    const d = ok(applyDuplicate(tags, 'DI_S1_PartPresent'))
+    const i = d.findIndex((x) => x.name === 'DI_S1_PartPresent')
+    expect(d[i + 1]).toMatchObject({ name: 'DI_S1_PartPresent_2', addr: { bus: 'ecat', slave: 3, ch: 3 } }) // 0, 1, 2, 8 are taken
+    expect(ok(applyDuplicate(d, 'DI_S1_PartPresent')).map((x) => x.name)).toContain('DI_S1_PartPresent_3')
+    expect(get(ok(applyDuplicate(tags, 'A_301_NoPart')), 'A_301_NoPart_2').code).toBe(302)
+    expect(checkTags(ok(applyDuplicate(tags, 'AX_S1_X')))).toEqual([])
+    expect(checkTags(d)).toEqual([])
+  })
+
+  it('U-21.3 delete: the tag goes; what pointed at it shows red (rules)', () => {
+    const d = ok(applyDelete(tags, 'AX_S1_Z'))
+    expect(d).toHaveLength(19)
+    expect(checkTags(d).map((x) => `${x.tag}: ${x.message}`)).toEqual(['P_S1_Pick: axis AX_S1_Z does not exist', 'P_S1_Place: axis AX_S1_Z does not exist'])
   })
 })

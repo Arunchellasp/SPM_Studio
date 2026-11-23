@@ -1,6 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AddressDialog } from './address-dialog.view'
 import { ScaleDialog } from './scale-dialog.view'
+import { NewTagDialog } from './new-tag-dialog.view'
+import { toast } from '../../stores/feedback.store'
 import { checkTags, type TagIssue } from '@shared/tags-rules'
 import type { ScreenDef } from '../../app/screens'
 import { Button } from '../../components/button.view'
@@ -30,6 +32,14 @@ export function TagsScreen({ screen }: { screen: ScreenDef }): React.JSX.Element
   const edit = useProject((s) => s.edit)
   const setAddress = useProject((s) => s.setAddress)
   const setScale = useProject((s) => s.setScale)
+  const add = useProject((s) => s.add)
+  const duplicate = useProject((s) => s.duplicate)
+  const remove = useProject((s) => s.remove)
+  const undo = useProject((s) => s.undo)
+  const redo = useProject((s) => s.redo)
+  const canUndo = useProject((s) => s.past.length > 0)
+  const canRedo = useProject((s) => s.future.length > 0)
+  const [adding, setAdding] = useState(false)
   const [addrFor, setAddrFor] = useState<string | null>(null)
   const [scaleFor, setScaleFor] = useState<string | null>(null)
 
@@ -50,8 +60,46 @@ export function TagsScreen({ screen }: { screen: ScreenDef }): React.JSX.Element
   const selTag = project?.tags.tags.find((t) => t.name === selected) ?? null
   const selRow = rows.find((r) => r.name === selected) ?? null
 
+  /** Delete: the row goes, the toast says how to get it back */
+  const removeTag = (name: string): void => {
+    if (remove(name).ok) {
+      setSelected(null)
+      toast(`Deleted ${name} — Ctrl+Z brings it back`, 'info')
+    }
+  }
+
+  // step 21 keys on N03: Ctrl+Z undo, Ctrl+Y / Ctrl+Shift+Z redo, Delete removes the selected tag.
+  // Not while typing (a field, a grid editor) and not while a dialog is open: there the keys belong to the text.
+  useEffect(() => {
+    if (!project) return
+    const onKey = (e: KeyboardEvent): void => {
+      const el = e.target as HTMLElement
+      if (el.closest('input, textarea, select, [contenteditable="true"], .tabulator-editing, .dlg-backdrop')) return
+      if (document.querySelector('.dlg-backdrop')) return
+      const k = e.key.toLowerCase()
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && k === 'z') {
+        e.preventDefault()
+        if (!undo()) toast('Nothing to undo', 'info')
+      } else if ((e.ctrlKey || e.metaKey) && (k === 'y' || (e.shiftKey && k === 'z'))) {
+        e.preventDefault()
+        if (!redo()) toast('Nothing to redo', 'info')
+      } else if (e.key === 'Delete' && !e.ctrlKey && !e.altKey && selected) {
+        e.preventDefault()
+        removeTag(selected)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+
   const buttons = (
     <>
+      {project && (
+        <>
+          <Button size="md" variant="quiet" icon={<Icon name="undo" />} aria-label="Undo (Ctrl+Z)" title="Undo (Ctrl+Z)" onClick={() => undo()} disabled={!canUndo} />
+          <Button size="md" variant="quiet" icon={<Icon name="redo" />} aria-label="Redo (Ctrl+Y)" title="Redo (Ctrl+Y)" onClick={() => redo()} disabled={!canRedo} />
+        </>
+      )}
       <Button size="md" icon={<Icon name="open" />} onClick={() => void open()} disabled={busy}>
         Open project…
       </Button>
@@ -153,7 +201,7 @@ export function TagsScreen({ screen }: { screen: ScreenDef }): React.JSX.Element
         <span className="tgs-count" data-testid="grid-count" aria-live="polite">
           {countText(shown, rows.length)}
         </span>
-        <Button variant="primary" size="md" icon={<Icon name="plus" />} disabled title="Adding tags comes in step 21">
+        <Button variant="primary" size="md" icon={<Icon name="plus" />} onClick={() => setAdding(true)}>
           New tag
         </Button>
       </div>
@@ -176,10 +224,30 @@ export function TagsScreen({ screen }: { screen: ScreenDef }): React.JSX.Element
           issues={selTag ? (byTag.get(selTag.name) ?? []) : []}
           onPickAddress={setAddrFor}
           onPickScale={setScaleFor}
+          onDuplicate={(n) => {
+            const r = duplicate(n)
+            if (r.ok) setSelected(r.tag.name)
+          }}
+          onDelete={removeTag}
           onKind={(kind) => selTag && onEdit(selTag.name, 'kind', kind)}
         />
       </div>
 
+      {adding && (
+        <NewTagDialog
+          tags={project.tags.tags}
+          onClose={() => setAdding(false)}
+          onOk={(kind, name) => {
+            const r = add(kind, name)
+            if (r.ok) {
+              setFilter(NO_FILTER) // the new tag must be visible
+              setSelected(r.tag.name)
+              toast(`Added ${r.tag.name}`, 'done')
+            }
+            return r.ok
+          }}
+        />
+      )}
       {scaleTag && <ScaleDialog tag={scaleTag} onOk={(sc) => setScale(scaleTag.name, sc).ok} onClose={() => setScaleFor(null)} />}
       {addrTag && <AddressDialog tag={addrTag} onOk={(a) => setAddress(addrTag.name, a).ok} onClose={() => setAddrFor(null)} />}
     </div>
