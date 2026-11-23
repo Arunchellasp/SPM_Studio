@@ -1,0 +1,314 @@
+{
+  "schema": "spm.tags/1",
+  "tags": [
+    {
+      "name": "AI_Sealer_Temp",
+      "kind": "AI",
+      "dtype": "REAL",
+      "scope": "S2",
+      "addr": {
+        "bus": "ecat",
+        "slave": 5,
+        "ch": 1
+      },
+      "scale": {
+        "raw": [
+          0,
+          32767
+        ],
+        "eng": [
+          0,
+          400
+        ]
+      },
+      "unit": "degC",
+      "filter_ms": 200,
+      "alarm": {
+        "hi": 250,
+        "hihi": 280,
+        "code": 410
+      },
+      "log": {
+        "period_ms": 1000
+      },
+      "group": "S2 Sealer/Analog",
+      "desc": "Sealer jaw temperature"
+    },
+    {
+      "name": "AO_Dispense_Pressure",
+      "kind": "AO",
+      "dtype": "REAL",
+      "scope": "S2",
+      "addr": {
+        "bus": "ecat",
+        "slave": 6,
+        "ch": 0
+      },
+      "scale": {
+        "raw": [
+          0,
+          32767
+        ],
+        "eng": [
+          0,
+          6
+        ]
+      },
+      "unit": "bar",
+      "min": 0,
+      "max": 6,
+      "safe_state": 0,
+      "group": "S2 Sealer/Analog",
+      "desc": "Dispense pressure set"
+    },
+    {
+      "name": "AX_S1_X",
+      "kind": "AXIS",
+      "dtype": "STRUCT",
+      "scope": "S1",
+      "addr": {
+        "bus": "ecat",
+        "slave": 1
+      },
+      "unit": "mm",
+      "ppu": 1000,
+      "vmax": 500,
+      "acc": 3000,
+      "soft_min": 0,
+      "soft_max": 600,
+      "home": "neg_limit",
+      "group": "S1 Pick and place/Axes",
+      "desc": "Gantry X"
+    },
+    {
+      "name": "AX_S1_Z",
+      "kind": "AXIS",
+      "dtype": "STRUCT",
+      "scope": "S1",
+      "addr": {
+        "bus": "ecat",
+        "slave": 2
+      },
+      "unit": "mm",
+      "ppu": 1000,
+      "vmax": 200,
+      "acc": 2000,
+      "soft_min": 0,
+      "soft_max": 120,
+      "home": "pos_limit",
+      "group": "S1 Pick and place/Axes",
+      "desc": "Gantry Z"
+    },
+    {
+      "name": "A_301_NoPart",
+      "kind": "ALARM",
+      "dtype": "STRUCT",
+      "scope": "S1",
+      "code": 301,
+      "text": "No part on nest after pick",
+      "severity": 2,
+      "latch": true,
+      "reaction": "pause"
+    },
+    {
+      "name": "CY_S1_Clamp",
+      "kind": "UDT",
+      "dtype": "STRUCT",
+      "scope": "S1",
+      "type": "Cylinder",
+      "fields": {
+        "out": "DO_S1_ClampValve",
+        "open": "DI_S1_ClampOpen",
+        "closed": "DI_S1_ClampClosed"
+      },
+      "group": "S1 Pick and place",
+      "desc": "Nest clamp"
+    },
+    {
+      "name": "C_ShiftGood",
+      "kind": "COUNTER",
+      "dtype": "STRUCT",
+      "scope": "global",
+      "preset": 5000,
+      "retain": true,
+      "desc": "Good parts this shift"
+    },
+    {
+      "name": "DI_S1_ClampClosed",
+      "kind": "DI",
+      "dtype": "BOOL",
+      "scope": "S1",
+      "addr": {
+        "bus": "ecat",
+        "slave": 3,
+        "ch": 2
+      },
+      "debounce_ms": 5,
+      "group": "S1 Pick and place/Inputs",
+      "desc": "Clamp closed sensor"
+    },
+    {
+      "name": "DI_S1_ClampOpen",
+      "kind": "DI",
+      "dtype": "BOOL",
+      "scope": "S1",
+      "addr": {
+        "bus": "ecat",
+        "slave": 3,
+        "ch": 1
+      },
+      "debounce_ms": 5,
+      "group": "S1 Pick and place/Inputs",
+      "desc": "Clamp open sensor"
+    },
+    {
+      "name": "DI_S1_PartPresent",
+      "kind": "DI",
+      "dtype": "BOOL",
+      "scope": "S1",
+      "addr": {
+        "bus": "ecat",
+        "slave": 3,
+        "ch": 0
+      },
+      "debounce_ms": 10,
+      "invert": false,
+      "log": "change",
+      "group": "S1 Pick and place/Inputs",
+      "desc": "Part on nest"
+    },
+    {
+      "name": "DI_S2_DoorClosed",
+      "kind": "DI",
+      "dtype": "BOOL",
+      "scope": "S2",
+      "addr": {
+        "bus": "ecat",
+        "slave": 3,
+        "ch": 8
+      },
+      "debounce_ms": 20,
+      "log": "change",
+      "group": "S2 Sealer/Inputs",
+      "desc": "Sealer guard door closed"
+    },
+    {
+      "name": "DO_S1_ClampValve",
+      "kind": "DO",
+      "dtype": "BOOL",
+      "scope": "S1",
+      "addr": {
+        "bus": "ecat",
+        "slave": 4,
+        "ch": 2
+      },
+      "safe_state": false,
+      "group": "S1 Pick and place/Outputs",
+      "desc": "Clamp valve"
+    },
+    {
+      "name": "DO_S1_Vacuum",
+      "kind": "DO",
+      "dtype": "BOOL",
+      "scope": "S1",
+      "addr": {
+        "bus": "ecat",
+        "slave": 4,
+        "ch": 3
+      },
+      "safe_state": false,
+      "group": "S1 Pick and place/Outputs",
+      "desc": "Vacuum gripper"
+    },
+    {
+      "name": "DO_S2_HeaterOn",
+      "kind": "DO",
+      "dtype": "BOOL",
+      "scope": "S2",
+      "addr": {
+        "bus": "ecat",
+        "slave": 4,
+        "ch": 8
+      },
+      "safe_state": false,
+      "group": "S2 Sealer/Outputs",
+      "desc": "Sealer heater contactor"
+    },
+    {
+      "name": "P_S1_Pick",
+      "kind": "POINT",
+      "dtype": "REAL",
+      "scope": "S1",
+      "axes": [
+        "AX_S1_X",
+        "AX_S1_Z"
+      ],
+      "values": [
+        120.0,
+        85.5
+      ],
+      "teach": true,
+      "group": "S1 Pick and place/Points",
+      "desc": "Pick position"
+    },
+    {
+      "name": "P_S1_Place",
+      "kind": "POINT",
+      "dtype": "REAL",
+      "scope": "S1",
+      "axes": [
+        "AX_S1_X",
+        "AX_S1_Z"
+      ],
+      "values": [
+        480.0,
+        85.5
+      ],
+      "teach": true,
+      "group": "S1 Pick and place/Points",
+      "desc": "Place position"
+    },
+    {
+      "name": "RP_SealTime",
+      "kind": "RECIPE",
+      "dtype": "INT",
+      "default": 1200,
+      "min": 500,
+      "max": 3000,
+      "unit": "ms",
+      "access": {
+        "read": "operator",
+        "write": "engineer"
+      },
+      "desc": "Seal dwell time"
+    },
+    {
+      "name": "R_PartCount",
+      "kind": "REG",
+      "dtype": "DINT",
+      "scope": "global",
+      "init": 0,
+      "retain": true,
+      "log": "change",
+      "desc": "Good parts this batch"
+    },
+    {
+      "name": "R_S1_Step",
+      "kind": "REG",
+      "dtype": "INT",
+      "scope": "S1",
+      "init": 0,
+      "min": 0,
+      "max": 999,
+      "desc": "Station 1 flow step"
+    },
+    {
+      "name": "T_S1_ClampDwell",
+      "kind": "TIMER",
+      "dtype": "STRUCT",
+      "scope": "S1",
+      "preset_ms": 300,
+      "desc": "Wait after clamp closes"
+    }
+  ]
+}

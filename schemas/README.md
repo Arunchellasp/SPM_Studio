@@ -5,4 +5,5 @@ Contracts shared by the studio (TypeScript) and the runtime (C). Change a schema
 | File | Status |
 |---|---|
 | `message.schema.json` | P0 — WebSocket messages (mirrored in `studio/src/shared/protocol.ts`) |
-| `config`, `tags`, `program`, `rt` schemas | P1 |
+| `tags.schema.json` | P1 step 15 — tag table `spm.tags/1` (one rule block per kind; checked by `studio/src/shared/tags-schema.ts`) |
+| `config`, `program`, `rt` schemas | P1 |

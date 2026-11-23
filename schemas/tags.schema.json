@@ -1,0 +1,760 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "spm.tags/1",
+  "title": "SPM tag table (tags.json)",
+  "description": "One table for every kind of tag (Software implementation › 3). Flowcharts, screens, alarms and logs use tag NAMES; the address lives only here. Cross-row rules (unique names, address used twice, min < max) are checked by tags.rules.ts, not by this schema.",
+  "type": "object",
+  "required": [
+    "schema",
+    "tags"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "spm.tags/1",
+      "description": "file format and version; the runtime refuses other versions"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/tag"
+      }
+    }
+  },
+  "$defs": {
+    "addr": {
+      "type": "object",
+      "required": [
+        "bus",
+        "slave"
+      ],
+      "additionalProperties": false,
+      "description": "where the value lives on the field bus (I/O and axes only)",
+      "properties": {
+        "bus": {
+          "enum": [
+            "ecat",
+            "sim"
+          ],
+          "description": "ecat = EtherCAT, sim = simulated card"
+        },
+        "slave": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 511
+        },
+        "ch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        }
+      }
+    },
+    "pair": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "role": {
+      "enum": [
+        "operator",
+        "engineer",
+        "admin"
+      ]
+    },
+    "tag": {
+      "type": "object",
+      "required": [
+        "name",
+        "kind"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Z]{1,3}_[A-Za-z0-9_]{1,44}$",
+          "description": "unique; A–Z a–z 0–9 _; starts with the kind prefix (DI_, AX_ …)"
+        },
+        "kind": {
+          "enum": [
+            "DI",
+            "DO",
+            "AI",
+            "AO",
+            "AXIS",
+            "POINT",
+            "REG",
+            "TIMER",
+            "COUNTER",
+            "ALARM",
+            "RECIPE",
+            "UDT"
+          ]
+        },
+        "dtype": {
+          "enum": [
+            "BOOL",
+            "INT",
+            "DINT",
+            "REAL",
+            "STRING",
+            "STRUCT"
+          ]
+        },
+        "scope": {
+          "type": "string",
+          "pattern": "^(global|S[0-9]{1,2}|flow:[A-Za-z0-9_]+|fn:[A-Za-z0-9_]+)$",
+          "description": "global · station S1… · flow:<name> · fn:<name>; default global"
+        },
+        "addr": {
+          "$ref": "#/$defs/addr"
+        },
+        "init": {
+          "type": [
+            "number",
+            "boolean",
+            "string"
+          ]
+        },
+        "retain": {
+          "type": "boolean",
+          "description": "keep the value after power off"
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string",
+          "maxLength": 16
+        },
+        "scale": {
+          "type": "object",
+          "required": [
+            "raw",
+            "eng"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "raw": {
+              "$ref": "#/$defs/pair"
+            },
+            "eng": {
+              "$ref": "#/$defs/pair"
+            }
+          }
+        },
+        "debounce_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "invert": {
+          "type": "boolean"
+        },
+        "filter_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60000
+        },
+        "safe_state": {
+          "type": [
+            "boolean",
+            "number"
+          ],
+          "description": "output value on STOP / alarm / comm loss"
+        },
+        "pulse_ms": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "alarm": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "hi": {
+              "type": "number"
+            },
+            "hihi": {
+              "type": "number"
+            },
+            "lo": {
+              "type": "number"
+            },
+            "lolo": {
+              "type": "number"
+            },
+            "code": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9999
+            }
+          }
+        },
+        "log": {
+          "oneOf": [
+            {
+              "enum": [
+                "none",
+                "change"
+              ]
+            },
+            {
+              "type": "object",
+              "required": [
+                "period_ms"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "period_ms": {
+                  "type": "integer",
+                  "minimum": 10
+                }
+              }
+            }
+          ]
+        },
+        "access": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "read": {
+              "$ref": "#/$defs/role"
+            },
+            "write": {
+              "$ref": "#/$defs/role"
+            }
+          }
+        },
+        "desc": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "group": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "ppu": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "pulses per unit"
+        },
+        "vmax": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "acc": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "soft_min": {
+          "type": "number"
+        },
+        "soft_max": {
+          "type": "number"
+        },
+        "home": {
+          "enum": [
+            "neg_limit",
+            "pos_limit",
+            "index",
+            "none"
+          ]
+        },
+        "axes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^AX_"
+          }
+        },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "number"
+          }
+        },
+        "teach": {
+          "type": "boolean"
+        },
+        "preset_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "preset": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "code": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9999
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "severity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4,
+          "description": "alarm priority P1 … P4"
+        },
+        "latch": {
+          "type": "boolean"
+        },
+        "reaction": {
+          "enum": [
+            "stop",
+            "pause",
+            "warn"
+          ]
+        },
+        "default": {
+          "type": [
+            "number",
+            "boolean",
+            "string"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*$",
+          "description": "UDT type name, e.g. Cylinder"
+        },
+        "fields": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "UDT member → tag name"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "DI"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "name": {
+                "pattern": "^DI_",
+                "type": "string"
+              },
+              "dtype": {
+                "const": "BOOL"
+              },
+              "addr": {
+                "type": "object",
+                "required": [
+                  "ch"
+                ]
+              }
+            },
+            "required": [
+              "addr"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "DO"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "name": {
+                "pattern": "^DO_",
+                "type": "string"
+              },
+              "dtype": {
+                "const": "BOOL"
+              },
+              "addr": {
+                "type": "object",
+                "required": [
+                  "ch"
+                ]
+              }
+            },
+            "required": [
+              "addr"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "AI"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "name": {
+                "pattern": "^AI_",
+                "type": "string"
+              },
+              "dtype": {
+                "const": "REAL"
+              },
+              "addr": {
+                "type": "object",
+                "required": [
+                  "ch"
+                ]
+              }
+            },
+            "required": [
+              "addr",
+              "scale",
+              "unit"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "AO"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "name": {
+                "pattern": "^AO_",
+                "type": "string"
+              },
+              "dtype": {
+                "const": "REAL"
+              },
+              "addr": {
+                "type": "object",
+                "required": [
+                  "ch"
+                ]
+              }
+            },
+            "required": [
+              "addr",
+              "scale",
+              "unit"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "AXIS"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "name": {
+                "pattern": "^AX_",
+                "type": "string"
+              },
+              "dtype": {
+                "const": "STRUCT"
+              }
+            },
+            "required": [
+              "addr",
+              "unit",
+              "ppu",
+              "vmax",
+              "acc"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "POINT"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "name": {
+                "pattern": "^P_",
+                "type": "string"
+              },
+              "dtype": {
+                "const": "REAL"
+              }
+            },
+            "required": [
+              "axes",
+              "values"
+            ],
+            "not": {
+              "required": [
+                "addr"
+              ]
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "REG"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "name": {
+                "pattern": "^R_",
+                "type": "string"
+              },
+              "dtype": {
+                "enum": [
+                  "BOOL",
+                  "INT",
+                  "DINT",
+                  "REAL",
+                  "STRING"
+                ]
+              }
+            },
+            "required": [
+              "dtype"
+            ],
+            "not": {
+              "required": [
+                "addr"
+              ]
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "TIMER"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "name": {
+                "pattern": "^T_",
+                "type": "string"
+              },
+              "dtype": {
+                "const": "STRUCT"
+              }
+            },
+            "required": [
+              "preset_ms"
+            ],
+            "not": {
+              "required": [
+                "addr"
+              ]
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "COUNTER"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "name": {
+                "pattern": "^C_",
+                "type": "string"
+              },
+              "dtype": {
+                "const": "STRUCT"
+              }
+            },
+            "required": [
+              "preset"
+            ],
+            "not": {
+              "required": [
+                "addr"
+              ]
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "ALARM"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "name": {
+                "pattern": "^A_",
+                "type": "string"
+              },
+              "dtype": {
+                "const": "STRUCT"
+              }
+            },
+            "required": [
+              "code",
+              "text",
+              "severity"
+            ],
+            "not": {
+              "required": [
+                "addr"
+              ]
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "RECIPE"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "name": {
+                "pattern": "^RP_",
+                "type": "string"
+              },
+              "dtype": {
+                "enum": [
+                  "BOOL",
+                  "INT",
+                  "DINT",
+                  "REAL",
+                  "STRING"
+                ]
+              }
+            },
+            "required": [
+              "dtype",
+              "default"
+            ],
+            "not": {
+              "required": [
+                "addr"
+              ]
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "UDT"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "properties": {
+              "name": {
+                "pattern": "^[A-Z]{2,3}_",
+                "type": "string"
+              },
+              "dtype": {
+                "const": "STRUCT"
+              }
+            },
+            "required": [
+              "type",
+              "fields"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    }
+  }
+}
