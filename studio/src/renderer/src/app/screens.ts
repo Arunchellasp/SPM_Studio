@@ -9,6 +9,7 @@ import { ComponentsScreen } from '../features/components/components-screen.view'
 import { AdminScreen } from '../features/admin/admin-screen.view'
 import { OverviewScreen } from '../features/overview/overview-screen.view'
 import { TagsScreen } from '../features/tags/tags-screen.view'
+import { SequenceScreen } from '../features/sequence/sequence-screen.view'
 
 export interface ScreenDef {
   id: string
@@ -37,7 +38,8 @@ export const ALL_SCREENS: ScreenDef[] = [
     icon: 'program',
     label: 'Program',
     title: 'Program › Sequence editor',
-    purpose: 'Tree · canvas with live values · properties'
+    purpose: 'Tree · canvas with live values · properties',
+    view: SequenceScreen
   },
   {
     id: 'tags',

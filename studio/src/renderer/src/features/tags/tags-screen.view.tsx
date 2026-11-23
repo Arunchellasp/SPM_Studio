@@ -161,6 +161,9 @@ export function TagsScreen({ screen }: { screen: ScreenDef }): React.JSX.Element
 
   return (
     <div className="tgs tgs-open">
+      <h1 className="sr-only">
+        {screen.code} {screen.title}
+      </h1>
       <div className="tgs-bar" aria-label="Open project">
         <span className="tgs-bar-label">Project</span>
         <b data-testid="project-name">{project.name}</b>

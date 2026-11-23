@@ -155,6 +155,10 @@
   /* dialog + toast (GUI templates › Dialog 420 px wide, drawn like an N00 card) */
   --dialog-w: 420px;
   --dialog-w-wide: 640px; /* dialogs with a form or a preview (step 22: import, bulk tools) */
+  /* N02 sequence editor (step 23): Start / End nodes */
+  --seq-terminal-w: 160px;
+  --seq-terminal-h: 44px;
+  --seq-tool-w: 112px; /* canvas toolbar buttons (Run, Pause …) */
   --toast-w: 360px;
   --backdrop: rgba(31, 35, 40, 0.45); /* dims the screen behind a dialog */
   --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.22); /* only things that float above the screen get a shadow */

@@ -1,0 +1,70 @@
+/* N02 (Improved design › N02 at 1920 × 1080): tree 300 · canvas 1080 · properties 388; canvas row 680, tools row 262.
+   Proportions, not pixels (step 9 rule) — the same layout at 1366 and 1280. */
+.seq {
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 300fr) minmax(0, 1080fr) minmax(0, 388fr);
+  grid-template-rows: minmax(0, 680fr) minmax(0, 262fr);
+  grid-template-areas:
+    'tree main props'
+    'tree bottom bottom';
+  gap: var(--gap);
+}
+.seq-tree {
+  grid-area: tree;
+}
+.seq-main {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.seq-props {
+  grid-area: props;
+}
+.seq-bottom {
+  grid-area: bottom;
+  min-height: 0;
+  overflow: auto;
+}
+/* toolbar row of the canvas card: 6 buttons of 112 (design), shrinking on small windows; never wraps */
+.seq-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px var(--card-pad) 8px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.seq-tools .btn {
+  flex: 0 1 var(--seq-tool-w);
+  min-width: 0;
+  padding: 0 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.seq-tools .btn.btn-square {
+  flex: 0 0 auto;
+}
+.seq-status {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  margin-left: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.seq-later {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+.seq-main .card-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
