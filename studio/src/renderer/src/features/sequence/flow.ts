@@ -20,6 +20,9 @@ export interface StepParams {
 export interface FlowNodeData extends Record<string, unknown> {
   label: string
   p?: StepParams[StepKind]
+  /** step 25: optional step name (shown as the title, like 'Clamp' in the design) and a comment */
+  name?: string
+  comment?: string
 }
 
 export type FlowNode = Node<FlowNodeData, FlowNodeKind>

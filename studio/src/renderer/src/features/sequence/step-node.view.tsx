@@ -14,7 +14,8 @@ export function StepNode({ type, data, selected }: NodeProps<FlowNode>): React.J
   return (
     <div
       className={['seq-step', `seq-shape-${def.shape}`, text.includes('?') ? 'seq-open' : '', selected ? 'seq-selected' : ''].filter(Boolean).join(' ')}
-      aria-label={`${def.title}: ${text}`}
+      aria-label={`${data.name || def.title}: ${text}`}
+      data-kind={def.title}
     >
       {def.shape !== 'process' && (
         <svg className="seq-outline" viewBox="0 0 260 54" preserveAspectRatio="none" aria-hidden="true">
@@ -24,7 +25,7 @@ export function StepNode({ type, data, selected }: NodeProps<FlowNode>): React.J
       <Handle type="target" position={Position.Top} aria-label="link in" />
       <div className="seq-step-title">
         <Icon name={def.icon} />
-        <span>{def.title}</span>
+        <span>{data.name || def.title}</span>
       </div>
       <div className="seq-step-sum" title={text}>
         {text}

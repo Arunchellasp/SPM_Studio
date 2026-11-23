@@ -132,3 +132,40 @@
 .seq-pal-delay {
   border-radius: 0 11px 11px 0;
 }
+
+/* step 25 — property panel (design: label + field stacked, 356 wide) */
+.seq-props {
+  overflow: auto;
+}
+.seq-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.seq-form-kind {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+.seq-form-sum {
+  margin: 0 0 4px;
+  font-family: var(--mono);
+  font-size: var(--fs-sm);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.seq-prop {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.seq-notags {
+  padding: 8px 10px;
+  background: var(--warn-bg);
+  color: var(--cell-text);
+  font-size: var(--fs-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}

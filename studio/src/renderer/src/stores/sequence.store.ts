@@ -18,6 +18,8 @@ interface SequenceState {
   reset: () => void
   /** step 24: a node from the palette — at the drop point, or below the lowest node; returns its id */
   addStep: (type: StepKind, at?: { x: number; y: number }) => string
+  /** step 25: change parameters / name / comment of one node (the property panel) */
+  updateNode: (id: string, patch: Partial<Pick<FlowNode['data'], 'p' | 'name' | 'comment'>>) => void
 }
 
 export const useSequence = create<SequenceState>((set, get) => ({
@@ -39,5 +41,6 @@ export const useSequence = create<SequenceState>((set, get) => ({
     // the new node is the selected one (property panel, step 25)
     set({ nodes: [...get().nodes.map((x) => (x.selected ? { ...x, selected: false } : x)), { ...n, selected: true }] })
     return n.id
-  }
+  },
+  updateNode: (id, patch) => set({ nodes: get().nodes.map((n) => (n.id === id ? { ...n, data: { ...n.data, ...patch } } : n)) })
 }))

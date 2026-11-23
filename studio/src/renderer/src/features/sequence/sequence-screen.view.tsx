@@ -6,6 +6,7 @@ import { Tabs } from '../../components/tabs.view'
 import { useSequence } from '../../stores/sequence.store'
 import { SequenceCanvas } from './canvas.view'
 import { NodePalette } from './palette.view'
+import { PropertyPanel } from './property-panel.view'
 import './sequence-screen.css'
 
 /** the canvas toolbar of the design — all need the runtime (phase G) */
@@ -56,7 +57,7 @@ export function SequenceScreen({ screen }: { screen: ScreenDef }): React.JSX.Ele
       </Card>
 
       <Card title="Properties" className="seq-props">
-        {later('Click a node to edit it here', 'step 25 (property panel)')}
+        <PropertyPanel />
       </Card>
 
       <Card className="seq-bottom">
