@@ -2,11 +2,13 @@
  * N03 cell editing (step 19) — logic only, unit tested.
  * One edit = one tag, one column, one value → the new tag table, or a short reason why not.
  * Rules come from schemas/tags.schema.json (read here, never typed twice): name patterns per kind, scope pattern.
- * Rules ACROSS tags (address used twice, min < max …) are step 20; only unique names are checked here,
- * because the name is also the grid's row key.
+ * Rules ACROSS tags (address used twice, min < max …) are shared/tags-rules.ts (step 20) — an edit that
+ * breaks one is KEPT and shown red, so it can be fixed in any order. Only unique names are refused here,
+ * because the name is also the grid's row key. Kind and scaling edits since step 20.
  */
 import tagsSchema from '../../../../../../schemas/tags.schema.json'
 import type { Addr, Tag, TagKind } from '@shared/ipc'
+import { KIND_RULES, KIND_SPECIFIC } from '@shared/tags-rules'
 
 type SchemaBlock = { if: { properties: { kind: { const: string } } }; then: { properties: { name: { pattern: string } } } }
 const tagDef = tagsSchema.$defs.tag
@@ -20,7 +22,7 @@ const MAX_DESC = tagDef.properties.desc.maxLength
 const MAX_TEXT = tagDef.properties.text.maxLength
 const MAX_UNIT = tagDef.properties.unit.maxLength
 
-export type EditField = 'name' | 'type' | 'scope' | 'unit' | 'init' | 'retain' | 'comment'
+export type EditField = 'name' | 'type' | 'scope' | 'unit' | 'init' | 'retain' | 'comment' | 'kind'
 
 export type EditResult = { ok: true; tags: Tag[]; tag: Tag; note?: string } | { ok: false; error: string }
 
@@ -38,8 +40,9 @@ const INIT_KEY: Partial<Record<TagKind, 'init' | 'default' | 'preset_ms' | 'pres
 }
 
 /** may this column be edited for this tag? (the grid asks before opening an editor) */
-export function canEdit(tag: Pick<Tag, 'kind'>, field: EditField | 'address'): boolean {
+export function canEdit(tag: Pick<Tag, 'kind'>, field: EditField | 'address' | 'scale'): boolean {
   switch (field) {
+    case 'kind':
     case 'name':
     case 'scope':
     case 'comment':
@@ -54,7 +57,29 @@ export function canEdit(tag: Pick<Tag, 'kind'>, field: EditField | 'address'): b
       return RETAIN_KINDS.includes(tag.kind)
     case 'address':
       return IO_KINDS.includes(tag.kind)
+    case 'scale':
+      return tag.kind === 'AI' || tag.kind === 'AO'
   }
+}
+
+/** what a kind change keeps: the common columns, the address for I/O kinds, and the new kind's fixed dtype */
+export function changeKind(old: Tag, kind: TagKind): { tag: Tag; dropped: string[] } {
+  const rule = KIND_RULES[kind]
+  const keepAddr = IO_KINDS.includes(kind)
+  const next: Record<string, unknown> = { name: old.name, kind }
+  const dropped: string[] = []
+  for (const [k, v] of Object.entries(old)) {
+    if (k === 'name' || k === 'kind' || k === 'dtype') continue
+    const specific = KIND_SPECIFIC.includes(k) && !(rule?.required.includes(k) ?? false)
+    if ((k === 'addr' && !keepAddr) || (k !== 'addr' && specific)) dropped.push(k)
+    else next[k] = v
+  }
+  const allowed = rule?.dtype
+  if (allowed?.length === 1) next.dtype = allowed[0]
+  else if (old.dtype && (!allowed || allowed.includes(old.dtype))) next.dtype = old.dtype
+  else if (allowed) next.dtype = allowed.includes('INT') ? 'INT' : allowed[0]
+  if (old.dtype && old.dtype !== next.dtype) dropped.push(`dtype ${old.dtype}`)
+  return { tag: next as Tag, dropped }
 }
 
 type Parsed = { ok: true; value: number | boolean | string } | { ok: false; error: string }
@@ -154,6 +179,12 @@ export function applyEdit(tags: Tag[], name: string, field: EditField, value: un
     }
     case 'retain':
       return done({ ...old, retain: value === true ? true : undefined })
+    case 'kind': {
+      if (!KIND_RULES[text]) return { ok: false, error: `kind must be one of ${Object.keys(KIND_RULES).join(', ')}` }
+      if (text === old.kind) return done(old)
+      const { tag, dropped } = changeKind(old, text as TagKind)
+      return done(tag, `Kind is now ${text}${dropped.length ? ` — removed: ${dropped.join(', ')}` : ''}. Red cells show what it still needs.`)
+    }
     case 'comment': {
       if (old.kind === 'ALARM') {
         if (!text) return { ok: false, error: 'an alarm needs its text' }
@@ -178,5 +209,15 @@ export function applyAddress(tags: Tag[], name: string, addr: Addr): EditResult 
     return { ok: false, error: 'channel is a whole number 0 … 255' }
   const next: Addr = isAxis ? { bus: addr.bus, slave: addr.slave } : { bus: addr.bus, slave: addr.slave, ch: addr.ch }
   const tag = { ...old, addr: next }
+  return { ok: true, tags: replace(tags, old, tag), tag }
+}
+
+/** the scaling dialog's result: raw and eng ranges for AI / AO (whether the ranges make sense is a rule — step 20) */
+export function applyScale(tags: Tag[], name: string, scale: { raw: [number, number]; eng: [number, number] }): EditResult {
+  const old = tags.find((t) => t.name === name)
+  if (!old) return { ok: false, error: `no tag '${name}'` }
+  if (!canEdit(old, 'scale')) return { ok: false, error: `a ${old.kind} tag has no scaling` }
+  if (![...scale.raw, ...scale.eng].every(Number.isFinite)) return { ok: false, error: 'all four scaling values must be numbers' }
+  const tag = { ...old, scale: { raw: [scale.raw[0], scale.raw[1]] as [number, number], eng: [scale.eng[0], scale.eng[1]] as [number, number] } }
   return { ok: true, tags: replace(tags, old, tag), tag }
 }

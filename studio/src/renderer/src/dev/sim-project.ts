@@ -11,6 +11,7 @@ import demoTags from '../../../../../projects/demo/tags.json'
 import type { MenuCommand, StudioApi, TagFile } from '@shared/ipc'
 import { formatTagFile } from '@shared/tags-file'
 import { makeBigProject } from '@shared/big-project'
+import { checkTags, issueText } from '@shared/tags-rules'
 
 export function makeSimProject(): Pick<StudioApi, 'project' | 'onMenu'> {
   // ?project=big in the address → a 1000-tag project (N03 speed test, step 18)
@@ -22,6 +23,8 @@ export function makeSimProject(): Pick<StudioApi, 'project' | 'onMenu'> {
       open: async () => ({ ok: true, project: { name, dir: `(browser) projects/${name}`, tags: JSON.parse(disk) as TagFile } }),
       save: async (tags) => {
         if (tags.schema !== 'spm.tags/1') return { ok: false, errors: ['schema: must be "spm.tags/1"'] }
+        const issues = checkTags(tags.tags) // same last gate as main (step 20)
+        if (issues.length) return { ok: false, errors: issues.map(issueText) }
         const text = formatTagFile(tags)
         const changed = text !== disk
         disk = text

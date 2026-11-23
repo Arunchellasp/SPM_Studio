@@ -3,6 +3,7 @@
  * segmented filter, and the filter itself. The view (tag-grid.view.tsx) hands these to Tabulator.
  */
 import type { Tag, TagKind } from '@shared/ipc'
+import type { IssueColumn, TagIssue } from '@shared/tags-rules'
 
 /** the segmented filter of the design: All · Inputs · Outputs · Flags · Data · Timers · Points */
 export type KindGroup = 'all' | 'inputs' | 'outputs' | 'flags' | 'data' | 'timers' | 'points'
@@ -55,6 +56,8 @@ export interface GridRow {
   kind: TagKind
   dtype?: string
   group: Exclude<KindGroup, 'all'>
+  /** step 20: problems of this tag per grid column (red cell + tooltip) */
+  issues?: Partial<Record<IssueColumn, string[]>>
 }
 
 const NONE = '–'
@@ -72,7 +75,15 @@ function valueText(v: unknown): string {
   return String(v)
 }
 
-export function toGridRow(tag: Tag): GridRow {
+/** problems of one tag, grouped by the column that shows them */
+export function issuesByColumn(list: TagIssue[] | undefined): GridRow['issues'] {
+  if (!list?.length) return undefined
+  const out: Partial<Record<IssueColumn, string[]>> = {}
+  for (const i of list) (out[i.column] ??= []).push(i.message)
+  return out
+}
+
+export function toGridRow(tag: Tag, issues?: TagIssue[]): GridRow {
   return {
     name: tag.name,
     address: addressText(tag),
@@ -86,7 +97,8 @@ export function toGridRow(tag: Tag): GridRow {
     comment: tag.desc ?? tag.text ?? '',
     kind: tag.kind,
     dtype: tag.dtype,
-    group: groupOf(tag)
+    group: groupOf(tag),
+    issues: issuesByColumn(issues)
   }
 }
 

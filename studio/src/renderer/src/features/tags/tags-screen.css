@@ -132,3 +132,31 @@
   background: var(--surface);
   overflow-wrap: anywhere;
 }
+
+/* step 20 — problems in the details panel; a value with its 'Change…' button */
+.tgs-issues {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  list-style: none;
+  background: var(--fault-bg);
+  border-left: 3px solid var(--danger);
+  color: var(--cell-text);
+  font-size: var(--fs-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tgs-detail dd.tgs-dd-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.tgs-detail dd.tgs-dd-select {
+  padding: 0;
+  border: 0;
+  min-height: 0;
+  background: none;
+}

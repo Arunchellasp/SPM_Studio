@@ -48,6 +48,7 @@ export function detailRows(tag: Tag, row: GridRow): { label: string; value: stri
     { label: 'Address', value: row.address },
     { label: 'Type', value: tag.dtype ?? tag.kind },
     { label: 'Scope', value: row.scope },
+    ...(tag.scale ? [{ label: 'Scaling', value: `raw ${tag.scale.raw[0]} … ${tag.scale.raw[1]} → ${tag.scale.eng[0]} … ${tag.scale.eng[1]}${tag.unit ? ' ' + tag.unit : ''}` }] : []),
     { label: 'Mapped to', value: '– (card and channel come with N04 I/O)' },
     { label: 'Used in', value: '– (flowcharts come with N02 Program)' },
     { label: 'Alarm', value: alarm },

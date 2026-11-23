@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
 })
 
 const row = (page: Page, name: string): Locator =>
-  page.locator('.tabulator-row').filter({ has: page.locator(`.tabulator-cell[tabulator-field="name"]:text-is("${name}")`) })
+  page.locator('.tabulator-row').filter({ has: page.locator('.tabulator-cell[tabulator-field="name"]', { hasText: new RegExp(`^${name}$`) }) })
 const cell = (page: Page, name: string, field: string): Locator => row(page, name).locator(`.tabulator-cell[tabulator-field="${field}"]`)
 const editor = (page: Page): Locator => page.locator('.tabulator-cell.tabulator-editing input')
 const toast = (page: Page): Locator => page.getByRole('status')

@@ -6,7 +6,8 @@
  */
 import { create } from 'zustand'
 import type { Addr, MenuCommand, ProjectInfo, StudioApi } from '@shared/ipc'
-import { applyAddress, applyEdit, type EditField, type EditResult } from '../features/tags/tag-edit'
+import { applyAddress, applyEdit, applyScale, type EditField, type EditResult } from '../features/tags/tag-edit'
+import { checkTags, issueText } from '@shared/tags-rules'
 import { makeSimProject } from '../dev/sim-project'
 import { confirmDialog, toast } from './feedback.store'
 
@@ -30,6 +31,8 @@ interface ProjectState {
   edit: (name: string, field: EditField, value: unknown) => EditResult
   /** the address picker's result */
   setAddress: (name: string, addr: Addr) => EditResult
+  /** the scaling dialog's result (AI / AO) */
+  setScale: (name: string, scale: { raw: [number, number]; eng: [number, number] }) => EditResult
 }
 
 /** first error + how many more, short enough for a toast */
@@ -74,6 +77,13 @@ export const useProject = create<ProjectState>((set, get) => ({
       return
     }
     if (get().busy) return
+    // step 20: no save while a rule fails — the red cells say what to fix
+    const issues = checkTags(p.tags.tags)
+    if (issues.length) {
+      const n = issues.length
+      toast(`Not saved: ${n} ${n === 1 ? 'problem' : 'problems'} — ${issueText(issues[0]!)}`, 'error', 8000)
+      return
+    }
     set({ busy: true })
     try {
       const res = await api().project.save(p.tags)
@@ -88,7 +98,8 @@ export const useProject = create<ProjectState>((set, get) => ({
   },
 
   edit: (name, field, value) => apply(applyEdit(get().project?.tags.tags ?? [], name, field, value)),
-  setAddress: (name, addr) => apply(applyAddress(get().project?.tags.tags ?? [], name, addr))
+  setAddress: (name, addr) => apply(applyAddress(get().project?.tags.tags ?? [], name, addr)),
+  setScale: (name, scale) => apply(applyScale(get().project?.tags.tags ?? [], name, scale))
 }))
 
 /** a good edit replaces the tag table (new objects → React redraws) and marks the project dirty; a refused one says why */

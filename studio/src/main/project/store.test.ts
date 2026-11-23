@@ -95,3 +95,25 @@ describe('project store', () => {
     expect(await openProject(dir)).toEqual({ ok: false, errors: ['schema: must be "spm.tags/1"'] })
   })
 })
+
+describe('project store — rules (step 20)', () => {
+  it('U-20.9 save is refused while a rule fails (address used twice); the file is not touched', async () => {
+    const before = await readFile(file(), 'utf8')
+    const tags = await opened()
+    tags.tags.find((t) => t.name === 'DI_S1_ClampOpen')!.addr = { bus: 'ecat', slave: 3, ch: 0 }
+    const r = await saveTags(dir, tags)
+    expect(r).toEqual({
+      ok: false,
+      errors: ['DI_S1_ClampOpen: address ecat 3:0 is also used by DI_S1_PartPresent', 'DI_S1_PartPresent: address ecat 3:0 is also used by DI_S1_ClampOpen']
+    })
+    expect(await readFile(file(), 'utf8')).toBe(before)
+  })
+
+  it('U-20.10 a file with rule problems still opens (so they can be fixed in N03)', async () => {
+    const tags = await opened()
+    tags.tags.find((t) => t.name === 'R_S1_Step')!.init = 5000 // above max 999
+    await writeFile(file(), JSON.stringify(tags))
+    const r = await openProject(dir)
+    expect(r.ok).toBe(true)
+  })
+})

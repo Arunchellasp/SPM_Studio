@@ -5,7 +5,7 @@ import { addressText, countText, groupOf, KIND_GROUPS, matches, NO_FILTER, optio
 import { detailRows } from './tags'
 
 const tags = (demo as TagFile).tags
-const rows = tags.map(toGridRow)
+const rows = tags.map((t) => toGridRow(t))
 const byName = (n: string): Tag => tags.find((t) => t.name === n)!
 const shown = (f: Partial<typeof NO_FILTER>): string[] => rows.filter((r) => matches(r, { ...NO_FILTER, ...f })).map((r) => r.name)
 

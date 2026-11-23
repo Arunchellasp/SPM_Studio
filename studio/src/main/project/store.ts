@@ -7,7 +7,7 @@
  *     tags.json.bak    ← the previous version, written by save (one level of undo on disk)
  *     config.json, program.json … later steps
  *
- * Rules: read → check against schemas/tags.schema.json; save → check first, refuse a bad file,
+ * Rules: read → check against schemas/tags.schema.json; save → schema + tags-rules first, refuse a bad file,
  * write a temp file and rename it over the old one (a crash never leaves half a tags.json).
  */
 import { copyFile, readFile, rename, stat, writeFile } from 'node:fs/promises'
@@ -16,11 +16,12 @@ import tagsSchema from '../../../../schemas/tags.schema.json'
 import type { ProjectOpenResult, ProjectSaveResult, TagFile } from '@shared/ipc'
 import { makeTagChecker } from '@shared/tags-schema'
 import { formatTagFile } from '@shared/tags-file'
+import { checkTags, issueText } from '@shared/tags-rules'
 
 export const TAGS_FILE = 'tags.json'
 export const BACKUP_SUFFIX = '.bak'
 
-const checkTags = makeTagChecker(tagsSchema)
+const checkSchema = makeTagChecker(tagsSchema)
 
 /** the first lines of the checker's list are enough for a toast; the rest is counted */
 const MAX_ERRORS = 10
@@ -48,15 +49,20 @@ export async function openProject(dir: string): Promise<ProjectOpenResult> {
   } catch (e) {
     return { ok: false, errors: [`${TAGS_FILE} is not valid JSON: ${(e as Error).message}`] }
   }
-  const check = checkTags(data)
+  const check = checkSchema(data)
   if (!check.ok) return { ok: false, errors: short(check.errors) }
+  // rule problems do NOT block opening: the file opens, N03 shows them red so they can be fixed (step 20)
   return { ok: true, project: { name: basename(dir), dir, tags: data as TagFile } }
 }
 
 /** Check, then write <dir>/tags.json (sorted, 2-space JSON). Keeps the file's line endings. */
 export async function saveTags(dir: string, tags: TagFile): Promise<ProjectSaveResult> {
-  const check = checkTags(tags)
+  const check = checkSchema(tags)
   if (!check.ok) return { ok: false, errors: short(check.errors) }
+  // step 20: rules across tags (duplicate name, address used twice, min ≥ max …) — the screens check too,
+  // but main is the last gate before the disk
+  const issues = checkTags(tags.tags)
+  if (issues.length) return { ok: false, errors: short(issues.map(issueText)) }
 
   const file = join(dir, TAGS_FILE)
   const old = (await exists(file)) ? await readFile(file, 'utf8') : null

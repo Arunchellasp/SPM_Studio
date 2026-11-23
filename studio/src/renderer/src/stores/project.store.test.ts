@@ -78,3 +78,17 @@ describe('project store editing (step 19)', () => {
     expect(useProject.getState().project!.tags.tags.find((t) => t.name === 'R_S1_Step')!.desc).toBe('not saved yet')
   })
 })
+
+describe('project store — rules (step 20)', () => {
+  it('U-20.13 Save is blocked while a rule fails, and works again after the fix', async () => {
+    await useProject.getState().open()
+    useProject.getState().setAddress('DI_S1_ClampOpen', { bus: 'ecat', slave: 3, ch: 0 }) // = DI_S1_PartPresent
+    await useProject.getState().save()
+    expect(lastToast()).toMatchObject({ text: 'Not saved: 2 problems — DI_S1_ClampOpen: address ecat 3:0 is also used by DI_S1_PartPresent', kind: 'error' })
+    expect(useProject.getState().dirty).toBe(true)
+    useProject.getState().setAddress('DI_S1_ClampOpen', { bus: 'ecat', slave: 3, ch: 1 })
+    await useProject.getState().save()
+    expect(lastToast()?.text).toMatch(/^(Saved |No changes)/)
+    expect(useProject.getState().dirty).toBe(false)
+  })
+})

@@ -35,10 +35,31 @@ const byCode = (a: unknown, b: unknown): number => {
 const EDIT: Record<string, EditField> = { name: 'name', type: 'type', scope: 'scope', unit: 'unit', init: 'init', comment: 'comment' }
 const editableIf = (cell: CellComponent): boolean => canEdit(cell.getRow().getData() as GridRow, EDIT[cell.getField()]!)
 
+/**
+ * Every cell: its text (as text, never as HTML) and — step 20 — red with the reason as tooltip when a rule fails.
+ * aria-invalid tells screen readers; the row also gets 'row-bad' (a ⚠ before the name: not by colour alone).
+ */
+function cellText(cell: CellComponent): HTMLElement {
+  const row = cell.getRow().getData() as GridRow
+  const msgs = row.issues?.[cell.getField() as keyof NonNullable<GridRow['issues']>]
+  const el = cell.getElement()
+  el.classList.toggle('cell-bad', !!msgs)
+  if (msgs) {
+    el.title = msgs.join('\n')
+    el.setAttribute('aria-invalid', 'true')
+  } else {
+    el.removeAttribute('title')
+    el.removeAttribute('aria-invalid')
+  }
+  const span = document.createElement('span')
+  span.textContent = String(cell.getValue() ?? '')
+  return span
+}
+
 function columns(scopes: () => string[]): ColumnDefinition[] {
   const text = { editor: 'input' as const, editable: editableIf }
   return [
-    { title: 'Name', field: 'name', widthGrow: 24, hozAlign: 'left', headerHozAlign: 'left', tooltip: true, sorter: byCode, ...text },
+    { title: 'Name', field: 'name', widthGrow: 24, hozAlign: 'left', headerHozAlign: 'left', sorter: byCode, ...text },
     { title: 'Address', field: 'address', widthGrow: 9 }, // double-click → address picker (dialog)
     { title: 'Type', field: 'type', widthGrow: 9, editor: 'list', editorParams: { values: [...EDITABLE_DTYPES] }, editable: editableIf },
     {
@@ -54,8 +75,8 @@ function columns(scopes: () => string[]): ColumnDefinition[] {
     { title: 'Retain', field: 'retain', widthGrow: 7 }, // click toggles (when allowed)
     { title: 'Mapped to', field: 'mappedTo', widthGrow: 17, headerSort: false },
     { title: 'Live value', field: 'live', widthGrow: 14, headerSort: false },
-    { title: 'Comment', field: 'comment', widthGrow: 34, hozAlign: 'left', headerHozAlign: 'left', tooltip: true, ...text }
-  ].map((c) => ({ headerHozAlign: 'center', hozAlign: 'center', minWidth: 48, resizable: false, ...c }) as ColumnDefinition)
+    { title: 'Comment', field: 'comment', widthGrow: 34, hozAlign: 'left', headerHozAlign: 'left', ...text }
+  ].map((c) => ({ headerHozAlign: 'center', hozAlign: 'center', minWidth: 48, resizable: false, formatter: cellText, ...c }) as ColumnDefinition)
 }
 
 export interface TagGridProps {
@@ -95,6 +116,7 @@ export function TagGrid({ rows, scopes, filter, selected, onSelect, onCount, onE
       index: 'name',
       columns: columns(() => cb.current.scopes),
       editTriggerEvent: 'dblclick', // one click selects, double-click edits
+      rowFormatter: (row: RowComponent) => row.getElement().classList.toggle('row-bad', !!(row.getData() as GridRow).issues),
       layout: 'fitColumns',
       height: '100%',
       renderVertical: 'virtual',
@@ -144,7 +166,10 @@ export function TagGrid({ rows, scopes, filter, selected, onSelect, onCount, onE
     () =>
       whenBuilt((t) => {
         t.deselectRow()
-        if (selected && t.getRow(selected)) t.selectRow(selected)
+        if (selected && t.getRow(selected)) {
+          t.selectRow(selected)
+          t.scrollToRow(selected, 'nearest', false).catch(() => {}) // filtered out → nothing to scroll to
+        }
       }),
     [selected, rows]
   )

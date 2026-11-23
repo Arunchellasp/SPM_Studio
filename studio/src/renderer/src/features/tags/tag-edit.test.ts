@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import demo from '../../../../../../projects/demo/tags.json'
 import type { Tag, TagFile } from '@shared/ipc'
-import { applyAddress, applyEdit, canEdit, parseValue } from './tag-edit'
+import { applyAddress, applyEdit, applyScale, canEdit, changeKind, parseValue } from './tag-edit'
+import { checkTags } from '@shared/tags-rules'
 
 const tags = (demo as TagFile).tags
 const get = (list: Tag[], n: string): Tag => list.find((t) => t.name === n)!
@@ -74,5 +75,26 @@ describe('N03 cell editing', () => {
     expect(err(applyAddress(tags, 'DI_S1_PartPresent', { bus: 'ecat', slave: 3, ch: NaN }))).toBe('channel is a whole number 0 … 255')
     expect(err(applyAddress(tags, 'DI_S1_PartPresent', { bus: 'ecat', slave: 600, ch: 0 }))).toBe('slave is a whole number 0 … 511')
     expect(err(applyAddress(tags, 'R_PartCount', { bus: 'ecat', slave: 1, ch: 0 }))).toBe('a REG tag lives in memory and has no address')
+  })
+
+  it('U-20.11 kind change: common columns kept, old-kind columns removed, fixed type set; the rules say what is missing', () => {
+    const { tag, dropped } = changeKind(get(tags, 'DI_S1_PartPresent'), 'REG')
+    expect(tag).toEqual({ name: 'DI_S1_PartPresent', kind: 'REG', dtype: 'BOOL', scope: 'S1', debounce_ms: 10, invert: false, log: 'change', desc: 'Part on nest', group: 'S1 Pick and place/Inputs' })
+    expect(dropped).toEqual(['addr'])
+    const r = applyEdit(tags, 'R_S1_Step', 'kind', 'AI')
+    expect(r.ok && r.note).toBe('Kind is now AI — removed: dtype INT. Red cells show what it still needs.')
+    const left = r.ok ? checkTags(r.tags).map((i) => i.message) : []
+    expect(left).toEqual(['a AI name must start with AI_', 'a AI tag needs an address', 'a AI tag needs scale', 'a AI tag needs unit'])
+    expect(err(applyEdit(tags, 'R_S1_Step', 'kind', 'XX'))).toMatch(/^kind must be one of DI, DO, AI/)
+  })
+
+  it('U-20.12 scaling: only AI / AO, four numbers; a falling range is kept (the rule shows it red)', () => {
+    const r = applyScale(tags, 'AI_Sealer_Temp', { raw: [0, 27648], eng: [0, 300] })
+    expect(r.ok && get(r.tags, 'AI_Sealer_Temp').scale).toEqual({ raw: [0, 27648], eng: [0, 300] })
+    const back = applyScale(tags, 'AI_Sealer_Temp', { raw: [100, 0], eng: [0, 300] })
+    expect(back.ok).toBe(true)
+    expect(back.ok && checkTags(back.tags).map((i) => i.message)).toEqual(['raw range 100 … 0 must rise'])
+    expect(err(applyScale(tags, 'AI_Sealer_Temp', { raw: [0, NaN], eng: [0, 1] }))).toBe('all four scaling values must be numbers')
+    expect(err(applyScale(tags, 'DI_S1_PartPresent', { raw: [0, 1], eng: [0, 1] }))).toBe('a DI tag has no scaling')
   })
 })

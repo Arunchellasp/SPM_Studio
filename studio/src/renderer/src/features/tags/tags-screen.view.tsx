@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import { AddressDialog } from './address-dialog.view'
+import { ScaleDialog } from './scale-dialog.view'
+import { checkTags, type TagIssue } from '@shared/tags-rules'
 import type { ScreenDef } from '../../app/screens'
 import { Button } from '../../components/button.view'
 import { Card } from '../../components/card.view'
@@ -27,13 +29,22 @@ export function TagsScreen({ screen }: { screen: ScreenDef }): React.JSX.Element
   const dirty = useProject((s) => s.dirty)
   const edit = useProject((s) => s.edit)
   const setAddress = useProject((s) => s.setAddress)
+  const setScale = useProject((s) => s.setScale)
   const [addrFor, setAddrFor] = useState<string | null>(null)
+  const [scaleFor, setScaleFor] = useState<string | null>(null)
 
   const [filter, setFilter] = useState<GridFilter>(NO_FILTER)
   const [selected, setSelected] = useState<string | null>(null)
   const [shown, setShown] = useState(0)
 
-  const rows = useMemo(() => (project ? project.tags.tags.map(toGridRow) : []), [project])
+  // step 20: the rules run on every change of the table (pure, ~1 ms for 1000 tags)
+  const issues = useMemo(() => (project ? checkTags(project.tags.tags) : []), [project])
+  const byTag = useMemo(() => {
+    const m = new Map<string, TagIssue[]>()
+    for (const i of issues) m.set(i.tag, [...(m.get(i.tag) ?? []), i])
+    return m
+  }, [issues])
+  const rows = useMemo(() => (project ? project.tags.tags.map((t) => toGridRow(t, byTag.get(t.name))) : []), [project, byTag])
   const scopes = useMemo(() => optionsOf(rows, 'scope'), [rows])
   const types = useMemo(() => optionsOf(rows, 'type'), [rows])
   const selTag = project?.tags.tags.find((t) => t.name === selected) ?? null
@@ -70,6 +81,8 @@ export function TagsScreen({ screen }: { screen: ScreenDef }): React.JSX.Element
 
   const set = (patch: Partial<GridFilter>): void => setFilter((f) => ({ ...f, ...patch }))
   const addrTag = project.tags.tags.find((t) => t.name === addrFor) ?? null
+  const scaleTag = project.tags.tags.find((t) => t.name === scaleFor) ?? null
+  const problemTags = [...byTag.keys()]
 
   /** a grid edit → store; a renamed selected tag stays selected */
   const onEdit = (name: string, field: Parameters<typeof edit>[1], value: unknown): boolean => {
@@ -89,6 +102,22 @@ export function TagsScreen({ screen }: { screen: ScreenDef }): React.JSX.Element
         <span data-testid="project-count">
           {tagCountText(project.tags.tags.length)} · format {project.tags.schema}
         </span>
+        {issues.length > 0 && (
+          <Button
+            size="sm"
+            variant="danger"
+            data-testid="project-problems"
+            title="Save is blocked until these are fixed. Click: go to the next tag with a problem."
+            onClick={() => {
+              // next problem after the selected one (round), and show all kinds so it is visible
+              const i = selected ? problemTags.indexOf(selected) : -1
+              setFilter(NO_FILTER)
+              setSelected(problemTags[(i + 1) % problemTags.length] ?? null)
+            }}
+          >
+            ⚠ {issues.length} {issues.length === 1 ? 'problem' : 'problems'}
+          </Button>
+        )}
         {dirty && (
           <span className="tgs-dirty" data-testid="project-dirty">
             ● unsaved changes
@@ -140,9 +169,18 @@ export function TagsScreen({ screen }: { screen: ScreenDef }): React.JSX.Element
           onEdit={onEdit}
           onPickAddress={setAddrFor}
         />
-        <TagDetails project={project} tag={selTag} row={selRow} onPickAddress={setAddrFor} />
+        <TagDetails
+          project={project}
+          tag={selTag}
+          row={selRow}
+          issues={selTag ? (byTag.get(selTag.name) ?? []) : []}
+          onPickAddress={setAddrFor}
+          onPickScale={setScaleFor}
+          onKind={(kind) => selTag && onEdit(selTag.name, 'kind', kind)}
+        />
       </div>
 
+      {scaleTag && <ScaleDialog tag={scaleTag} onOk={(sc) => setScale(scaleTag.name, sc).ok} onClose={() => setScaleFor(null)} />}
       {addrTag && <AddressDialog tag={addrTag} onOk={(a) => setAddress(addrTag.name, a).ok} onClose={() => setAddrFor(null)} />}
     </div>
   )
