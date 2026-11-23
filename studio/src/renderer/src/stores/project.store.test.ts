@@ -4,7 +4,7 @@ import { useFeedback } from './feedback.store'
 import { UNDO_STEPS, useProject } from './project.store'
 
 beforeEach(() => {
-  useProject.setState({ project: null, busy: false, dirty: false, past: [], future: [], saved: null })
+  useProject.setState({ project: null, busy: false, dirty: false, past: [], future: [], saved: null, importing: null })
   useFeedback.setState({ toasts: [] })
 })
 const lastToast = (): { text: string; kind: string } | undefined => useFeedback.getState().toasts.at(-1)
@@ -139,5 +139,46 @@ describe('project store — undo / redo (step 21)', () => {
     await useProject.getState().open()
     expect(useProject.getState().past).toEqual([])
     expect(useProject.getState().future).toEqual([])
+  })
+})
+
+describe('project store — bulk and import (step 22)', () => {
+  // the browser stand-in keeps its 'disk' between tests of this file (U-21.7 saved one more tag) → count from what was opened
+  const n = (): number => useProject.getState().project!.tags.tags.length
+
+  it('U-22.12 generate / copy station are ONE undo step each', async () => {
+    await useProject.getState().open()
+    const n0 = n()
+    useProject.getState().generate({ kind: 'DI', station: 'S3', count: 32, bus: 'ecat', slave: 20, firstCh: 0 })
+    expect(n()).toBe(n0 + 32)
+    useProject.getState().undo()
+    expect(n()).toBe(n0)
+    expect(useProject.getState().dirty).toBe(false)
+    useProject.getState().copyStation({ from: 'S2', to: 'S5', slaveOffset: 10 })
+    expect(useProject.getState().project!.tags.tags.some((t) => t.name === 'DI_S5_DoorClosed')).toBe(true)
+  })
+
+  it('U-22.13 import: rows wait for the preview; Merge applies as one step; Cancel changes nothing', async () => {
+    await useProject.getState().open()
+    const n0 = n()
+    await useProject.getState().readImport()
+    const imp = useProject.getState().importing
+    expect(imp?.tags).toHaveLength(n0 + 2)
+    expect(imp?.errors).toHaveLength(1)
+    expect(n()).toBe(n0) // nothing changed yet
+    useProject.getState().cancelImport()
+    expect(useProject.getState().importing).toBeNull()
+    await useProject.getState().readImport()
+    useProject.getState().applyImport('merge')
+    expect(n()).toBe(n0 + 2)
+    expect(useProject.getState().project!.tags.tags.find((t) => t.name === 'R_S1_Step')!.desc).toBe('Edited in Excel')
+    useProject.getState().undo()
+    expect(n()).toBe(n0)
+  })
+
+  it('U-22.14 export says where it went', async () => {
+    await useProject.getState().open()
+    await useProject.getState().exportTags()
+    expect(lastToast()).toMatchObject({ text: `Exported ${n()} tags to (browser) projects/demo/demo-tags.xlsx`, kind: 'done' })
   })
 })

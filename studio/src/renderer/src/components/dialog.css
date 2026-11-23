@@ -61,3 +61,57 @@
   gap: 12px;
   min-width: 320px;
 }
+
+/* step 22 — import preview and bulk tools */
+.imp {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.imp-file,
+.imp-note {
+  margin: 0;
+}
+.imp-note,
+.bulk-preview {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+.imp-plan {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  row-gap: 6px;
+  margin: 0;
+}
+.imp-plan dt {
+  color: var(--muted);
+}
+.imp-plan dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.imp-errors {
+  padding: 8px 10px;
+  background: var(--fault-bg);
+  border-left: 3px solid var(--danger);
+  color: var(--cell-text);
+  font-size: var(--fs-sm);
+}
+.imp-errors ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+.bulk-form {
+  padding-top: 12px;
+}
+.dlg.dlg-wide {
+  width: var(--dialog-w-wide);
+}
+.dlg .addr-form,
+.dlg .imp {
+  min-width: 0;
+}
+.bulk-preview {
+  margin: 0;
+  font-family: var(--mono);
+}

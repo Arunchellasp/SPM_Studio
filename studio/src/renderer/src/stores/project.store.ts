@@ -5,7 +5,10 @@
  * Results are shown as toasts — never window.alert.
  */
 import { create } from 'zustand'
-import type { Addr, MenuCommand, ProjectInfo, StudioApi, Tag, TagKind } from '@shared/ipc'
+import type { Addr, MenuCommand, ProjectImportResult, ProjectInfo, StudioApi, Tag, TagKind } from '@shared/ipc'
+import { applyImport } from '@shared/tag-table'
+import { copyStation, generate, type CopySpec, type GenerateSpec } from '../features/tags/tag-bulk'
+import { useUi } from './ui.store'
 import { applyAdd, applyAddress, applyDelete, applyDuplicate, applyEdit, applyScale, type EditField, type EditResult } from '../features/tags/tag-edit'
 import { checkTags, issueText } from '@shared/tags-rules'
 import { makeSimProject } from '../dev/sim-project'
@@ -44,6 +47,16 @@ interface ProjectState {
   remove: (name: string) => EditResult
   undo: () => boolean
   redo: () => boolean
+  /** step 22 */
+  generate: (spec: GenerateSpec) => EditResult
+  copyStation: (spec: CopySpec) => EditResult
+  exportTags: () => Promise<void>
+  /** asks main for a file; its rows wait in 'importing' for the preview (nothing in the table changes yet) */
+  readImport: () => Promise<void>
+  /** the file read for import, shown in N03's preview dialog until Import / Cancel */
+  importing: Extract<ProjectImportResult, { ok: true }> | null
+  applyImport: (mode: 'merge' | 'replace') => EditResult
+  cancelImport: () => void
 }
 
 /** how many changes can be undone (roadmap: 20) */
@@ -61,6 +74,7 @@ export const useProject = create<ProjectState>((set, get) => ({
   past: [],
   future: [],
   saved: null,
+  importing: null,
 
   open: async () => {
     if (get().busy) return
@@ -121,6 +135,34 @@ export const useProject = create<ProjectState>((set, get) => ({
   duplicate: (name) => apply(applyDuplicate(get().project?.tags.tags ?? [], name)),
   remove: (name) => apply(applyDelete(get().project?.tags.tags ?? [], name)),
 
+  generate: (spec) => apply(generate(get().project?.tags.tags ?? [], spec)),
+  copyStation: (spec) => apply(copyStation(get().project?.tags.tags ?? [], spec)),
+
+  exportTags: async () => {
+    const p = get().project
+    if (!p) return void toast('No project open — File › Open project… (Ctrl+O)', 'info')
+    const res = await api().project.exportTags(p.tags.tags)
+    if (res.ok) toast(`Exported ${p.tags.tags.length} tags to ${res.file}`, 'done')
+    else if (!res.cancelled) toast(`Not exported: ${firstError(res.errors)}`, 'error', 8000)
+  },
+
+  readImport: async () => {
+    if (!get().project) return void toast('Open a project first — the import goes into its tag table', 'info')
+    const res = await api().project.importTags()
+    if (res.ok) set({ importing: res })
+    else if (!res.cancelled) toast(`Not imported: ${firstError(res.errors)}`, 'error', 8000)
+  },
+
+  applyImport: (mode) => {
+    const imp = get().importing
+    const cur = get().project?.tags.tags ?? []
+    set({ importing: null })
+    if (!imp) return { ok: false, error: 'nothing to import' }
+    const tags = applyImport(cur, imp.tags, mode)
+    return apply({ ok: true, tags, tag: imp.tags[0] ?? cur[0]!, note: `Imported ${imp.tags.length} tags (${mode}) — Ctrl+Z takes it back` })
+  },
+  cancelImport: () => set({ importing: null }),
+
   undo: () => {
     const { project: p, past, future, saved } = get()
     const prev = past.at(-1)
@@ -170,5 +212,10 @@ export function connectProjectMenu(): void {
   api().onMenu((cmd: MenuCommand) => {
     if (cmd === 'project.open') void useProject.getState().open()
     if (cmd === 'project.save') void useProject.getState().save()
+    if (cmd === 'project.export') void useProject.getState().exportTags()
+    if (cmd === 'project.import') {
+      useUi.getState().openScreen('tags') // the preview lives on N03
+      void useProject.getState().readImport()
+    }
   })
 }

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { AddressDialog } from './address-dialog.view'
 import { ScaleDialog } from './scale-dialog.view'
 import { NewTagDialog } from './new-tag-dialog.view'
+import { BulkDialog } from './bulk-dialog.view'
+import { ImportDialog } from './import-dialog.view'
 import { toast } from '../../stores/feedback.store'
 import { checkTags, type TagIssue } from '@shared/tags-rules'
 import type { ScreenDef } from '../../app/screens'
@@ -40,6 +42,14 @@ export function TagsScreen({ screen }: { screen: ScreenDef }): React.JSX.Element
   const canUndo = useProject((s) => s.past.length > 0)
   const canRedo = useProject((s) => s.future.length > 0)
   const [adding, setAdding] = useState(false)
+  const [bulk, setBulk] = useState(false)
+  const generateTags = useProject((s) => s.generate)
+  const copyStation = useProject((s) => s.copyStation)
+  const exportTags = useProject((s) => s.exportTags)
+  const readImport = useProject((s) => s.readImport)
+  const applyImport = useProject((s) => s.applyImport)
+  const importing = useProject((s) => s.importing)
+  const cancelImport = useProject((s) => s.cancelImport)
   const [addrFor, setAddrFor] = useState<string | null>(null)
   const [scaleFor, setScaleFor] = useState<string | null>(null)
 
@@ -98,6 +108,16 @@ export function TagsScreen({ screen }: { screen: ScreenDef }): React.JSX.Element
         <>
           <Button size="md" variant="quiet" icon={<Icon name="undo" />} aria-label="Undo (Ctrl+Z)" title="Undo (Ctrl+Z)" onClick={() => undo()} disabled={!canUndo} />
           <Button size="md" variant="quiet" icon={<Icon name="redo" />} aria-label="Redo (Ctrl+Y)" title="Redo (Ctrl+Y)" onClick={() => redo()} disabled={!canRedo} />
+        </>
+      )}
+      {project && (
+        <>
+          <Button size="md" variant="quiet" onClick={() => void readImport()} disabled={busy} title="Excel / CSV → tag table (preview first)">
+            Import…
+          </Button>
+          <Button size="md" variant="quiet" onClick={() => void exportTags()} disabled={busy} title="tag table → Excel / CSV">
+            Export…
+          </Button>
         </>
       )}
       <Button size="md" icon={<Icon name="open" />} onClick={() => void open()} disabled={busy}>
@@ -201,6 +221,9 @@ export function TagsScreen({ screen }: { screen: ScreenDef }): React.JSX.Element
         <span className="tgs-count" data-testid="grid-count" aria-live="polite">
           {countText(shown, rows.length)}
         </span>
+        <Button size="md" onClick={() => setBulk(true)} title="Generate I/O for a card · copy a station">
+          Bulk…
+        </Button>
         <Button variant="primary" size="md" icon={<Icon name="plus" />} onClick={() => setAdding(true)}>
           New tag
         </Button>
@@ -233,6 +256,40 @@ export function TagsScreen({ screen }: { screen: ScreenDef }): React.JSX.Element
         />
       </div>
 
+      {importing && (
+        <ImportDialog
+          file={importing.file}
+          incoming={importing.tags}
+          errors={importing.errors}
+          current={project.tags.tags}
+          onClose={cancelImport}
+          onOk={(mode) => {
+            if (applyImport(mode).ok) setFilter(NO_FILTER)
+          }}
+        />
+      )}
+      {bulk && (
+        <BulkDialog
+          tags={project.tags.tags}
+          onClose={() => setBulk(false)}
+          onGenerate={(spec) => {
+            const r = generateTags(spec)
+            if (r.ok) {
+              setFilter(NO_FILTER)
+              setSelected(r.tag.name)
+            }
+            return r.ok
+          }}
+          onCopy={(spec) => {
+            const r = copyStation(spec)
+            if (r.ok) {
+              setFilter(NO_FILTER)
+              setSelected(r.tag.name)
+            }
+            return r.ok
+          }}
+        />
+      )}
       {adding && (
         <NewTagDialog
           tags={project.tags.tags}

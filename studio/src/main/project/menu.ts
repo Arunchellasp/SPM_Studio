@@ -14,6 +14,9 @@ export function buildMenu(send: (cmd: MenuCommand) => void, dev: boolean): Menu 
         { label: '&Open project…', accelerator: 'CmdOrCtrl+O', click: () => send('project.open') },
         { label: '&Save', accelerator: 'CmdOrCtrl+S', click: () => send('project.save') },
         { type: 'separator' },
+        { label: '&Import tags (Excel / CSV)…', click: () => send('project.import') },
+        { label: '&Export tags (Excel / CSV)…', click: () => send('project.export') },
+        { type: 'separator' },
         { role: 'quit', label: 'E&xit' }
       ]
     },

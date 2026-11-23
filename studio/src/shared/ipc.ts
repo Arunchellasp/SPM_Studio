@@ -11,7 +11,9 @@ export const IPC = {
   runtimeCommand: 'runtime:command', // renderer → main (invoke)
   projectOpen: 'project:open', // renderer → main (invoke): folder dialog, read + check tags.json
   projectSave: 'project:save', // renderer → main (invoke): check + write tags.json of the open project
-  menuCommand: 'menu:command' // main → renderer (push): File menu item clicked
+  menuCommand: 'menu:command', // main → renderer (push): File menu item clicked
+  projectExport: 'project:export', // renderer → main (invoke): save dialog, write .xlsx / .csv (step 22)
+  projectImport: 'project:import' // renderer → main (invoke): open dialog, read .xlsx / .csv → tags (step 22)
 } as const
 
 export interface AppInfo {
@@ -77,8 +79,13 @@ export type ProjectOpenResult = { ok: true; project: ProjectInfo } | { ok: false
 /** changed = false: the file on disk was already exactly this (nothing written) */
 export type ProjectSaveResult = { ok: true; changed: boolean; file: string } | { ok: false; errors: string[] }
 
+/** step 22: Excel / CSV */
+export type ProjectExportResult = { ok: true; file: string } | { ok: false; cancelled?: boolean; errors: string[] }
+/** errors = rows that could not be read (the others are in tags) */
+export type ProjectImportResult = { ok: true; file: string; tags: Tag[]; errors: string[] } | { ok: false; cancelled?: boolean; errors: string[] }
+
 /** File menu items forwarded to the screens */
-export type MenuCommand = 'project.open' | 'project.save'
+export type MenuCommand = 'project.open' | 'project.save' | 'project.import' | 'project.export'
 
 /** The typed API exposed to the screens by the preload script. */
 export interface StudioApi {
@@ -94,6 +101,10 @@ export interface StudioApi {
     open(): Promise<ProjectOpenResult>
     /** writes tags.json of the project opened last; refused when the schema check fails */
     save(tags: TagFile): Promise<ProjectSaveResult>
+    /** step 22: write the given tags to an .xlsx / .csv the user picks */
+    exportTags(tags: Tag[]): Promise<ProjectExportResult>
+    /** step 22: read an .xlsx / .csv the user picks; the screens decide what to do with the rows */
+    importTags(): Promise<ProjectImportResult>
   }
   /** File menu (Ctrl+O, Ctrl+S) */
   onMenu(cb: (cmd: MenuCommand) => void): () => void

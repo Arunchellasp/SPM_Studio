@@ -12,6 +12,8 @@ export interface ModalProps {
   /** the buttons at the bottom (Cancel / OK …) */
   actions: ReactNode
   children: ReactNode
+  /** 640 px instead of 420 (forms with previews — step 22) */
+  wide?: boolean
 }
 
 /**
@@ -19,7 +21,7 @@ export interface ModalProps {
  * as the confirm dialog (step 8): focus goes to the first field, Tab stays inside, Esc closes,
  * focus goes back to where it was. Rendered only while open: {open && <Modal …/>}.
  */
-export function Modal({ title, onClose, actions, children }: ModalProps): React.JSX.Element {
+export function Modal({ title, onClose, actions, children, wide = false }: ModalProps): React.JSX.Element {
   const box = useRef<HTMLDivElement>(null)
   const titleId = useId()
 
@@ -50,7 +52,7 @@ export function Modal({ title, onClose, actions, children }: ModalProps): React.
 
   return (
     <div className="dlg-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div ref={box} className="dlg" role="dialog" aria-modal="true" aria-labelledby={titleId} onKeyDown={onKeyDown}>
+      <div ref={box} className={wide ? 'dlg dlg-wide' : 'dlg'} role="dialog" aria-modal="true" aria-labelledby={titleId} onKeyDown={onKeyDown}>
         <header className="dlg-head">
           <h2 id={titleId} className="dlg-title">
             {title}

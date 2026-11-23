@@ -5,10 +5,12 @@
 import { join } from 'node:path'
 import { app, BrowserWindow, dialog, ipcMain, Menu, session, shell } from 'electron'
 import { z } from 'zod'
-import { IPC, type AppInfo, type ProjectOpenResult, type ProjectSaveResult, type TagFile } from '@shared/ipc'
+import { basename, join as joinPath } from 'node:path'
+import { IPC, type AppInfo, type ProjectExportResult, type ProjectImportResult, type ProjectOpenResult, type ProjectSaveResult, type TagFile } from '@shared/ipc'
 import { RuntimeBridge } from './runtime/bridge'
 import { openProject, saveTags } from './project/store'
 import { buildMenu } from './project/menu'
+import { exportTags, formatOf, importTags } from './project/exchange'
 
 const RUNTIME_URL = process.env.SPM_RUNTIME_URL ?? 'ws://127.0.0.1:7600'
 const isDev = !app.isPackaged
@@ -138,6 +140,48 @@ function registerIpc(): void {
     const p = SaveArgs.safeParse(payload)
     if (!p.success) return { ok: false, errors: ['BAD_REQUEST: ' + (p.error.issues[0]?.message ?? '')] }
     return saveTags(projectDir, p.data as TagFile)
+  })
+
+  // step 22: Excel / CSV. The screens send tags to export (no path); main asks where. Import returns rows only —
+  // nothing is changed on disk, the screens show a preview and apply it as one undo step.
+  const SHEETS = [
+    { name: 'Excel workbook', extensions: ['xlsx'] },
+    { name: 'CSV (comma separated)', extensions: ['csv'] }
+  ]
+  ipcMain.handle(IPC.projectExport, async (e, payload: unknown): Promise<ProjectExportResult> => {
+    if (!trusted(e) || !win) return { ok: false, errors: ['DENIED'] }
+    const p = SaveArgs.shape.tags.safeParse(payload)
+    if (!p.success) return { ok: false, errors: ['BAD_REQUEST'] }
+    const pick = await dialog.showSaveDialog(win, {
+      title: 'Export tags',
+      defaultPath: joinPath(projectDir ?? app.getPath('documents'), `${projectDir ? basename(projectDir) : 'tags'}-tags.xlsx`),
+      filters: SHEETS
+    })
+    if (pick.canceled || !pick.filePath) return { ok: false, cancelled: true, errors: [] }
+    const file = formatOf(pick.filePath) ? pick.filePath : pick.filePath + '.xlsx'
+    try {
+      await exportTags(file, p.data as TagFile['tags'])
+      return { ok: true, file }
+    } catch (err) {
+      return { ok: false, errors: [`could not write ${file}: ${(err as Error).message}`] }
+    }
+  })
+  ipcMain.handle(IPC.projectImport, async (e): Promise<ProjectImportResult> => {
+    if (!trusted(e) || !win) return { ok: false, errors: ['DENIED'] }
+    const pick = await dialog.showOpenDialog(win, {
+      title: 'Import tags',
+      defaultPath: projectDir ?? app.getPath('documents'),
+      properties: ['openFile'],
+      filters: [{ name: 'Excel or CSV', extensions: ['xlsx', 'csv'] }, ...SHEETS]
+    })
+    const file = pick.filePaths[0]
+    if (pick.canceled || !file) return { ok: false, cancelled: true, errors: [] }
+    try {
+      const r = await importTags(file)
+      return { ok: true, file, tags: r.tags, errors: r.errors }
+    } catch (err) {
+      return { ok: false, errors: [`could not read ${basename(file)}: ${(err as Error).message}`] }
+    }
   })
 
   bridge.on('status', (s) => win?.webContents.send(IPC.runtimeStatus, s))

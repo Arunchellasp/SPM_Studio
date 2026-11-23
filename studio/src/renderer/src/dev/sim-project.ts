@@ -29,6 +29,14 @@ export function makeSimProject(): Pick<StudioApi, 'project' | 'onMenu'> {
         const changed = text !== disk
         disk = text
         return { ok: true, changed, file: `(browser) projects/${name}/tags.json` }
+      },
+      // step 22: no files in a browser — export only says where it would go; import returns a fixed
+      // 'edited in Excel' sheet: one tag changed, two new, one bad row (for the import preview tests)
+      exportTags: async () => ({ ok: true, file: `(browser) projects/${name}/${name}-tags.xlsx` }),
+      importTags: async () => {
+        const sheet = (JSON.parse(disk) as TagFile).tags.map((t) => (t.name === 'R_S1_Step' ? { ...t, desc: 'Edited in Excel' } : t))
+        sheet.push({ name: 'R_Excel_1', kind: 'REG', dtype: 'INT', scope: 'S1', init: 1 }, { name: 'R_Excel_2', kind: 'REG', dtype: 'BOOL', scope: 'S1', init: false })
+        return { ok: true, file: '(browser) tags-edited.xlsx', tags: sheet, errors: ["row 24 (R_Bad): column 'more' is not valid JSON"] }
       }
     },
     // no menu bar in a browser
