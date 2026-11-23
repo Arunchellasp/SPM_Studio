@@ -57,18 +57,11 @@ export interface CommandResult {
   [key: string]: unknown
 }
 
-/** One row of tags.json. Columns are checked by schemas/tags.schema.json (step 15); typed fully in step 17. */
-export interface TagRow {
-  name: string
-  kind: string
-  [column: string]: unknown
-}
-
-/** The whole tags.json file */
-export interface TagFile {
-  schema: 'spm.tags/1'
-  tags: TagRow[]
-}
+/** tags.json types are GENERATED from schemas/tags.schema.json (step 17: npm run gen) — never typed twice */
+import type { Tag, TagFile } from './generated/tags'
+export type { Addr, Pair, Role, Tag, TagFile } from './generated/tags'
+/** the twelve kinds, read from the generated type: a new kind in the schema appears here by itself */
+export type TagKind = Tag['kind']
 
 export interface ProjectInfo {
   /** folder name, e.g. 'demo' (config.json may give a nicer name later) */

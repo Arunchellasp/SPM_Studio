@@ -61,7 +61,7 @@ describe('project store', () => {
   it('U-16.4 a file that fails the schema is NOT written; the reason is returned', async () => {
     const before = await readFile(file(), 'utf8')
     const tags = await opened()
-    tags.tags[0]!.kind = 'DX'
+    ;(tags.tags[0] as { kind: string }).kind = 'DX' // on purpose: since step 17 the compiler itself refuses 'DX'
     const r = await saveTags(dir, tags)
     expect(r.ok).toBe(false)
     if (!r.ok) expect(r.errors[0]).toMatch(/^tag 0 'AI_Sealer_Temp' › kind: must be one of/)
