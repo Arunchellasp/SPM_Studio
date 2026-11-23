@@ -53,6 +53,7 @@ export interface GridRow {
   live: string
   comment: string
   kind: TagKind
+  dtype?: string
   group: Exclude<KindGroup, 'all'>
 }
 
@@ -84,6 +85,7 @@ export function toGridRow(tag: Tag): GridRow {
     live: NONE, // live value from the runtime (phase G)
     comment: tag.desc ?? tag.text ?? '',
     kind: tag.kind,
+    dtype: tag.dtype,
     group: groupOf(tag)
   }
 }

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { AddressDialog } from './address-dialog.view'
 import type { ScreenDef } from '../../app/screens'
 import { Button } from '../../components/button.view'
 import { Card } from '../../components/card.view'
@@ -23,6 +24,10 @@ export function TagsScreen({ screen }: { screen: ScreenDef }): React.JSX.Element
   const busy = useProject((s) => s.busy)
   const open = useProject((s) => s.open)
   const save = useProject((s) => s.save)
+  const dirty = useProject((s) => s.dirty)
+  const edit = useProject((s) => s.edit)
+  const setAddress = useProject((s) => s.setAddress)
+  const [addrFor, setAddrFor] = useState<string | null>(null)
 
   const [filter, setFilter] = useState<GridFilter>(NO_FILTER)
   const [selected, setSelected] = useState<string | null>(null)
@@ -39,7 +44,7 @@ export function TagsScreen({ screen }: { screen: ScreenDef }): React.JSX.Element
       <Button size="md" icon={<Icon name="open" />} onClick={() => void open()} disabled={busy}>
         Open project…
       </Button>
-      <Button size="md" icon={<Icon name="save" />} onClick={() => void save()} disabled={busy || !project}>
+      <Button size="md" variant={dirty ? 'primary' : 'default'} icon={<Icon name="save" />} onClick={() => void save()} disabled={busy || !project}>
         Save
       </Button>
     </>
@@ -64,6 +69,14 @@ export function TagsScreen({ screen }: { screen: ScreenDef }): React.JSX.Element
   }
 
   const set = (patch: Partial<GridFilter>): void => setFilter((f) => ({ ...f, ...patch }))
+  const addrTag = project.tags.tags.find((t) => t.name === addrFor) ?? null
+
+  /** a grid edit → store; a renamed selected tag stays selected */
+  const onEdit = (name: string, field: Parameters<typeof edit>[1], value: unknown): boolean => {
+    const res = edit(name, field, value)
+    if (res.ok && field === 'name' && selected === name) setSelected(res.tag.name)
+    return res.ok
+  }
 
   return (
     <div className="tgs tgs-open">
@@ -76,6 +89,11 @@ export function TagsScreen({ screen }: { screen: ScreenDef }): React.JSX.Element
         <span data-testid="project-count">
           {tagCountText(project.tags.tags.length)} · format {project.tags.schema}
         </span>
+        {dirty && (
+          <span className="tgs-dirty" data-testid="project-dirty">
+            ● unsaved changes
+          </span>
+        )}
         <span className="tgs-bar-actions">{buttons}</span>
       </div>
 
@@ -112,9 +130,20 @@ export function TagsScreen({ screen }: { screen: ScreenDef }): React.JSX.Element
       </div>
 
       <div className="tgs-body">
-        <TagGrid rows={rows} filter={filter} selected={selected} onSelect={setSelected} onCount={setShown} />
-        <TagDetails project={project} tag={selTag} row={selRow} />
+        <TagGrid
+          rows={rows}
+          scopes={scopes}
+          filter={filter}
+          selected={selected}
+          onSelect={setSelected}
+          onCount={setShown}
+          onEdit={onEdit}
+          onPickAddress={setAddrFor}
+        />
+        <TagDetails project={project} tag={selTag} row={selRow} onPickAddress={setAddrFor} />
       </div>
+
+      {addrTag && <AddressDialog tag={addrTag} onOk={(a) => setAddress(addrTag.name, a).ok} onClose={() => setAddrFor(null)} />}
     </div>
   )
 }

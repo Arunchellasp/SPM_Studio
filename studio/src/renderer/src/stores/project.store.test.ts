@@ -4,7 +4,7 @@ import { useFeedback } from './feedback.store'
 import { useProject } from './project.store'
 
 beforeEach(() => {
-  useProject.setState({ project: null, busy: false })
+  useProject.setState({ project: null, busy: false, dirty: false })
   useFeedback.setState({ toasts: [] })
 })
 const lastToast = (): { text: string; kind: string } | undefined => useFeedback.getState().toasts.at(-1)
@@ -40,5 +40,41 @@ describe('project store (screens, browser stand-in)', () => {
     useProject.setState({ project: { ...p, tags: { ...p.tags, schema: 'spm.tags/2' as 'spm.tags/1' } } })
     await useProject.getState().save()
     expect(lastToast()).toMatchObject({ text: 'Not saved: schema: must be "spm.tags/1"', kind: 'error' })
+  })
+})
+
+describe('project store editing (step 19)', () => {
+  it('U-19.7 an edit updates the store and marks it unsaved; Save clears the mark', async () => {
+    await useProject.getState().open()
+    expect(useProject.getState().dirty).toBe(false)
+    const r = useProject.getState().edit('R_S1_Step', 'comment', 'edited in the grid')
+    expect(r.ok).toBe(true)
+    expect(useProject.getState().project!.tags.tags.find((t) => t.name === 'R_S1_Step')!.desc).toBe('edited in the grid')
+    expect(useProject.getState().dirty).toBe(true)
+    await useProject.getState().save()
+    expect(useProject.getState().dirty).toBe(false)
+    expect(lastToast()?.text).toMatch(/^Saved /)
+  })
+
+  it('U-19.8 a refused edit changes nothing and says why', async () => {
+    await useProject.getState().open()
+    const before = useProject.getState().project
+    const r = useProject.getState().edit('R_PartCount', 'init', 'abc')
+    expect(r.ok).toBe(false)
+    expect(useProject.getState().project).toBe(before)
+    expect(useProject.getState().dirty).toBe(false)
+    expect(lastToast()).toMatchObject({ text: "Not changed: 'abc' is not a whole number (DINT)", kind: 'error' })
+  })
+
+  it('U-19.9 Open with unsaved changes asks first; Cancel keeps the edits', async () => {
+    await useProject.getState().open()
+    useProject.getState().edit('R_S1_Step', 'comment', 'not saved yet')
+    const pending = useProject.getState().open()
+    const dlg = useFeedback.getState().dialog
+    expect(dlg?.title).toBe('Discard unsaved changes?')
+    useFeedback.getState().closeDialog(false)
+    await pending
+    expect(useProject.getState().dirty).toBe(true)
+    expect(useProject.getState().project!.tags.tags.find((t) => t.name === 'R_S1_Step')!.desc).toBe('not saved yet')
   })
 })

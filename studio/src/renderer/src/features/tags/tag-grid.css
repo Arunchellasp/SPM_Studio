@@ -75,3 +75,34 @@
   font-size: var(--fs);
   font-weight: 400;
 }
+
+/* step 19 — editors. The cell being edited, and Tabulator's list pop-up (it lives on <body>, outside the grid). */
+.tag-grid.tabulator .tabulator-row .tabulator-cell.tabulator-editing {
+  border: 2px solid var(--accent);
+  padding: 0;
+  background: var(--surface);
+}
+.tag-grid.tabulator .tabulator-row .tabulator-cell.tabulator-editing input {
+  height: 100%;
+  padding: 0 6px;
+  color: var(--text);
+  background: var(--surface);
+  font: inherit;
+}
+.tabulator-edit-list {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-family: var(--font);
+  font-size: var(--fs);
+}
+.tabulator-edit-list .tabulator-edit-list-item {
+  padding: 6px 8px;
+  color: var(--text);
+}
+.tabulator-edit-list .tabulator-edit-list-item:hover,
+.tabulator-edit-list .tabulator-edit-list-item.active,
+.tabulator-edit-list .tabulator-edit-list-item.focused {
+  background: var(--accent);
+  color: var(--header-text);
+}
