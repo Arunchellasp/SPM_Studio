@@ -7,8 +7,10 @@ import './theme/tokens.css'
 import './theme/base.css'
 import { AppShell } from './shell/app-shell.view'
 import { applyTheme, loadTheme } from './app/theme'
+import { connectProjectMenu } from './stores/project.store'
 
 applyTheme(loadTheme()) // before the first paint, so a dark PC never flashes light
+connectProjectMenu() // File › Open project… (Ctrl+O) / Save (Ctrl+S) from the window menu
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

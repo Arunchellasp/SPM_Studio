@@ -21,6 +21,7 @@ export default defineConfig({
       alias: { ...alias, '@renderer': resolve(__dirname, 'src/renderer/src') }
     },
     plugins: [react()],
+    server: { fs: { allow: [resolve(__dirname, '..')] } }, // projects/ and schemas/ next to studio/ (step 16)
     build: {
       outDir: resolve(__dirname, 'out/renderer'),
       rollupOptions: { input: resolve(__dirname, 'src/renderer/index.html') }

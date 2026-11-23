@@ -3,10 +3,12 @@
  * No UI code here; no heavy work on this thread (use worker_threads).
  */
 import { join } from 'node:path'
-import { app, BrowserWindow, ipcMain, session, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, session, shell } from 'electron'
 import { z } from 'zod'
-import { IPC, type AppInfo } from '@shared/ipc'
+import { IPC, type AppInfo, type ProjectOpenResult, type ProjectSaveResult, type TagFile } from '@shared/ipc'
 import { RuntimeBridge } from './runtime/bridge'
+import { openProject, saveTags } from './project/store'
+import { buildMenu } from './project/menu'
 
 const RUNTIME_URL = process.env.SPM_RUNTIME_URL ?? 'ws://127.0.0.1:7600'
 const isDev = !app.isPackaged
@@ -16,6 +18,8 @@ if (process.env.SPM_DISABLE_GPU === '1') app.disableHardwareAcceleration()
 
 let win: BrowserWindow | null = null
 const bridge = new RuntimeBridge(RUNTIME_URL)
+/** folder of the open project; only main knows it, so the screens can never write elsewhere */
+let projectDir: string | null = null
 
 // ---------------------------------------------------------------- single instance
 if (!app.requestSingleInstanceLock()) {
@@ -86,6 +90,9 @@ function trusted(e: Electron.IpcMainInvokeEvent): boolean {
   return !!win && e.sender === win.webContents && e.senderFrame === win.webContents.mainFrame
 }
 
+// a light shape check before the real one (Ajv + tags.schema.json in project/store.ts)
+const SaveArgs = z.object({ schema: z.string(), tags: z.array(z.object({ name: z.string(), kind: z.string() }).loose()) })
+
 const CommandArgs = z.object({
   op: z.string().regex(/^[a-z_]{1,32}$/),
   args: z.record(z.string(), z.unknown()).optional()
@@ -111,6 +118,28 @@ function registerIpc(): void {
     return bridge.command(p.data.op, p.data.args)
   })
 
+  ipcMain.handle(IPC.projectOpen, async (e): Promise<ProjectOpenResult> => {
+    if (!trusted(e) || !win) return { ok: false, errors: ['DENIED'] }
+    const pick = await dialog.showOpenDialog(win, {
+      title: 'Open project folder',
+      properties: ['openDirectory'],
+      defaultPath: projectDir ?? app.getPath('documents')
+    })
+    const dir = pick.filePaths[0]
+    if (pick.canceled || !dir) return { ok: false, cancelled: true, errors: [] }
+    const res = await openProject(dir)
+    if (res.ok) projectDir = dir
+    return res
+  })
+
+  ipcMain.handle(IPC.projectSave, async (e, payload: unknown): Promise<ProjectSaveResult> => {
+    if (!trusted(e)) return { ok: false, errors: ['DENIED'] }
+    if (!projectDir) return { ok: false, errors: ['no project is open'] }
+    const p = SaveArgs.safeParse(payload)
+    if (!p.success) return { ok: false, errors: ['BAD_REQUEST: ' + (p.error.issues[0]?.message ?? '')] }
+    return saveTags(projectDir, p.data as TagFile)
+  })
+
   bridge.on('status', (s) => win?.webContents.send(IPC.runtimeStatus, s))
   bridge.on('state', (s) => win?.webContents.send(IPC.runtimeState, s))
   bridge.on('event', (ev) => win?.webContents.send(IPC.runtimeEvent, ev))
@@ -121,6 +150,7 @@ app.whenReady().then(() => {
   // deny every permission request (camera, notifications, …) by default
   session.defaultSession.setPermissionRequestHandler((_wc, _perm, cb) => cb(false))
   registerIpc()
+  Menu.setApplicationMenu(buildMenu((cmd) => win?.webContents.send(IPC.menuCommand, cmd), isDev))
   createWindow()
   bridge.start()
 

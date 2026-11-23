@@ -7,6 +7,6 @@
     "outDir": "node_modules/.tsbuild/web",
     "tsBuildInfoFile": "node_modules/.tsbuild/web.tsbuildinfo"
   },
-  "include": ["src/renderer/src/**/*", "src/shared/**/*"],
+  "include": ["src/renderer/src/**/*", "src/shared/**/*", "../schemas/*.json", "../projects/demo/*.json"],
   "exclude": ["src/shared/**/*.test.ts", "src/main/**/*.test.ts"]
 }

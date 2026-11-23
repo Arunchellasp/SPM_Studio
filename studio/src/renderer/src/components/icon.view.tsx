@@ -9,6 +9,7 @@ import {
   CircleCheck,
   ClipboardList,
   Component,
+  FolderOpen,
   Gauge,
   Hash,
   House,
@@ -18,6 +19,7 @@ import {
   Play,
   Plus,
   RotateCcw,
+  Save,
   Settings,
   Square,
   TriangleAlert,
@@ -72,7 +74,10 @@ export const ICONS = {
   close: X, // ✕
   info: Info,
   done: CircleCheck,
-  error: CircleAlert
+  error: CircleAlert,
+  // project files (step 16)
+  open: FolderOpen,
+  save: Save
 } satisfies Record<string, LucideIcon>
 
 export type IconName = keyof typeof ICONS

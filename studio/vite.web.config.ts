@@ -10,5 +10,7 @@ export default defineConfig({
     alias: { '@shared': resolve(__dirname, 'src/shared'), '@renderer': resolve(__dirname, 'src/renderer/src') }
   },
   plugins: [react()],
+  // the demo project and the schemas live next to studio/ (projects/, schemas/) — step 16
+  server: { fs: { allow: [resolve(__dirname, '..')] } },
   build: { outDir: resolve(__dirname, 'out/web'), emptyOutDir: true }
 })

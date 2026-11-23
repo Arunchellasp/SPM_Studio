@@ -8,6 +8,7 @@ import type { IconName } from '../components/icon.view'
 import { ComponentsScreen } from '../features/components/components-screen.view'
 import { AdminScreen } from '../features/admin/admin-screen.view'
 import { OverviewScreen } from '../features/overview/overview-screen.view'
+import { TagsScreen } from '../features/tags/tags-screen.view'
 
 export interface ScreenDef {
   id: string
@@ -38,7 +39,15 @@ export const ALL_SCREENS: ScreenDef[] = [
     title: 'Program › Sequence editor',
     purpose: 'Tree · canvas with live values · properties'
   },
-  { id: 'tags', code: 'N03', icon: 'tags', label: 'Tags', title: 'Tags › Tag database', purpose: 'One typed, named table for every tag' },
+  {
+    id: 'tags',
+    code: 'N03',
+    icon: 'tags',
+    label: 'Tags',
+    title: 'Tags › Tag database',
+    purpose: 'One typed, named table for every tag',
+    view: TagsScreen
+  },
   { id: 'io', code: 'N04', icon: 'io', label: 'I/O', title: 'I/O › Cards, mapping, diagnostics', purpose: 'Simulate / force per channel' },
   {
     id: 'motion',

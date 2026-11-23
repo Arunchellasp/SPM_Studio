@@ -4,6 +4,7 @@
  * Used only when the screens run outside Electron (plain browser preview, web demo).
  * Behaves like tools/mock-runtime.mjs: 20 Hz state, step / mode events, start / stop / write.
  */
+import { makeSimProject } from './sim-project'
 import type { CommandResult, RuntimeEvent, RuntimeState, RuntimeStatus, StudioApi } from '@shared/ipc'
 
 type Cb<T> = (v: T) => void
@@ -100,7 +101,8 @@ export function installSimApi(): void {
       onStatus: (cb) => sub(statusCbs, cb, { ...status }),
       onState: (cb) => sub(stateCbs, cb),
       onEvent: (cb) => sub(eventCbs, cb)
-    }
+    },
+    ...makeSimProject()
   }
   window.spm = api
 }

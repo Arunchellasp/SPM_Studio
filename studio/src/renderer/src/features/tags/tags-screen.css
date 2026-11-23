@@ -1,0 +1,49 @@
+/* N03 Tags (step 16): page head on the grey background like N10, project facts, kind summary */
+.tgs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+.tgs-head h1 {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: 600;
+}
+.tgs-code {
+  color: var(--muted-on-bg);
+  font-weight: 700;
+  margin-right: 6px;
+}
+.tgs-purpose {
+  margin: 4px 0 0;
+  color: var(--muted-on-bg);
+}
+.tgs-facts {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  row-gap: 8px;
+  margin: 0;
+}
+.tgs-facts dt {
+  color: var(--muted);
+}
+.tgs-facts dd {
+  margin: 0;
+  font-weight: 600;
+}
+.tgs-facts dd.tgs-path {
+  font-family: var(--mono);
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+.tgs-kinds {
+  align-self: flex-start;
+}
+.tgs-note {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+.tgs-project .tgs-note {
+  margin: 0;
+}

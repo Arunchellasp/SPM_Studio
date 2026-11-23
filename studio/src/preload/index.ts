@@ -18,7 +18,12 @@ const api: StudioApi = {
     onStatus: (cb) => subscribe(IPC.runtimeStatus, cb),
     onState: (cb) => subscribe(IPC.runtimeState, cb),
     onEvent: (cb) => subscribe(IPC.runtimeEvent, cb)
-  }
+  },
+  project: {
+    open: () => ipcRenderer.invoke(IPC.projectOpen),
+    save: (tags) => ipcRenderer.invoke(IPC.projectSave, tags)
+  },
+  onMenu: (cb) => subscribe(IPC.menuCommand, cb)
 }
 
 contextBridge.exposeInMainWorld('spm', api)
