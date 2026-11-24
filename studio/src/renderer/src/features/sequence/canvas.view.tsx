@@ -10,6 +10,9 @@ import './canvas.css'
 const NODE_TYPES = { start: TerminalNode, end: TerminalNode, move_abs: StepNode, wait_di: StepNode, set_do: StepNode, delay: StepNode }
 const STEP_TYPES = new Set<string>(STEP_DEFS.map((d) => d.type))
 /** fit = all nodes in view with a margin, never bigger than 100 % (the fit button has its own options — step 24) */
+/** flow units; a node is 44 … 54 high, so anywhere on its upper half reaches the dot on top */
+export const LINK_RADIUS = 40
+
 const FIT = { padding: 1 / 5, maxZoom: 1 }
 
 /**
@@ -62,6 +65,9 @@ function Canvas(): React.JSX.Element {
         onConnect={(c: Connection) => void connect(c)}
         // while dragging a link: green / red handle, the same rule as on drop
         isValidConnection={(c) => connectProblem(c, nodes, edges) === ''}
+        // a link ends on the nearest free dot within this distance, so letting go on the box itself works
+        // (found on the PC, physical test P-23.3: the 10 px dot was too hard to hit by hand)
+        connectionRadius={LINK_RADIUS}
         snapToGrid
         snapGrid={[GRID, GRID]}
         fitView

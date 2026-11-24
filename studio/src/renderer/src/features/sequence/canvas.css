@@ -37,6 +37,14 @@
   width: 10px;
   height: 10px;
 }
+/* the dot stays 10 px, but it can be grabbed within 26 px: a near miss starts a link, not a pan
+   (found on the PC, physical test P-23.3) */
+.seq-canvas .react-flow__handle::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+}
 
 /* Start / End: rounded terminal, 160 × 44 (steps are 260 × 54 in the design) */
 .seq-terminal {
