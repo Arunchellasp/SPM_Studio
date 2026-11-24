@@ -17,6 +17,7 @@ import {
   House,
   Info,
   Move,
+  Network,
   Pause,
   Play,
   Plus,
@@ -96,7 +97,9 @@ export const ICONS = {
   output: ToggleRight,
   delay: Timer,
   // step 26
-  decision: Split
+  decision: Split,
+  // step 28: auto-layout ('tidy up')
+  layout: Network
 } satisfies Record<string, LucideIcon>
 
 export type IconName = keyof typeof ICONS

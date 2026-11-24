@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import {
   Background,
   BackgroundVariant,
@@ -59,6 +60,15 @@ function Canvas(): React.JSX.Element {
   const onNodesChange = useSequence((s) => s.onNodesChange)
   const onEdgesChange = useSequence((s) => s.onEdgesChange)
   const connect = useSequence((s) => s.connect)
+  const record = useSequence((s) => s.record)
+  const dropIfUnmoved = useSequence((s) => s.dropIfUnmoved)
+  const fitTick = useSequence((s) => s.fitTick)
+  // step 28: after Tidy up, show the whole tidied flow (once the new positions are drawn)
+  useEffect(() => {
+    if (!fitTick) return
+    const t = requestAnimationFrame(() => void flow.fitView(FIT))
+    return () => cancelAnimationFrame(t)
+  }, [fitTick, flow])
   // The shell is CSS-zoomed on small screens / Windows 125 % (step 9). React Flow reads the pointer in page
   // pixels but draws in the zoomed space, so links and drops landed off (found on the PC, P-23.3). The canvas
   // undoes the shell zoom for itself: inside it a CSS pixel is a page pixel again.
@@ -92,6 +102,13 @@ function Canvas(): React.JSX.Element {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={(c: Connection) => void connect(c)}
+          // step 28: undo steps for what React Flow changes by itself — a drag (from where it started) and Delete
+          onNodeDragStart={() => record()}
+          onNodeDragStop={() => dropIfUnmoved()}
+          onBeforeDelete={async () => {
+            record()
+            return true
+          }}
           // while dragging a link: green / red handle, the same rule as on drop
           isValidConnection={(c) => connectProblem(c, nodes, edges) === ''}
           // a link ends on the nearest free dot within this distance, so letting go on the box itself works

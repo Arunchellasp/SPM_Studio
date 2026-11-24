@@ -29,6 +29,7 @@
   "dependencies": {
     "@xyflow/react": "^13.0.2",
     "ajv": "^8.20.0",
+    "elkjs": "^0.12.1",
     "exceljs": "^4.4.0",
     "lucide-react": "^1.77.0",
     "papaparse": "^5.7.1",

@@ -1,4 +1,7 @@
+import { useEffect } from 'react'
 import type { ScreenDef } from '../../app/screens'
+import { toast } from '../../stores/feedback.store'
+import { autoLayout } from './auto-layout'
 import { Button } from '../../components/button.view'
 import { Card } from '../../components/card.view'
 import { Icon } from '../../components/icon.view'
@@ -30,6 +33,38 @@ export function SequenceScreen({ screen }: { screen: ScreenDef }): React.JSX.Ele
   const edges = useSequence((s) => s.edges)
   const nodes = useSequence((s) => s.nodes)
   const reset = useSequence((s) => s.reset)
+  const canUndo = useSequence((s) => s.past.length > 0)
+  const canRedo = useSequence((s) => s.future.length > 0)
+  const tidy = async (): Promise<void> => {
+    const s = useSequence.getState()
+    s.applyLayout(await autoLayout(s.nodes, s.edges))
+  }
+  // step 28 keys on N02 (like N03, step 21): Ctrl+Z / Ctrl+Y undo / redo, Ctrl+C / Ctrl+V copy / paste nodes.
+  // Not while typing in a field and not while a dialog is open: there the keys belong to the text.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey) return
+      const el = e.target as HTMLElement
+      if (el.closest('input, textarea, select, [contenteditable="true"]') || document.querySelector('.dlg-backdrop')) return
+      const s = useSequence.getState()
+      const k = e.key.toLowerCase()
+      if (k === 'z' && !e.shiftKey) {
+        e.preventDefault()
+        if (!s.undo()) toast('Nothing to undo', 'info')
+      } else if (k === 'y' || (k === 'z' && e.shiftKey)) {
+        e.preventDefault()
+        if (!s.redo()) toast('Nothing to redo', 'info')
+      } else if (k === 'c') {
+        const n = s.copy()
+        if (n) toast(`Copied ${n} ${n === 1 ? 'node' : 'nodes'} — Ctrl+V pastes`, 'info')
+      } else if (k === 'v') {
+        e.preventDefault()
+        if (!s.paste().length) toast('Nothing to paste — select nodes and press Ctrl+C first', 'info')
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
   const { issues } = useFlowIssues()
   return (
     <div className="seq">
@@ -59,6 +94,32 @@ export function SequenceScreen({ screen }: { screen: ScreenDef }): React.JSX.Ele
           <span className={issues.length ? 'seq-problems seq-problems-bad' : 'seq-problems'} data-testid="seq-problems">
             {issues.length ? `⚠ ${issues.length} ${issues.length === 1 ? 'problem' : 'problems'}` : '✓ no problems'}
           </span>
+          <Button
+            size="md"
+            variant="quiet"
+            icon={<Icon name="undo" />}
+            aria-label="Undo (Ctrl+Z)"
+            title="Undo (Ctrl+Z)"
+            onClick={() => useSequence.getState().undo()}
+            disabled={!canUndo}
+          />
+          <Button
+            size="md"
+            variant="quiet"
+            icon={<Icon name="redo" />}
+            aria-label="Redo (Ctrl+Y)"
+            title="Redo (Ctrl+Y)"
+            onClick={() => useSequence.getState().redo()}
+            disabled={!canRedo}
+          />
+          <Button
+            size="md"
+            variant="quiet"
+            icon={<Icon name="layout" />}
+            aria-label="Tidy up"
+            title="Tidy up: lay the flow out top to bottom (one undo step). Ctrl+C / Ctrl+V copy and paste nodes."
+            onClick={() => void tidy()}
+          />
           <Button
             size="md"
             variant="quiet"
