@@ -1,5 +1,6 @@
 import { Background, BackgroundVariant, Controls, MiniMap, ReactFlow, ReactFlowProvider, useReactFlow, type Connection, type Edge } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
+import { useScreenScale } from '../../app/screen-scale'
 import { useSequence } from '../../stores/sequence.store'
 import { connectProblem, GRID, STEP_DEFS, type FlowNode, type StepKind } from './flow'
 import { DND_TYPE } from './palette.view'
@@ -37,11 +38,16 @@ function Canvas(): React.JSX.Element {
   const onNodesChange = useSequence((s) => s.onNodesChange)
   const onEdgesChange = useSequence((s) => s.onEdgesChange)
   const connect = useSequence((s) => s.connect)
+  // The shell is CSS-zoomed on small screens / Windows 125 % (step 9). React Flow reads the pointer in page
+  // pixels but draws in the zoomed space, so links and drops landed off (found on the PC, P-23.3). The canvas
+  // undoes the shell zoom for itself: inside it a CSS pixel is a page pixel again.
+  const { zoom } = useScreenScale()
 
   return (
     <div
       className="seq-canvas"
       data-testid="seq-canvas"
+      style={zoom === 1 ? undefined : { zoom: 1 / zoom }}
       // step 24: drop from the palette — the node's top-left corner where the pointer is, centred on it
       onDragOver={(e) => {
         if (!e.dataTransfer.types.includes(DND_TYPE)) return
