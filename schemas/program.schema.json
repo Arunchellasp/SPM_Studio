@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "spm.program/1",
+  "title": "SPM program (program.json, editor format)",
+  "description": "The flowcharts of a project as the studio draws them (Software implementation › 4c): flows per station, their nodes with position and parameters, and the links. Tags are used by NAME. The compiler (step 29) turns this into program.rt.json for the runtime. Flow rules (one Start, links, tags exist …) are checked by flow.rules.ts, not by this schema.",
+  "type": "object",
+  "required": [
+    "schema",
+    "flows"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "spm.program/1",
+      "description": "file format and version"
+    },
+    "flows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/flow"
+      }
+    }
+  },
+  "$defs": {
+    "name": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,47}$",
+      "description": "letters, digits and _; starts with a letter or _ (also a C identifier)"
+    },
+    "flow": {
+      "type": "object",
+      "required": [
+        "name",
+        "station",
+        "nodes",
+        "edges"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/name",
+          "description": "unique in the project, e.g. S1_Main"
+        },
+        "station": {
+          "$ref": "#/$defs/name",
+          "description": "the station it belongs to (a tag scope, e.g. S1)"
+        },
+        "autostart": {
+          "type": "boolean",
+          "default": false,
+          "description": "started by the runtime when the machine goes to Auto"
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/edge"
+          }
+        }
+      }
+    },
+    "node": {
+      "type": "object",
+      "required": [
+        "id",
+        "type",
+        "pos"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{1,32}$",
+          "description": "unique in its flow; the compiler keeps it as 'src' so the screens can show the live step"
+        },
+        "type": {
+          "enum": [
+            "start",
+            "end",
+            "move_abs",
+            "wait_di",
+            "set_do",
+            "delay",
+            "if"
+          ],
+          "description": "node type = op of the step table in lower case (Software implementation › 4a); more types join with their steps"
+        },
+        "pos": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "[x, y] on the canvas, in canvas pixels"
+        },
+        "p": {
+          "type": "object",
+          "description": "parameters of the type (e.g. wait_di: tag, value, timeout_ms, alarm) — checked by the editor and the compiler",
+          "additionalProperties": true
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "optional step name shown instead of the type title"
+        },
+        "comment": {
+          "type": "string",
+          "maxLength": 500
+        }
+      }
+    },
+    "edge": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_-]{1,32}$"
+      },
+      "minItems": 2,
+      "maxItems": 3,
+      "description": "[from node id, to node id] or, out of a Decision, [from, to, 'yes' | 'no'] (the way out is checked when the editor reads the file)"
+    }
+  }
+}

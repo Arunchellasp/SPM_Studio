@@ -8,7 +8,8 @@
  * process (project/store.ts); this stand-in only checks the file version. tools/csp-guard.test.ts keeps it so.
  */
 import demoTags from '../../../../../projects/demo/tags.json'
-import type { MenuCommand, StudioApi, TagFile } from '@shared/ipc'
+import type { MenuCommand, ProgramFile, StudioApi, TagFile } from '@shared/ipc'
+import { formatProgramFile } from '@shared/program-file'
 import { formatTagFile } from '@shared/tags-file'
 import { makeBigProject } from '@shared/big-project'
 import { checkTags, issueText } from '@shared/tags-rules'
@@ -18,9 +19,14 @@ export function makeSimProject(): Pick<StudioApi, 'project' | 'onMenu'> {
   const big = typeof location !== 'undefined' && new URLSearchParams(location.search).get('project') === 'big'
   const name = big ? 'big-1000' : 'demo'
   let disk = formatTagFile(big ? makeBigProject() : (demoTags as TagFile))
+  // step 27: no program.json in the demo folder; a save keeps it here, a later Open reads it back
+  let programDisk: string | null = null
   return {
     project: {
-      open: async () => ({ ok: true, project: { name, dir: `(browser) projects/${name}`, tags: JSON.parse(disk) as TagFile } }),
+      open: async () => ({
+        ok: true,
+        project: { name, dir: `(browser) projects/${name}`, tags: JSON.parse(disk) as TagFile, program: programDisk ? (JSON.parse(programDisk) as ProgramFile) : null }
+      }),
       save: async (tags) => {
         if (tags.schema !== 'spm.tags/1') return { ok: false, errors: ['schema: must be "spm.tags/1"'] }
         const issues = checkTags(tags.tags) // same last gate as main (step 20)
@@ -32,6 +38,13 @@ export function makeSimProject(): Pick<StudioApi, 'project' | 'onMenu'> {
       },
       // step 22: no files in a browser — export only says where it would go; import returns a fixed
       // 'edited in Excel' sheet: one tag changed, two new, one bad row (for the import preview tests)
+      saveProgram: async (program) => {
+        if (program.schema !== 'spm.program/1') return { ok: false, errors: ['schema: must be "spm.program/1"'] }
+        const text = formatProgramFile(program)
+        const changed = text !== programDisk
+        programDisk = text
+        return { ok: true, changed, file: `(browser) projects/${name}/program.json` }
+      },
       exportTags: async () => ({ ok: true, file: `(browser) projects/${name}/${name}-tags.xlsx` }),
       importTags: async () => {
         const sheet = (JSON.parse(disk) as TagFile).tags.map((t) => (t.name === 'R_S1_Step' ? { ...t, desc: 'Edited in Excel' } : t))

@@ -23,7 +23,8 @@ const api: StudioApi = {
     open: () => ipcRenderer.invoke(IPC.projectOpen),
     save: (tags) => ipcRenderer.invoke(IPC.projectSave, tags),
     exportTags: (tags) => ipcRenderer.invoke(IPC.projectExport, tags),
-    importTags: () => ipcRenderer.invoke(IPC.projectImport)
+    importTags: () => ipcRenderer.invoke(IPC.projectImport),
+    saveProgram: (program) => ipcRenderer.invoke(IPC.projectSaveProgram, program)
   },
   onMenu: (cb) => subscribe(IPC.menuCommand, cb)
 }

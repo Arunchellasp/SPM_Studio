@@ -9,10 +9,22 @@ import type { Addr, MenuCommand, ProjectImportResult, ProjectInfo, StudioApi, Ta
 import { applyImport } from '@shared/tag-table'
 import { copyStation, generate, type CopySpec, type GenerateSpec } from '../features/tags/tag-bulk'
 import { useUi } from './ui.store'
-import { applyAdd, applyAddress, applyDelete, applyDuplicate, applyEdit, applyScale, type EditField, type EditResult } from '../features/tags/tag-edit'
+import {
+  applyAdd,
+  applyAddress,
+  applyDelete,
+  applyDuplicate,
+  applyEdit,
+  applyScale,
+  type EditField,
+  type EditResult
+} from '../features/tags/tag-edit'
 import { checkTags, issueText } from '@shared/tags-rules'
 import { makeSimProject } from '../dev/sim-project'
 import { confirmDialog, toast } from './feedback.store'
+import { useSequence } from './sequence.store'
+import { programDirty } from '../features/sequence/program-dirty'
+import { programText, toProgram } from '../features/sequence/program'
 
 let sim: Pick<StudioApi, 'project' | 'onMenu'> | null = null
 function api(): Pick<StudioApi, 'project' | 'onMenu'> {
@@ -35,6 +47,8 @@ interface ProjectState {
   open: () => Promise<void>
   /** write the current tag table back to tags.json */
   save: () => Promise<void>
+  /** step 27: write the flows of N02 to program.json */
+  saveProgram: () => Promise<void>
   /** change one cell; refused edits leave the table as it was and say why */
   edit: (name: string, field: EditField, value: unknown) => EditResult
   /** the address picker's result */
@@ -78,10 +92,13 @@ export const useProject = create<ProjectState>((set, get) => ({
 
   open: async () => {
     if (get().busy) return
-    if (get().dirty) {
+    // step 27: unsaved flowcharts count too (only once a project is open — before that there is nowhere to save them)
+    const flowsDirty = !!get().project && programDirty()
+    if (get().dirty || flowsDirty) {
+      const what = [get().dirty && 'tag changes', flowsDirty && 'flowchart changes'].filter(Boolean).join(' and ')
       const go = await confirmDialog({
         title: 'Discard unsaved changes?',
-        message: `${get().project?.name ?? 'The project'} has changes that are not saved. Open another project and lose them?`,
+        message: `${get().project?.name ?? 'The project'} has ${what} that are not saved. Open another project and lose them?`,
         confirmLabel: 'Discard and open',
         danger: true
       })
@@ -92,7 +109,14 @@ export const useProject = create<ProjectState>((set, get) => ({
       const res = await api().project.open()
       if (res.ok) {
         set({ project: res.project, dirty: false, past: [], future: [], saved: res.project.tags.tags })
-        toast(`Opened ${res.project.name} · ${res.project.tags.tags.length} tags`, 'done')
+        // step 27: the project's flowcharts replace the drawing in N02
+        const problems = useSequence.getState().loadProgram(res.project.program ?? null, res.project.tags.tags)
+        const flows = res.project.program?.flows.length ?? 0
+        toast(
+          `Opened ${res.project.name} · ${res.project.tags.tags.length} tags${flows ? ` · ${flows} ${flows === 1 ? 'flow' : 'flows'}` : ''}`,
+          'done'
+        )
+        if (problems.length) toast(`program.json: ${firstError(problems)} — that part was left out`, 'error', 8000)
       } else if (!res.cancelled) {
         toast(`Could not open the project: ${firstError(res.errors)}`, 'error', 8000)
       }
@@ -122,6 +146,27 @@ export const useProject = create<ProjectState>((set, get) => ({
       else {
         set({ dirty: false, saved: p.tags.tags })
         toast(res.changed ? `Saved ${res.file}` : 'No changes — tags.json is already up to date', res.changed ? 'done' : 'info')
+      }
+    } finally {
+      set({ busy: false })
+    }
+  },
+
+  saveProgram: async () => {
+    if (!get().project) {
+      toast('No project open — open one in Tags first, then save the flowcharts into it', 'info')
+      return
+    }
+    if (get().busy) return
+    const flows = useSequence.getState().currentFlows()
+    set({ busy: true })
+    try {
+      // flow problems (badges) do not block saving: a half-drawn flow can be kept and finished later (step 26)
+      const res = await api().project.saveProgram(toProgram(flows))
+      if (!res.ok) toast(`Not saved: ${firstError(res.errors)}`, 'error', 8000)
+      else {
+        useSequence.getState().markSaved(programText(flows))
+        toast(res.changed ? `Saved ${res.file}` : 'No changes — program.json is already up to date', res.changed ? 'done' : 'info')
       }
     } finally {
       set({ busy: false })
@@ -211,7 +256,9 @@ export function connectProjectMenu(): void {
   menuConnected = true
   api().onMenu((cmd: MenuCommand) => {
     if (cmd === 'project.open') void useProject.getState().open()
-    if (cmd === 'project.save') void useProject.getState().save()
+    // Ctrl+S saves what the screen shows: the flowcharts on N02, the tags elsewhere
+    if (cmd === 'project.save')
+      void (useUi.getState().activeScreen === 'program' ? useProject.getState().saveProgram() : useProject.getState().save())
     if (cmd === 'project.export') void useProject.getState().exportTags()
     if (cmd === 'project.import') {
       useUi.getState().openScreen('tags') // the preview lives on N03

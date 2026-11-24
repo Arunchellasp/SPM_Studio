@@ -13,7 +13,8 @@ export const IPC = {
   projectSave: 'project:save', // renderer → main (invoke): check + write tags.json of the open project
   menuCommand: 'menu:command', // main → renderer (push): File menu item clicked
   projectExport: 'project:export', // renderer → main (invoke): save dialog, write .xlsx / .csv (step 22)
-  projectImport: 'project:import' // renderer → main (invoke): open dialog, read .xlsx / .csv → tags (step 22)
+  projectImport: 'project:import', // renderer → main (invoke): open dialog, read .xlsx / .csv → tags (step 22)
+  projectSaveProgram: 'project:save-program' // renderer → main (invoke): check + write program.json (step 27)
 } as const
 
 export interface AppInfo {
@@ -62,6 +63,9 @@ export interface CommandResult {
 /** tags.json types are GENERATED from schemas/tags.schema.json (step 17: npm run gen) — never typed twice */
 import type { Tag, TagFile } from './generated/tags'
 export type { Addr, Pair, Role, Tag, TagFile } from './generated/tags'
+/** program.json types, GENERATED from schemas/program.schema.json (step 27) */
+import type { ProgramFile } from './generated/program'
+export type { ProgramFile, Flow as ProgramFlow, Node as ProgramNode, Edge as ProgramEdge } from './generated/program'
 /** the twelve kinds, read from the generated type: a new kind in the schema appears here by itself */
 export type TagKind = Tag['kind']
 
@@ -71,6 +75,8 @@ export interface ProjectInfo {
   /** absolute folder path on this PC (shown only, never sent back by the screens) */
   dir: string
   tags: TagFile
+  /** step 27: the project's flowcharts; null / missing = no program.json yet (a new project) */
+  program?: ProgramFile | null
 }
 
 /** cancelled = the user closed the folder dialog; errors = why the folder could not be opened */
@@ -105,6 +111,8 @@ export interface StudioApi {
     exportTags(tags: Tag[]): Promise<ProjectExportResult>
     /** step 22: read an .xlsx / .csv the user picks; the screens decide what to do with the rows */
     importTags(): Promise<ProjectImportResult>
+    /** step 27: writes program.json of the project opened last; refused when the schema check fails */
+    saveProgram(program: ProgramFile): Promise<ProjectSaveResult>
   }
   /** File menu (Ctrl+O, Ctrl+S) */
   onMenu(cb: (cmd: MenuCommand) => void): () => void

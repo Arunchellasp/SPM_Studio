@@ -21,7 +21,10 @@ export interface Target {
 }
 
 /** One line per schema. message.schema.json joins when the runtime link is built (protocol.ts is still hand-written). */
-export const TARGETS: Target[] = [{ schema: 'schemas/tags.schema.json', out: 'src/shared/generated/tags.ts', name: 'TagFile' }]
+export const TARGETS: Target[] = [
+  { schema: 'schemas/tags.schema.json', out: 'src/shared/generated/tags.ts', name: 'TagFile' },
+  { schema: 'schemas/program.schema.json', out: 'src/shared/generated/program.ts', name: 'ProgramFile' } // step 27
+]
 
 const STYLE = { singleQuote: true, semi: false, printWidth: 140, trailingComma: 'none' } as const // = .prettierrc
 

@@ -7,6 +7,7 @@ import { useSequence } from '../../stores/sequence.store'
 import { BuildOutput } from './build-output.view'
 import { SequenceCanvas } from './canvas.view'
 import { useFlowIssues } from './flow-issues'
+import { FlowTree } from './flow-tree.view'
 import { NodePalette } from './palette.view'
 import { PropertyPanel } from './property-panel.view'
 import './sequence-screen.css'
@@ -40,7 +41,7 @@ export function SequenceScreen({ screen }: { screen: ScreenDef }): React.JSX.Ele
         <h2 className="seq-sub">Nodes</h2>
         <NodePalette />
         <h2 className="seq-sub">Sequences</h2>
-        {later('Sequences, functions, modes and the tag tree', 'step 27 (save / load + tree)')}
+        <FlowTree />
       </Card>
 
       {/* the design has no title here: the toolbar is the first row of the canvas card */}
@@ -62,8 +63,8 @@ export function SequenceScreen({ screen }: { screen: ScreenDef }): React.JSX.Ele
             size="md"
             variant="quiet"
             icon={<Icon name="reset" />}
-            aria-label="New flow"
-            title="New flow (Start and End only)"
+            aria-label="Clear flow"
+            title="Clear this flow: back to Start and End only (+ New flow in the tree adds a flow)"
             onClick={reset}
           />
         </div>

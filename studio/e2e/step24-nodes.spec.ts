@@ -4,7 +4,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test'
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
   await page.locator('.rail-item', { hasText: 'Program' }).click()
-  await page.getByRole('button', { name: 'New flow' }).click() // the flow store lives across screens
+  await page.getByRole('button', { name: 'Clear flow' }).click() // the flow store lives across screens ('New flow' until step 27)
   await expect(page.locator('.react-flow__node')).toHaveCount(2)
 })
 

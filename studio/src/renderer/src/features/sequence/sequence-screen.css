@@ -220,3 +220,61 @@ button.seq-build-item:hover {
 button.seq-build-item:focus-visible {
   outline: 2px solid var(--accent);
 }
+
+/* step 27 — Sequences tree (stations → flows) and Save */
+.seq-tree-list,
+.seq-tree-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.seq-tree-list ul {
+  padding-left: 22px;
+  margin-bottom: 6px;
+}
+.seq-station {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  padding: 4px 0;
+}
+.seq-flow {
+  display: block;
+  width: 100%;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--radius-input);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.seq-flow:hover {
+  background: var(--hover);
+}
+.seq-flow:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.seq-flow[aria-current='true'] {
+  background: var(--accent-lt);
+  color: var(--accent-text);
+  font-weight: 700;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.seq-flow-new {
+  color: var(--muted);
+}
+.seq-save {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+.seq-dirty {
+  color: var(--accent-text);
+  font-weight: 600;
+}

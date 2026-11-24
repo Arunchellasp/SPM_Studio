@@ -6,9 +6,9 @@ import { join } from 'node:path'
 import { app, BrowserWindow, dialog, ipcMain, Menu, session, shell } from 'electron'
 import { z } from 'zod'
 import { basename, join as joinPath } from 'node:path'
-import { IPC, type AppInfo, type ProjectExportResult, type ProjectImportResult, type ProjectOpenResult, type ProjectSaveResult, type TagFile } from '@shared/ipc'
+import { IPC, type AppInfo, type ProjectExportResult, type ProjectImportResult, type ProjectOpenResult, type ProgramFile, type ProjectSaveResult, type TagFile } from '@shared/ipc'
 import { RuntimeBridge } from './runtime/bridge'
-import { openProject, saveTags } from './project/store'
+import { openProject, saveTags, saveProgram } from './project/store'
 import { buildMenu } from './project/menu'
 import { exportTags, formatOf, importTags } from './project/exchange'
 
@@ -94,6 +94,7 @@ function trusted(e: Electron.IpcMainInvokeEvent): boolean {
 
 // a light shape check before the real one (Ajv + tags.schema.json in project/store.ts)
 const SaveArgs = z.object({ schema: z.string(), tags: z.array(z.object({ name: z.string(), kind: z.string() }).loose()) })
+const ProgramArgs = z.object({ schema: z.literal('spm.program/1'), flows: z.array(z.object({ name: z.string(), nodes: z.array(z.unknown()), edges: z.array(z.unknown()) }).loose()) })
 
 const CommandArgs = z.object({
   op: z.string().regex(/^[a-z_]{1,32}$/),
@@ -140,6 +141,15 @@ function registerIpc(): void {
     const p = SaveArgs.safeParse(payload)
     if (!p.success) return { ok: false, errors: ['BAD_REQUEST: ' + (p.error.issues[0]?.message ?? '')] }
     return saveTags(projectDir, p.data as TagFile)
+  })
+
+  // step 27: program.json — light shape check here, the full schema check in saveProgram
+  ipcMain.handle(IPC.projectSaveProgram, async (e, payload: unknown): Promise<ProjectSaveResult> => {
+    if (!trusted(e)) return { ok: false, errors: ['DENIED'] }
+    if (!projectDir) return { ok: false, errors: ['no project is open'] }
+    const p = ProgramArgs.safeParse(payload)
+    if (!p.success) return { ok: false, errors: ['BAD_REQUEST: ' + (p.error.issues[0]?.message ?? '')] }
+    return saveProgram(projectDir, p.data as unknown as ProgramFile)
   })
 
   // step 22: Excel / CSV. The screens send tags to export (no path); main asks where. Import returns rows only —
