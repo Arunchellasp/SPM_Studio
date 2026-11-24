@@ -84,17 +84,20 @@ const COLUMN_OF: Record<string, IssueColumn> = {
   text: 'comment'
 }
 
+/** 'an AI', 'an AXIS', 'an ALARM' — but 'a DI', 'a UDT' (said 'you-dee-tee') */
+const article = (kind: string): string => (kind.startsWith('A') ? 'an' : 'a')
+
 function perKind(t: Tag, out: TagIssue[]): void {
   const r = KIND_RULES[t.kind]
   if (!r) return
   const add = (column: IssueColumn, rule: RuleId, message: string): void => void out.push({ tag: t.name, column, rule, message })
-  if (!r.prefix.test(t.name)) add('name', 'kind-prefix', `a ${t.kind} name must start with ${r.prefixText}`)
+  if (!r.prefix.test(t.name)) add('name', 'kind-prefix', `${article(t.kind)} ${t.kind} name must start with ${r.prefixText}`)
   for (const col of r.required) {
-    if ((t as Record<string, unknown>)[col] === undefined) add(COLUMN_OF[col] ?? 'name', 'kind-required', `a ${t.kind} tag needs ${col === 'addr' ? 'an address' : col}`)
+    if ((t as Record<string, unknown>)[col] === undefined) add(COLUMN_OF[col] ?? 'name', 'kind-required', `${article(t.kind)} ${t.kind} tag needs ${col === 'addr' ? 'an address' : col}`)
   }
   if (r.dtype && t.dtype !== undefined && !r.dtype.includes(t.dtype)) add('type', 'kind-dtype', `type of a ${t.kind} must be ${r.dtype.join(' or ')}`)
-  if (r.memory && t.addr) add('address', 'kind-address', `a ${t.kind} tag lives in memory and must not have an address`)
-  if (t.addr && !r.memory && t.kind !== 'AXIS' && t.kind !== 'UDT' && t.addr.ch === undefined) add('address', 'kind-required', `a ${t.kind} address needs a channel`)
+  if (r.memory && t.addr) add('address', 'kind-address', `${article(t.kind)} ${t.kind} tag lives in memory and must not have an address`)
+  if (t.addr && !r.memory && t.kind !== 'AXIS' && t.kind !== 'UDT' && t.addr.ch === undefined) add('address', 'kind-required', `${article(t.kind)} ${t.kind} address needs a channel`)
 }
 
 // ---------------------------------------------------------------- across tags

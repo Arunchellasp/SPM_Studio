@@ -160,7 +160,7 @@ export function applyEdit(tags: Tag[], name: string, field: EditField, value: un
       return done({ ...old, scope: s })
     }
     case 'unit': {
-      if (!text && UNIT_REQUIRED.includes(old.kind)) return { ok: false, error: `a ${old.kind} tag needs a unit` }
+      if (!text && UNIT_REQUIRED.includes(old.kind)) return { ok: false, error: `${old.kind.startsWith('A') ? 'an' : 'a'} ${old.kind} tag needs a unit` }
       if (text.length > MAX_UNIT) return { ok: false, error: `unit is at most ${MAX_UNIT} characters` }
       return done({ ...old, unit: text || undefined })
     }

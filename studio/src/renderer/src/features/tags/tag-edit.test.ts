@@ -57,7 +57,7 @@ describe('N03 cell editing', () => {
   it('U-19.5 scope, unit, retain, comment rules', () => {
     expect(get(ok(applyEdit(tags, 'R_S1_Step', 'scope', 'S3')), 'R_S1_Step').scope).toBe('S3')
     expect(err(applyEdit(tags, 'R_S1_Step', 'scope', 'Station 3'))).toBe("scope 'Station 3' — use global, S1 … S99, flow:<name> or fn:<name>")
-    expect(err(applyEdit(tags, 'AI_Sealer_Temp', 'unit', ''))).toBe('a AI tag needs a unit')
+    expect(err(applyEdit(tags, 'AI_Sealer_Temp', 'unit', ''))).toBe('an AI tag needs a unit')
     expect(canEdit({ kind: 'DI' }, 'unit')).toBe(false)
     expect(get(ok(applyEdit(tags, 'R_S1_Step', 'retain', true)), 'R_S1_Step').retain).toBe(true)
     expect('retain' in get(ok(applyEdit(tags, 'R_PartCount', 'retain', false)), 'R_PartCount')).toBe(false)
@@ -84,7 +84,7 @@ describe('N03 cell editing', () => {
     const r = applyEdit(tags, 'R_S1_Step', 'kind', 'AI')
     expect(r.ok && r.note).toBe('Kind is now AI — removed: dtype INT. Red cells show what it still needs.')
     const left = r.ok ? checkTags(r.tags).map((i) => i.message) : []
-    expect(left).toEqual(['a AI name must start with AI_', 'a AI tag needs an address', 'a AI tag needs scale', 'a AI tag needs unit'])
+    expect(left).toEqual(['an AI name must start with AI_', 'an AI tag needs an address', 'an AI tag needs scale', 'an AI tag needs unit'])
     expect(err(applyEdit(tags, 'R_S1_Step', 'kind', 'XX'))).toMatch(/^kind must be one of DI, DO, AI/)
   })
 

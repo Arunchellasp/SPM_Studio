@@ -2,6 +2,7 @@
 import type { ProjectInfo, Tag } from '@shared/ipc'
 import { countByKind } from '@shared/tags-file'
 import type { GridRow } from './tag-grid'
+import { canEdit } from './tag-edit'
 
 /** the twelve kinds as Software implementation › 3a names them */
 export const KIND_LABEL: Record<string, string> = {
@@ -48,7 +49,13 @@ export function detailRows(tag: Tag, row: GridRow): { label: string; value: stri
     { label: 'Address', value: row.address },
     { label: 'Type', value: tag.dtype ?? tag.kind },
     { label: 'Scope', value: row.scope },
-    ...(tag.scale ? [{ label: 'Scaling', value: `raw ${tag.scale.raw[0]} … ${tag.scale.raw[1]} → ${tag.scale.eng[0]} … ${tag.scale.eng[1]}${tag.unit ? ' ' + tag.unit : ''}` }] : []),
+    // shown for every kind that can have a scaling, also while it has none yet — that is when its Change… is needed
+    // (found on the PC, physical test P-20.4: REG → AI left 'needs scale' with no way to add one)
+    ...(tag.scale
+      ? [{ label: 'Scaling', value: `raw ${tag.scale.raw[0]} … ${tag.scale.raw[1]} → ${tag.scale.eng[0]} … ${tag.scale.eng[1]}${tag.unit ? ' ' + tag.unit : ''}` }]
+      : canEdit(tag, 'scale')
+        ? [{ label: 'Scaling', value: '– (none yet)' }]
+        : []),
     { label: 'Mapped to', value: '– (card and channel come with N04 I/O)' },
     { label: 'Used in', value: '– (flowcharts come with N02 Program)' },
     { label: 'Alarm', value: alarm },

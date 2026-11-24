@@ -72,7 +72,7 @@ test('UI-20.5 kind change in the details: asks first, then red cells show what t
   await expect(kind).toHaveValue('REG')
   await kind.selectOption('AI')
   await page.getByRole('alertdialog').getByRole('button', { name: 'Change to AI' }).click()
-  await expect(cell(page, 'R_S1_Step', 'name')).toHaveAttribute('title', 'a AI name must start with AI_')
+  await expect(cell(page, 'R_S1_Step', 'name')).toHaveAttribute('title', 'an AI name must start with AI_')
   await expect(cell(page, 'R_S1_Step', 'address')).toHaveClass(/cell-bad/)
   await expect(cell(page, 'R_S1_Step', 'unit')).toHaveClass(/cell-bad/)
   await expect(problems(page)).toHaveText('⚠ 4 problems')
