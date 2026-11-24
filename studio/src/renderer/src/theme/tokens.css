@@ -160,6 +160,8 @@
   --seq-terminal-h: 44px;
   --seq-tool-w: 112px; /* canvas toolbar buttons (Run, Pause …) */
   --seq-step-w: 260px; /* steps (Improved design › N02: 260 × 54) */
+  --seq-decision-h: 80px; /* step 26: the Decision diamond — taller, so its text fits inside the diamond */
+  --seq-badge: 22px; /* step 26: red problem badge on a node */
   --seq-step-h: 54px;
   --toast-w: 360px;
   --backdrop: rgba(31, 35, 40, 0.45); /* dims the screen behind a dialog */

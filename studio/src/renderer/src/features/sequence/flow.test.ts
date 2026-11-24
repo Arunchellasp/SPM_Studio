@@ -53,14 +53,18 @@ describe('N02 node types (step 24)', () => {
       'Move:MOVE_ABS:process',
       'Wait input:WAIT_DI:condition',
       'Set output:SET_DO:process',
-      'Delay:DELAY:delay'
+      'Delay:DELAY:delay',
+      'Decision:IF:decision' // step 26
     ])
+    expect(defaultParams('if')).toEqual({ expr: '' })
   })
 
   it('U-24.2 summary line: open parameters show ?, values as the runtime will use them', () => {
     expect(summary('move_abs', defaultParams('move_abs'))).toBe('MOVE axis? → point? · 100 %')
     expect(summary('move_abs', { axis: 'AX_S1_X', point: 'P_S1_Pick', speed: 80 })).toBe('MOVE AX_S1_X → P_S1_Pick · 80 %')
-    expect(summary('wait_di', { tag: 'DI_S1_PartPresent', value: true, timeout_ms: 5000, alarm: '' })).toBe('WAIT DI_S1_PartPresent = TRUE · 5 s')
+    expect(summary('wait_di', { tag: 'DI_S1_PartPresent', value: true, timeout_ms: 5000, alarm: '' })).toBe(
+      'WAIT DI_S1_PartPresent = TRUE · 5 s'
+    )
     expect(summary('set_do', { tag: 'DO_S1_ClampValve', value: false })).toBe('SET DO_S1_ClampValve := FALSE')
     expect(summary('delay', { ms: 300 })).toBe('DELAY 300 ms')
     expect(summary('start', undefined)).toBe('')

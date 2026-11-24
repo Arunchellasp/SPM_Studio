@@ -24,6 +24,7 @@ import {
   RotateCcw,
   Save,
   Settings,
+  Split,
   Square,
   Timer,
   ToggleRight,
@@ -93,7 +94,9 @@ export const ICONS = {
   // N02 node types (step 24)
   wait: Hourglass,
   output: ToggleRight,
-  delay: Timer
+  delay: Timer,
+  // step 26
+  decision: Split
 } satisfies Record<string, LucideIcon>
 
 export type IconName = keyof typeof ICONS

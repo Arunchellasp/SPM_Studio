@@ -48,6 +48,7 @@
 
 /* Start / End: rounded terminal, 160 × 44 (steps are 260 × 54 in the design) */
 .seq-terminal {
+  position: relative;
   width: var(--seq-terminal-w);
   height: var(--seq-terminal-h);
   border-radius: calc(var(--seq-terminal-h) / 2);
@@ -130,4 +131,60 @@
 .seq-step.seq-selected .seq-outline path {
   stroke: var(--accent);
   stroke-width: 4;
+}
+
+/* step 26 — Decision: a diamond 260 × 80; 'yes' straight on (bottom), 'no' to the right */
+.seq-step.seq-decision {
+  height: var(--seq-decision-h);
+  padding: 8px 48px;
+  align-items: center;
+  text-align: center;
+}
+.seq-decision .seq-step-sum {
+  max-width: 100%;
+}
+.seq-step.seq-decision .seq-outline polygon {
+  fill: var(--surface);
+}
+.seq-way {
+  position: absolute;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--muted);
+  pointer-events: none;
+}
+.seq-way-yes {
+  left: calc(50% + 10px);
+  bottom: -20px;
+}
+.seq-way-no {
+  right: -24px;
+  top: calc(50% - 22px);
+}
+/* labels on the links out of a Decision */
+.seq-canvas .react-flow__edge-textbg {
+  fill: var(--surface);
+}
+.seq-canvas .react-flow__edge-text {
+  fill: var(--text);
+  font-weight: 700;
+}
+
+/* step 26 — red badge: count of problems, messages in the tooltip (top right corner of the node) */
+.seq-badge {
+  position: absolute;
+  top: calc(var(--seq-badge) / -2);
+  right: calc(var(--seq-badge) / -2);
+  min-width: var(--seq-badge);
+  height: var(--seq-badge);
+  padding: 0 6px;
+  border-radius: calc(var(--seq-badge) / 2);
+  background: var(--error);
+  color: var(--on-accent);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  line-height: var(--seq-badge);
+  text-align: center;
+  z-index: 1;
+  cursor: help;
 }

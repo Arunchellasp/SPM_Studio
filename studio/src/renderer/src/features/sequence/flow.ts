@@ -6,7 +6,7 @@
 import type { Connection, Edge, Node } from '@xyflow/react'
 
 /** node types (Software implementation › 4a); the names are those of program.json (4c) */
-export type StepKind = 'move_abs' | 'wait_di' | 'set_do' | 'delay'
+export type StepKind = 'move_abs' | 'wait_di' | 'set_do' | 'delay' | 'if'
 export type FlowNodeKind = 'start' | 'end' | StepKind
 
 /** parameters per type — 'p' in program.json; empty strings = not chosen yet (property panel: step 25) */
@@ -15,6 +15,8 @@ export interface StepParams {
   wait_di: { tag: string; value: boolean; timeout_ms: number; alarm: string }
   set_do: { tag: string; value: boolean }
   delay: { ms: number }
+  /** step 26: the condition (flow-expr.ts); yes / no are the two links out */
+  if: { expr: string }
 }
 
 export interface FlowNodeData extends Record<string, unknown> {
@@ -35,8 +37,8 @@ export interface StepDef {
   type: StepKind
   title: string
   op: string
-  shape: 'process' | 'condition' | 'delay'
-  icon: 'motion' | 'wait' | 'output' | 'delay'
+  shape: 'process' | 'condition' | 'delay' | 'decision'
+  icon: 'motion' | 'wait' | 'output' | 'delay' | 'decision'
   done: string
 }
 
@@ -44,7 +46,8 @@ export const STEP_DEFS: StepDef[] = [
   { type: 'move_abs', title: 'Move', op: 'MOVE_ABS', shape: 'process', icon: 'motion', done: 'axis in position' },
   { type: 'wait_di', title: 'Wait input', op: 'WAIT_DI', shape: 'condition', icon: 'wait', done: 'input = value (or timeout → alarm)' },
   { type: 'set_do', title: 'Set output', op: 'SET_DO', shape: 'process', icon: 'output', done: 'next cycle' },
-  { type: 'delay', title: 'Delay', op: 'DELAY', shape: 'delay', icon: 'delay', done: 'time elapsed' }
+  { type: 'delay', title: 'Delay', op: 'DELAY', shape: 'delay', icon: 'delay', done: 'time elapsed' },
+  { type: 'if', title: 'Decision', op: 'IF', shape: 'decision', icon: 'decision', done: 'evaluated in one cycle → yes or no' }
 ]
 
 export const stepDef = (t: StepKind): StepDef => STEP_DEFS.find((d) => d.type === t)!
@@ -55,7 +58,8 @@ export function defaultParams<K extends StepKind>(type: K): StepParams[K] {
     move_abs: { axis: '', point: '', speed: 100 },
     wait_di: { tag: '', value: true, timeout_ms: 5000, alarm: '' },
     set_do: { tag: '', value: true },
-    delay: { ms: 500 }
+    delay: { ms: 500 },
+    if: { expr: '' }
   }
   return structuredClone(d[type])
 }
@@ -81,9 +85,18 @@ export function summary(type: FlowNodeKind, p: FlowNodeData['p']): string {
     }
     case 'delay':
       return `DELAY ${seconds((p as StepParams['delay']).ms)}`
+    case 'if':
+      return `IF ${or((p as StepParams['if']).expr.trim(), 'condition?')}`
     default:
       return ''
   }
+}
+
+/** the ways out of a node: a Decision has 'yes' (bottom) and 'no' (right), every other node one, End none */
+export function outlets(type: FlowNodeKind | undefined): (string | null)[] {
+  if (type === 'if') return ['yes', 'no']
+  if (type === 'end' || type === undefined) return []
+  return [null]
 }
 
 /** next free node id: n1, n2 … (start / end keep their names) */
@@ -95,11 +108,21 @@ export function nextId(nodes: FlowNode[]): string {
 export const snap = (v: number): number => Math.round(v / GRID) * GRID
 
 /** a new step node; without a drop position it goes below the lowest node */
-export function makeStep(type: StepKind, nodes: FlowNode[], at?: { x: number; y: number }): FlowNode {
+export function makeStep(type: StepKind | Terminal, nodes: FlowNode[], at?: { x: number; y: number }): FlowNode {
   const below = { x: 0, y: Math.max(0, ...nodes.map((n) => n.position.y)) + GRID * 6 }
-  const pos = at ?? below
-  return { id: nextId(nodes), type, position: { x: snap(pos.x), y: snap(pos.y) }, data: { label: stepDef(type).title, p: defaultParams(type) } }
+  const pos = { x: snap((at ?? below).x), y: snap((at ?? below).y) }
+  // step 26: more Start / End from the palette (a second End is fine, a second Start is a problem the rules show)
+  if (type === 'start' || type === 'end')
+    return { id: nextId(nodes), type, position: pos, data: { label: type === 'start' ? 'Start' : 'End' } }
+  return { id: nextId(nodes), type, position: pos, data: { label: stepDef(type).title, p: defaultParams(type) } }
 }
+
+export type Terminal = 'start' | 'end'
+/** palette entries for Start / End (Software implementation › 4a: 'Start / End · START, END') */
+export const TERMINAL_DEFS: { type: Terminal; title: string; op: string; done: string }[] = [
+  { type: 'start', title: 'Start', op: 'START', done: 'immediately — the flow begins here' },
+  { type: 'end', title: 'End', op: 'END', done: 'immediately — the flow is finished' }
+]
 
 /** a new flow: Start at the top, End below it — not connected yet (the user draws the first link) */
 export function newFlow(): { nodes: FlowNode[]; edges: Edge[] } {
@@ -114,8 +137,8 @@ export function newFlow(): { nodes: FlowNode[]; edges: Edge[] } {
 
 /**
  * May this link be drawn? '' = yes, otherwise the reason (shown as a toast).
- * Rules now: not to itself, not twice, nothing into Start, nothing out of End, one way out of each node.
- * (Branches come with the decision node, step 26.)
+ * Rules: not to itself, not twice, nothing into Start, nothing out of End, each way out used once
+ * (a Decision has two: yes and no — step 26).
  */
 export function connectProblem(c: Connection | Edge, nodes: FlowNode[], edges: Edge[]): string {
   if (!c.source || !c.target) return 'a link needs two ends'
@@ -124,8 +147,11 @@ export function connectProblem(c: Connection | Edge, nodes: FlowNode[], edges: E
   if (kind(c.target) === 'start') return 'nothing can lead into Start'
   if (kind(c.source) === 'end') return 'nothing can leave End'
   if (edges.some((e) => e.source === c.source && e.target === c.target)) return 'these two nodes are already linked'
-  if (edges.some((e) => e.source === c.source)) return 'this node already has its way out (branches come with the decision node)'
+  const handle = c.sourceHandle ?? null
+  if (edges.some((e) => e.source === c.source && (e.sourceHandle ?? null) === handle))
+    return handle ? `its '${handle}' way out is already linked` : 'this node already has its way out (a Decision has two: yes and no)'
   return ''
 }
 
-export const edgeId = (c: Pick<Edge, 'source' | 'target'>): string => `e-${c.source}-${c.target}`
+export const edgeId = (c: Pick<Edge, 'source' | 'target' | 'sourceHandle'>): string =>
+  c.sourceHandle ? `e-${c.source}-${c.sourceHandle}-${c.target}` : `e-${c.source}-${c.target}`

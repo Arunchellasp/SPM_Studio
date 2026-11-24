@@ -1,6 +1,6 @@
 import { Icon } from '../../components/icon.view'
 import { useSequence } from '../../stores/sequence.store'
-import { STEP_DEFS } from './flow'
+import { STEP_DEFS, TERMINAL_DEFS } from './flow'
 
 /** the drag data type: only drops from this palette create nodes */
 export const DND_TYPE = 'application/x-spm-node'
@@ -13,7 +13,7 @@ export function NodePalette(): React.JSX.Element {
   const addStep = useSequence((s) => s.addStep)
   return (
     <ul className="seq-palette" aria-label="Node palette">
-      {STEP_DEFS.map((d) => (
+      {[...TERMINAL_DEFS.map((d) => ({ ...d, shape: 'terminal', icon: undefined })), ...STEP_DEFS].map((d) => (
         <li key={d.type}>
           <button
             type="button"
@@ -27,7 +27,7 @@ export function NodePalette(): React.JSX.Element {
             title={`${d.op} — done when: ${d.done}. Drag onto the canvas, or click to add below the last node.`}
           >
             <span className={`seq-pal-shape seq-pal-${d.shape}`} aria-hidden="true">
-              <Icon name={d.icon} />
+              {d.icon && <Icon name={d.icon} />}
             </span>
             <span>{d.title}</span>
           </button>

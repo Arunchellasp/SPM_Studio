@@ -5,8 +5,9 @@
  */
 import type { Tag } from '@shared/ipc'
 import type { StepKind, StepParams } from './flow'
+import { parseCondition } from './flow-expr'
 
-export type FieldKind = 'tag' | 'number' | 'bool'
+export type FieldKind = 'tag' | 'number' | 'bool' | 'expr'
 
 export interface FieldDef {
   key: string
@@ -43,7 +44,8 @@ export const FIELDS: { [K in StepKind]: FieldDef[] } = {
     { key: 'tag', label: 'Output', kind: 'tag', accepts: (t) => t.kind === 'DO', offers: 'digital outputs (DO)' },
     { key: 'value', label: 'Set to', kind: 'bool' }
   ],
-  delay: [{ key: 'ms', label: 'Time', kind: 'number', unit: 'ms', min: 1, max: 3600000, hint: '1 ms … 1 h' }]
+  delay: [{ key: 'ms', label: 'Time', kind: 'number', unit: 'ms', min: 1, max: 3600000, hint: '1 ms … 1 h' }],
+  if: [{ key: 'expr', label: 'Condition', kind: 'expr', hint: 'tags and numbers with = <> < <= > >=, + − * /, AND OR NOT, ( )' }]
 }
 
 /** the tags a field offers, sorted by name; Move › Point: only points that use the chosen axis */
@@ -62,10 +64,19 @@ export type ParseResult = { ok: true; value: string | number | boolean } | { ok:
 export function parseField(type: StepKind, f: FieldDef, raw: string | boolean, tags: Tag[], p: StepParams[StepKind]): ParseResult {
   if (f.kind === 'bool') return { ok: true, value: raw === true || raw === 'TRUE' }
   const text = String(raw).trim()
+  if (f.kind === 'expr') {
+    if (!text) return { ok: true, value: '' } // open: dashed until filled
+    const r = parseCondition(text)
+    if (!r.ok) return { ok: false, error: r.error }
+    const unknown = tags.length ? r.names.filter((n) => !tags.some((t) => t.name === n)) : []
+    if (unknown.length) return { ok: false, error: `no tag ${unknown.join(', ')} in the project` }
+    return { ok: true, value: text }
+  }
   if (f.kind === 'number') {
     if (!/^\d+$/.test(text)) return { ok: false, error: `a whole number${f.unit ? ` in ${f.unit}` : ''}` }
     const n = Number(text)
-    if ((f.min !== undefined && n < f.min) || (f.max !== undefined && n > f.max)) return { ok: false, error: `${f.min} … ${f.max}${f.unit ? ` ${f.unit}` : ''}` }
+    if ((f.min !== undefined && n < f.min) || (f.max !== undefined && n > f.max))
+      return { ok: false, error: `${f.min} … ${f.max}${f.unit ? ` ${f.unit}` : ''}` }
     return { ok: true, value: n }
   }
   // tag

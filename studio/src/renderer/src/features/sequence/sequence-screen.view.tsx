@@ -4,7 +4,9 @@ import { Card } from '../../components/card.view'
 import { Icon } from '../../components/icon.view'
 import { Tabs } from '../../components/tabs.view'
 import { useSequence } from '../../stores/sequence.store'
+import { BuildOutput } from './build-output.view'
 import { SequenceCanvas } from './canvas.view'
+import { useFlowIssues } from './flow-issues'
 import { NodePalette } from './palette.view'
 import { PropertyPanel } from './property-panel.view'
 import './sequence-screen.css'
@@ -27,6 +29,7 @@ export function SequenceScreen({ screen }: { screen: ScreenDef }): React.JSX.Ele
   const edges = useSequence((s) => s.edges)
   const nodes = useSequence((s) => s.nodes)
   const reset = useSequence((s) => s.reset)
+  const { issues } = useFlowIssues()
   return (
     <div className="seq">
       {/* no visible title in the design, but every screen keeps its heading for screen readers (and UI-13.5) */}
@@ -48,10 +51,21 @@ export function SequenceScreen({ screen }: { screen: ScreenDef }): React.JSX.Ele
               {t}
             </Button>
           ))}
-          <span className="seq-status" data-testid="seq-status">
+          <span className="seq-status" data-testid="seq-status" title={`Offline · ${nodes.length} nodes · ${edges.length} links`}>
             Offline · {nodes.length} nodes · {edges.length} {edges.length === 1 ? 'link' : 'links'}
           </span>
-          <Button size="md" variant="quiet" icon={<Icon name="reset" />} aria-label="New flow" title="New flow (Start and End only)" onClick={reset} />
+          {/* step 26: the flow's problems at a glance — details in Build output and on the badges */}
+          <span className={issues.length ? 'seq-problems seq-problems-bad' : 'seq-problems'} data-testid="seq-problems">
+            {issues.length ? `⚠ ${issues.length} ${issues.length === 1 ? 'problem' : 'problems'}` : '✓ no problems'}
+          </span>
+          <Button
+            size="md"
+            variant="quiet"
+            icon={<Icon name="reset" />}
+            aria-label="New flow"
+            title="New flow (Start and End only)"
+            onClick={reset}
+          />
         </div>
         <SequenceCanvas />
       </Card>
@@ -67,7 +81,7 @@ export function SequenceScreen({ screen }: { screen: ScreenDef }): React.JSX.Ele
             { id: 'watch', label: 'Watch', content: later('Live values of chosen tags', 'phase G (runtime link)') },
             { id: 'trace', label: 'Trace', content: later('Step changes over time', 'phase G (runtime link)') },
             { id: 'xref', label: 'Cross reference', content: later('Where each tag is used', 'step 27') },
-            { id: 'build', label: 'Build output', content: later('Errors and warnings of the step table', 'step 29') }
+            { id: 'build', label: 'Build output', content: <BuildOutput /> }
           ]}
         />
       </Card>

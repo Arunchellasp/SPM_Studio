@@ -26,7 +26,7 @@ async function link(page: Page, from: Locator, to: Locator): Promise<void> {
 }
 
 test('UI-24.1 the palette offers Move, Wait input, Set output, Delay', async ({ page }) => {
-  await expect(page.getByRole('list', { name: 'Node palette' }).getByRole('button')).toHaveText(['Move', 'Wait input', 'Set output', 'Delay'])
+  await expect(page.getByRole('list', { name: 'Node palette' }).getByRole('button')).toHaveText(['Start', 'End', 'Move', 'Wait input', 'Set output', 'Delay', 'Decision']) // Start / End / Decision: step 26
   await expect(palette(page, 'Wait input')).toHaveAttribute('draggable', 'true')
 })
 

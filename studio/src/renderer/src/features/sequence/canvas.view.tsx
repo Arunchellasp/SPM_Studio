@@ -1,15 +1,36 @@
-import { Background, BackgroundVariant, Controls, MiniMap, ReactFlow, ReactFlowProvider, useReactFlow, type Connection, type Edge } from '@xyflow/react'
+import {
+  Background,
+  BackgroundVariant,
+  Controls,
+  MiniMap,
+  ReactFlow,
+  ReactFlowProvider,
+  useReactFlow,
+  type Connection,
+  type Edge
+} from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useScreenScale } from '../../app/screen-scale'
 import { useSequence } from '../../stores/sequence.store'
-import { connectProblem, GRID, STEP_DEFS, type FlowNode, type StepKind } from './flow'
+import { DecisionNode } from './decision-node.view'
+import { connectProblem, GRID, STEP_DEFS, TERMINAL_DEFS, type FlowNode, type StepKind, type Terminal } from './flow'
+import { useFlowIssues } from './flow-issues'
+import { IssuesContext } from './issue-badge.view'
 import { DND_TYPE } from './palette.view'
 import { StepNode } from './step-node.view'
 import { TerminalNode } from './terminal-node.view'
 import './canvas.css'
 
-const NODE_TYPES = { start: TerminalNode, end: TerminalNode, move_abs: StepNode, wait_di: StepNode, set_do: StepNode, delay: StepNode }
-const STEP_TYPES = new Set<string>(STEP_DEFS.map((d) => d.type))
+const NODE_TYPES = {
+  start: TerminalNode,
+  end: TerminalNode,
+  move_abs: StepNode,
+  wait_di: StepNode,
+  set_do: StepNode,
+  delay: StepNode,
+  if: DecisionNode
+}
+const STEP_TYPES = new Set<string>([...TERMINAL_DEFS, ...STEP_DEFS].map((d) => d.type))
 /** fit = all nodes in view with a margin, never bigger than 100 % (the fit button has its own options — step 24) */
 /** flow units; a node is 44 … 54 high, so anywhere on its upper half reaches the dot on top */
 export const LINK_RADIUS = 40
@@ -42,6 +63,7 @@ function Canvas(): React.JSX.Element {
   // pixels but draws in the zoomed space, so links and drops landed off (found on the PC, P-23.3). The canvas
   // undoes the shell zoom for itself: inside it a CSS pixel is a page pixel again.
   const { zoom } = useScreenScale()
+  const { perNode } = useFlowIssues()
 
   return (
     <div
@@ -59,35 +81,37 @@ function Canvas(): React.JSX.Element {
         if (!STEP_TYPES.has(type)) return
         e.preventDefault()
         const p = flow.screenToFlowPosition({ x: e.clientX, y: e.clientY })
-        addStep(type as StepKind, { x: p.x - GRID * 8, y: p.y - GRID * 2 })
+        addStep(type as StepKind | Terminal, { x: p.x - GRID * 8, y: p.y - GRID * 2 })
       }}
     >
-      <ReactFlow<FlowNode, Edge>
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={NODE_TYPES}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={(c: Connection) => void connect(c)}
-        // while dragging a link: green / red handle, the same rule as on drop
-        isValidConnection={(c) => connectProblem(c, nodes, edges) === ''}
-        // a link ends on the nearest free dot within this distance, so letting go on the box itself works
-        // (found on the PC, physical test P-23.3: the 10 px dot was too hard to hit by hand)
-        connectionRadius={LINK_RADIUS}
-        snapToGrid
-        snapGrid={[GRID, GRID]}
-        fitView
-        fitViewOptions={FIT}
-        minZoom={1 / 4}
-        maxZoom={2}
-        deleteKeyCode={['Delete', 'Backspace']}
-        proOptions={{ hideAttribution: true }}
-        aria-label="Sequence canvas"
-      >
-        <Background variant={BackgroundVariant.Dots} gap={GRID} size={1} />
-        <Controls showInteractive={false} position="bottom-left" fitViewOptions={FIT} />
-        <MiniMap position="bottom-right" pannable zoomable ariaLabel="Mini-map" />
-      </ReactFlow>
+      <IssuesContext.Provider value={perNode}>
+        <ReactFlow<FlowNode, Edge>
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={NODE_TYPES}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={(c: Connection) => void connect(c)}
+          // while dragging a link: green / red handle, the same rule as on drop
+          isValidConnection={(c) => connectProblem(c, nodes, edges) === ''}
+          // a link ends on the nearest free dot within this distance, so letting go on the box itself works
+          // (found on the PC, physical test P-23.3: the 10 px dot was too hard to hit by hand)
+          connectionRadius={LINK_RADIUS}
+          snapToGrid
+          snapGrid={[GRID, GRID]}
+          fitView
+          fitViewOptions={FIT}
+          minZoom={1 / 4}
+          maxZoom={2}
+          deleteKeyCode={['Delete', 'Backspace']}
+          proOptions={{ hideAttribution: true }}
+          aria-label="Sequence canvas"
+        >
+          <Background variant={BackgroundVariant.Dots} gap={GRID} size={1} />
+          <Controls showInteractive={false} position="bottom-left" fitViewOptions={FIT} />
+          <MiniMap position="bottom-right" pannable zoomable ariaLabel="Mini-map" />
+        </ReactFlow>
+      </IssuesContext.Provider>
     </div>
   )
 }
