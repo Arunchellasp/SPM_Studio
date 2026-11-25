@@ -8,11 +8,21 @@
 #endif
 #endif
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "unity.h"
 #include "spm_rt_all.c"
 
-#define DEMO SPM_PROJECTS_DIR "/demo/"
+/* the demo project: compiled-in path, or SPM_PROJECTS (e.g. on the machine PC, where the build path does not exist) */
+static char g_demo[512];
+static const char *demo(const char *file)
+{
+    static char p[4][600];
+    static int k;
+    k = (k + 1) % 4;
+    snprintf(p[k], sizeof p[k], "%s/demo/%s", g_demo, file);
+    return p[k];
+}
 
 static Arena A;
 void setUp(void)
@@ -39,7 +49,7 @@ static void test_U35_1_config_loads_with_defaults_and_refuses_mistakes(void)
 {
     RtConfig c;
     Err e = {""};
-    TEST_ASSERT_EQUAL_INT_MESSAGE(0, cfg_load(DEMO "config.json", &c, &e), e.msg);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(0, cfg_load(demo("config.json"), &c, &e), e.msg);
     TEST_ASSERT_EQUAL_UINT32(1000, c.cycle_us);
     TEST_ASSERT_EQUAL_STRING("sim", c.card);
     TEST_ASSERT_EQUAL_UINT32(200, c.sim_cyl_ms);
@@ -70,7 +80,7 @@ static void test_U35_2_demo_tags_load_by_id_with_scale_udt_and_the_studios_crc(v
 {
     TagDB db;
     Err e = {""};
-    TEST_ASSERT_EQUAL_INT_MESSAGE(0, tagdb_load(DEMO "tags.json", &A, &db, &e), e.msg);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(0, tagdb_load(demo("tags.json"), &A, &db, &e), e.msg);
     TEST_ASSERT_EQUAL_UINT16(20, db.n);
     TEST_ASSERT_EQUAL_HEX32(0xD45C7CCE, db.crc); /* = tags_crc of the studio's compiler (golden files) */
     int di = tagdb_find(&db, "DI_S1_PartPresent");
@@ -120,8 +130,8 @@ static void test_U35_4_simcard_cylinder_sensors_follow_the_valve_after_200_ms(vo
     Card card;
     IoMap io;
     Err e = {""};
-    TEST_ASSERT_EQUAL_INT(0, cfg_load(DEMO "config.json", &c, &e));
-    TEST_ASSERT_EQUAL_INT(0, tagdb_load(DEMO "tags.json", &A, &db, &e));
+    TEST_ASSERT_EQUAL_INT(0, cfg_load(demo("config.json"), &c, &e));
+    TEST_ASSERT_EQUAL_INT(0, tagdb_load(demo("tags.json"), &A, &db, &e));
     TEST_ASSERT_EQUAL_INT(0, card_open(&card, &c, &e));
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, io_map_bind(&db, &card, &A, &io, &e), e.msg);
     TEST_ASSERT_EQUAL_UINT16(5, io.n_in);  /* 4 DI + 1 AI */
@@ -238,6 +248,8 @@ static void test_U35_7_rt_thread_runs_the_cycle_every_period_and_hands_over_stat
 
 int main(void)
 {
+    const char *env = getenv("SPM_PROJECTS");
+    snprintf(g_demo, sizeof g_demo, "%s", env && env[0] ? env : SPM_PROJECTS_DIR);
     UNITY_BEGIN();
     RUN_TEST(test_U35_1_config_loads_with_defaults_and_refuses_mistakes);
     RUN_TEST(test_U35_2_demo_tags_load_by_id_with_scale_udt_and_the_studios_crc);
