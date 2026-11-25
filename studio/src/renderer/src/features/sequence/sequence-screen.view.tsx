@@ -13,10 +13,13 @@ import { useFlowIssues } from './flow-issues'
 import { FlowTree } from './flow-tree.view'
 import { NodePalette } from './palette.view'
 import { PropertyPanel } from './property-panel.view'
+import { OnlineContext, useOnlineView } from './online-mark.view'
 import './sequence-screen.css'
 
-/** the canvas toolbar of the design — all need the runtime (phase G) */
+/** the canvas toolbar of the design — per-flow control comes with the flow engine (Start / Hold of the whole machine: header) */
 const RUN_TOOLS = ['Run', 'Pause', 'Step', 'Breakpoint', 'Force', 'Online change']
+const RUN_LATER =
+  'Start and Hold of the machine are in the header; Run, Pause, Step and Breakpoint for one flow come with the flow engine (step 37), Force with N04 (step 38)'
 
 const later = (what: string, step: string): React.JSX.Element => (
   <p className="seq-later">
@@ -30,8 +33,6 @@ const later = (what: string, step: string): React.JSX.Element => (
  * Working now: the canvas (Start, End, link, pan, zoom, mini-map). The other areas say which step fills them.
  */
 export function SequenceScreen({ screen }: { screen: ScreenDef }): React.JSX.Element {
-  const edges = useSequence((s) => s.edges)
-  const nodes = useSequence((s) => s.nodes)
   const reset = useSequence((s) => s.reset)
   const canUndo = useSequence((s) => s.past.length > 0)
   const canRedo = useSequence((s) => s.future.length > 0)
@@ -66,6 +67,7 @@ export function SequenceScreen({ screen }: { screen: ScreenDef }): React.JSX.Ele
     return () => window.removeEventListener('keydown', onKey)
   }, [])
   const { issues } = useFlowIssues()
+  const online = useOnlineView()
   return (
     <div className="seq">
       {/* no visible title in the design, but every screen keeps its heading for screen readers (and UI-13.5) */}
@@ -83,12 +85,12 @@ export function SequenceScreen({ screen }: { screen: ScreenDef }): React.JSX.Ele
       <Card className="seq-main" padding="none" aria-label="Sequence">
         <div className="seq-tools" role="toolbar" aria-label="Sequence tools">
           {RUN_TOOLS.map((t) => (
-            <Button key={t} size="md" disabled title="needs the runtime (phase G)">
+            <Button key={t} size="md" disabled title={RUN_LATER}>
               {t}
             </Button>
           ))}
-          <span className="seq-status" data-testid="seq-status" title={`Offline · ${nodes.length} nodes · ${edges.length} links`}>
-            Offline · {nodes.length} nodes · {edges.length} {edges.length === 1 ? 'link' : 'links'}
+          <span className={`seq-status seq-status-${online.kind}`} data-testid="seq-status" title={online.title}>
+            {online.text}
           </span>
           {/* step 26: the flow's problems at a glance — details in Build output and on the badges */}
           <span className={issues.length ? 'seq-problems seq-problems-bad' : 'seq-problems'} data-testid="seq-problems">
@@ -129,7 +131,9 @@ export function SequenceScreen({ screen }: { screen: ScreenDef }): React.JSX.Ele
             onClick={reset}
           />
         </div>
-        <SequenceCanvas />
+        <OnlineContext.Provider value={online}>
+          <SequenceCanvas />
+        </OnlineContext.Provider>
       </Card>
 
       <Card title="Properties" className="seq-props">

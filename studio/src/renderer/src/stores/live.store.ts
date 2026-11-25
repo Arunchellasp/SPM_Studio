@@ -41,5 +41,6 @@ const STATES: readonly string[] = [...WAIT_STATES, ...Object.keys(ACTING)]
 /** evt { ev: 'machine', state, mode } → MachineStatus; anything else (or a bad value) → null */
 export function machineFrom(e: RuntimeEvent): MachineStatus | null {
   if (e.ev !== 'machine' || !STATES.includes(String(e.state)) || !MODES.includes(e.mode as PackMode)) return null
-  return { state: e.state as PackState, mode: e.mode as PackMode }
+  const prog = typeof e.prog === 'string' && /^[0-9A-F]{8}$/.test(e.prog) ? e.prog : null // step 34
+  return { state: e.state as PackState, mode: e.mode as PackMode, prog }
 }

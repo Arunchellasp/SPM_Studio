@@ -15,7 +15,7 @@ test('UI-F3 a press 7 px beside the dot starts a link; letting go on the middle 
   await page.mouse.move(end.x + end.width / 2, end.y + end.height / 3, { steps: 8 })
   await page.mouse.move(end.x + end.width / 2, end.y + end.height / 2, { steps: 4 })
   await page.mouse.up()
-  await expect(status(page)).toContainText('1 link')
+  await expect(status(page)).toHaveAttribute('title', / 1 link$/)
   await expect(page.locator('.react-flow__edge')).toHaveCount(1)
   // no pan happened
   expect((await page.locator('.react-flow__node[data-id="start"]').boundingBox())!.x).toBeCloseTo(startBefore.x, 0)

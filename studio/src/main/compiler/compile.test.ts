@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import type { ProgramFile, ProgramFlow, TagFile } from '@shared/ipc'
-import { compile, crc32, describe as line } from './compile'
+import { compile, crc32, describe as line, verifyRt } from '@shared/compile'
 
 const tags = JSON.parse(readFileSync(resolve(__dirname, '../../../../projects/demo/tags.json'), 'utf8')) as TagFile
 const prog = (...flows: ProgramFlow[]): ProgramFile => ({ schema: 'spm.program/1', flows })
@@ -158,5 +158,30 @@ describe('compiler (step 29)', () => {
       'S1_Main · n7: condition: AX_S1_X is an AXIS — it has no single value to use here (DI, DO, AI, AO, REG, RECIPE have)'
     ])
     expect(errors(flow('R_PartCount >'))).toEqual(['S1_Main · n7: condition: Expected expression after > (position 14)'])
+  })
+
+  it('U-34.3 the runtime check of a download: schema and CRC (a changed step is refused)', () => {
+    const r = compile(
+      prog(
+        base(
+          [{ id: 'n7', type: 'delay', pos: [0, 0], p: { ms: 500 } }],
+          [
+            ['start', 'n7'],
+            ['n7', 'end']
+          ]
+        )
+      ),
+      tags
+    )
+    if (!r.ok) throw new Error('should compile')
+    expect(verifyRt(r.rt)).toEqual({ ok: true, crc: r.rt.crc })
+    const changed = structuredClone(r.rt)
+    ;(changed.flows[0]!.steps[1] as { ms: number }).ms = 50
+    expect(verifyRt(changed)).toMatchObject({ ok: false, err: 'CRC' })
+    expect(verifyRt({ ...r.rt, schema: 'spm.rt/2' })).toEqual({
+      ok: false,
+      err: 'SCHEMA',
+      msg: 'schema must be "spm.rt/1", not "spm.rt/2"'
+    })
   })
 })

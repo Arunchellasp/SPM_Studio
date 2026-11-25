@@ -20,7 +20,7 @@ test('UI-F4.1 at 80 % zoom a link dragged from the Start dot to the End dot conn
   await page.mouse.down()
   await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 10 })
   await page.mouse.up()
-  await expect(status(page)).toContainText('1 link')
+  await expect(status(page)).toHaveAttribute('title', / 1 link$/)
 })
 
 test('UI-F4.2 at 80 % zoom the link line follows the pointer while dragging', async ({ page }) => {

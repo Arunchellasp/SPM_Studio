@@ -21,17 +21,17 @@ test('UI-F5 a link let go on the middle (or the bottom) of a node connects; on e
   }
   const d = (await node(page, 'n1').boundingBox())!
   await drag('start', '', { x: d.x + d.width / 2, y: d.y + d.height * 3 / 4 }) // low on the diamond, far from its top dot
-  await expect(page.getByTestId('seq-status')).toContainText('1 link')
+  await expect(page.getByTestId('seq-status')).toHaveAttribute('title', / 1 link$/)
   const w = (await node(page, 'n2').boundingBox())!
   await drag('n1', 'no', { x: w.x + w.width - 12, y: w.y + w.height - 8 }) // bottom-right corner of the Delay
-  await expect(page.getByTestId('seq-status')).toContainText('2 links')
+  await expect(page.getByTestId('seq-status')).toHaveAttribute('title', / 2 links$/)
   await expect(page.locator('.react-flow__edge-text')).toHaveText(['no'])
   const c = (await page.getByTestId('seq-canvas').boundingBox())!
   await drag('n2', '', { x: c.x + 30, y: c.y + c.height - 30 }) // empty canvas: no link
-  await expect(page.getByTestId('seq-status')).toContainText('2 links')
+  await expect(page.getByTestId('seq-status')).toHaveAttribute('title', / 2 links$/)
   // a drop on Start is refused — and now says why instead of nothing happening
   const s = (await node(page, 'start').boundingBox())!
   await drag('n2', '', { x: s.x + s.width / 2, y: s.y + s.height / 2 })
   await expect(page.getByRole('status').filter({ hasText: 'Not linked: nothing can lead into Start' })).toBeVisible()
-  await expect(page.getByTestId('seq-status')).toContainText('2 links')
+  await expect(page.getByTestId('seq-status')).toHaveAttribute('title', / 2 links$/)
 })

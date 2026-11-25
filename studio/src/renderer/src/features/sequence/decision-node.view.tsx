@@ -3,6 +3,7 @@ import { Icon } from '../../components/icon.view'
 import { useSequence } from '../../stores/sequence.store'
 import { summary, type FlowNode } from './flow'
 import { IssueBadge } from './issue-badge.view'
+import { OnlineMark } from './online-mark.view'
 
 /**
  * Decision (step 26): the diamond of flowcharts (ISO 5807). One way in (top); two ways out, each labelled —
@@ -50,6 +51,7 @@ export function DecisionNode({ id, data, selected }: NodeProps<FlowNode>): React
         </span>
       )}
       <IssueBadge node={id} />
+      <OnlineMark node={id} />
     </div>
   )
 }

@@ -4,7 +4,7 @@
 export type Step = Start | End | WaitDi | SetDo | MoveAbs | Delay | If
 
 /**
- * Made by the compiler (studio/src/main/compiler/compile.ts, step 29) from program.json + tags.json (Software implementation › 4d). Names are replaced by numbers: tags by their index in tags.json, nodes by step numbers 0, 1, 2 … in walking order from START. The runtime needs no parsing in its real-time loop.
+ * Made by the compiler (studio/src/shared/compile.ts, step 29; moved from main in step 34) from program.json + tags.json (Software implementation › 4d). Names are replaced by numbers: tags by their index in tags.json, nodes by step numbers 0, 1, 2 … in walking order from START. The runtime needs no parsing in its real-time loop.
  */
 export interface RtFile {
   schema: 'spm.rt/1'

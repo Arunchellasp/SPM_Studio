@@ -2,6 +2,7 @@ import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { Icon } from '../../components/icon.view'
 import { stepDef, summary, type FlowNode, type StepKind } from './flow'
 import { IssueBadge } from './issue-badge.view'
+import { OnlineMark } from './online-mark.view'
 
 /**
  * A step on the canvas (step 24): icon + title, and a one-line summary of its parameters.
@@ -39,6 +40,7 @@ export function StepNode({ id, type, data, selected }: NodeProps<FlowNode>): Rea
       </div>
       <Handle type="source" position={Position.Bottom} aria-label="link out" />
       <IssueBadge node={id} />
+      <OnlineMark node={id} />
     </div>
   )
 }

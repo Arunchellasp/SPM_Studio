@@ -217,3 +217,76 @@ export function compileExpr(text: string, tags: Tag[], want?: ExprType): Compile
     }
   return { ok: true, type, rpn, names: p.names }
 }
+
+/**
+ * Step 34 · run an RPN condition (what the C runtime will do each cycle; the mock runtime and the
+ * browser simulator do it now). Values are numbers: TRUE = 1, FALSE = 0; a tag without a value reads 0.
+ * Returns the top of the stack; throws on a token it does not know or a stack that does not add up.
+ */
+export function evalRpn(rpn: readonly string[], value: (tagId: number) => number | boolean | undefined): number {
+  const st: number[] = []
+  const pop = (): number => {
+    const v = st.pop()
+    if (v === undefined) throw new Error('RPN: stack empty')
+    return v
+  }
+  const num = (v: number | boolean | undefined): number => (v === true ? 1 : v === false || v === undefined ? 0 : v)
+  const bin = (f: (a: number, b: number) => number): void => {
+    const b = pop()
+    st.push(f(pop(), b))
+  }
+  const bool = (b: boolean): number => (b ? 1 : 0)
+  for (const t of rpn) {
+    if (t.startsWith('T:')) st.push(num(value(Number(t.slice(2)))))
+    else if (t.startsWith('K:')) st.push(Number(t.slice(2)))
+    else
+      switch (t) {
+        case 'NOT':
+          st.push(bool(!pop()))
+          break
+        case 'NEG':
+          st.push(-pop())
+          break
+        case 'AND':
+          bin((a, b) => bool(!!a && !!b))
+          break
+        case 'OR':
+          bin((a, b) => bool(!!a || !!b))
+          break
+        case 'EQ':
+          bin((a, b) => bool(a === b))
+          break
+        case 'NE':
+          bin((a, b) => bool(a !== b))
+          break
+        case 'LT':
+          bin((a, b) => bool(a < b))
+          break
+        case 'LE':
+          bin((a, b) => bool(a <= b))
+          break
+        case 'GT':
+          bin((a, b) => bool(a > b))
+          break
+        case 'GE':
+          bin((a, b) => bool(a >= b))
+          break
+        case 'ADD':
+          bin((a, b) => a + b)
+          break
+        case 'SUB':
+          bin((a, b) => a - b)
+          break
+        case 'MUL':
+          bin((a, b) => a * b)
+          break
+        case 'DIV':
+          bin((a, b) => (b === 0 ? 0 : a / b))
+          break // like the C runtime: no exception in the cycle
+        default:
+          throw new Error(`RPN: unknown token ${t}`)
+      }
+  }
+  if (st.length !== 1) throw new Error(`RPN: ${st.length} values left on the stack`)
+  return st[0]!
+}

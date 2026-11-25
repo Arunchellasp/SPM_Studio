@@ -9,6 +9,7 @@ import { basename, join as joinPath } from 'node:path'
 import {
   IPC,
   type AppInfo,
+  type BuildResult,
   type ProjectExportResult,
   type ProjectImportResult,
   type ProjectOpenResult,
@@ -18,7 +19,8 @@ import {
 } from '@shared/ipc'
 import { RuntimeBridge } from './runtime/bridge'
 import { sendTo } from './window-send'
-import { openProject, saveTags, saveProgram } from './project/store'
+import { openProject, saveRt, saveTags, saveProgram } from './project/store'
+import { compile, describe as compileLine } from '@shared/compile'
 import { buildMenu } from './project/menu'
 import { exportTags, formatOf, importTags } from './project/exchange'
 
@@ -107,6 +109,7 @@ function trusted(e: Electron.IpcMainInvokeEvent): boolean {
 
 // a light shape check before the real one (Ajv + tags.schema.json in project/store.ts)
 const SaveArgs = z.object({ schema: z.string(), tags: z.array(z.object({ name: z.string(), kind: z.string() }).loose()) })
+const BuildArgs = z.object({ download: z.boolean() })
 const ProgramArgs = z.object({
   schema: z.literal('spm.program/1'),
   flows: z.array(z.object({ name: z.string(), nodes: z.array(z.unknown()), edges: z.array(z.unknown()) }).loose())
@@ -166,6 +169,28 @@ function registerIpc(): void {
     const p = ProgramArgs.safeParse(payload)
     if (!p.success) return { ok: false, errors: ['BAD_REQUEST: ' + (p.error.issues[0]?.message ?? '')] }
     return saveProgram(projectDir, p.data as unknown as ProgramFile)
+  })
+
+  // step 34: Build / Download (Software implementation › 4e, 6). Always from the files on disk — what is
+  // downloaded is exactly what was saved; the screens refuse to download unsaved changes anyway.
+  ipcMain.handle(IPC.projectBuild, async (e, payload: unknown): Promise<BuildResult> => {
+    if (!trusted(e)) return { ok: false, stage: 'project', errors: ['DENIED'] }
+    const p = BuildArgs.safeParse(payload)
+    if (!p.success) return { ok: false, stage: 'project', errors: ['BAD_REQUEST: ' + (p.error.issues[0]?.message ?? '')] }
+    if (!projectDir) return { ok: false, stage: 'project', errors: ['no project is open'] }
+    const open = await openProject(projectDir)
+    if (!open.ok) return { ok: false, stage: 'project', errors: open.errors }
+    if (!open.project.program) return { ok: false, stage: 'project', errors: ['no program.json yet — save the flows first'] }
+    const c = compile(open.project.program, open.project.tags)
+    if (!c.ok) return { ok: false, stage: 'compile', errors: c.errors.map(compileLine) }
+    const w = await saveRt(projectDir, c.text)
+    if (!w.ok) return { ok: false, stage: 'project', errors: w.errors }
+    if (!p.data.download) return { ok: true, rt: c.rt, file: w.file, downloaded: false }
+    const r = await bridge.command('download', { rt: c.rt })
+    if (!r.ok) return { ok: false, stage: 'download', errors: [`the runtime refused: ${r.msg ?? r.err ?? 'no reason given'}`] }
+    if (r.crc !== c.rt.crc)
+      return { ok: false, stage: 'download', errors: [`the runtime answered CRC ${String(r.crc)}, expected ${c.rt.crc}`] }
+    return { ok: true, rt: c.rt, file: w.file, downloaded: true }
   })
 
   // step 22: Excel / CSV. The screens send tags to export (no path); main asks where. Import returns rows only —

@@ -101,6 +101,12 @@ export async function saveProgram(dir: string, program: ProgramFile): Promise<Pr
   return writeSafely(join(dir, PROGRAM_FILE), (eol) => formatProgramFile(program, eol))
 }
 
+export const RT_FILE = 'program.rt.json'
+/** step 34: write <dir>/program.rt.json — the compiler made the text (one step per line, CRC inside) */
+export async function saveRt(dir: string, text: string): Promise<ProjectSaveResult> {
+  return writeSafely(join(dir, RT_FILE), (eol) => (eol === '\r\n' ? text.replace(/\n/g, '\r\n') : text))
+}
+
 /** Check, then write <dir>/tags.json (sorted, 2-space JSON). Keeps the file's line endings. */
 export async function saveTags(dir: string, tags: TagFile): Promise<ProjectSaveResult> {
   const check = checkSchema(tags)

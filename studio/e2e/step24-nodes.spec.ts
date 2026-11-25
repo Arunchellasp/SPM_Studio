@@ -51,7 +51,7 @@ test('UI-24.3 build the 6-node flow Start → Wait → Move → Set → Delay �
   const chain = [page.locator('.react-flow__node[data-id="start"]'), nodeOf(page, 'Wait input'), nodeOf(page, 'Move'), nodeOf(page, 'Set output'), nodeOf(page, 'Delay'), page.locator('.react-flow__node[data-id="end"]')]
   for (let i = 0; i < chain.length - 1; i++) await link(page, chain[i]!, chain[i + 1]!)
   await expect(page.locator('.react-flow__edge')).toHaveCount(5)
-  await expect(page.getByTestId('seq-status')).toHaveText('Offline · 6 nodes · 5 links')
+  await expect(page.getByTestId('seq-status')).toHaveAttribute('title', /· 6 nodes · 5 links$/) // since step 34 the browser has a runtime: the status shows it, the counts are in its tooltip
   await expect(page.locator('.react-flow__minimap-node')).toHaveCount(6)
   // fit view: every node inside the canvas (found in step 24: the fit button used other options)
   await page.locator('.react-flow__controls-fitview').click()

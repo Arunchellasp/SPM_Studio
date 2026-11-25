@@ -8,6 +8,10 @@
  *   step 33: alarms (src/shared/alarm-sim.ts) — evt 'alarms' on connect, evt 'alarm' raise / ack / clear,
  *   cmd ack { code, user }. Demo: in EXECUTE, after 6 s W0310 (P3, clears itself 10 s later),
  *   after 12 s E1202 (P1) → the machine aborts; Reset (clear) after the abort clears E1202.
+ *   step 34: cmd download { rt } (only in STOPPED; schema + CRC checked, src/shared/compile.ts) → res { ok, crc };
+ *   the program runs in EXECUTE (src/shared/flow-sim.ts): evt { ev:'step', flow, pc } on every step change,
+ *   state frames with pc per flow and the simulated values by tag id; evt 'machine' carries prog = its CRC.
+ *   With a program loaded the alarm demo raises W0310 only (no E1202 abort), so the sequence can be watched.
  *
  *   npm run mock-runtime          (on the PC: start-mock-runtime.cmd)
  */
@@ -21,20 +25,28 @@ const here = dirname(fileURLToPath(import.meta.url))
 const jiti = createJiti(import.meta.url)
 const { PackMachine } = await jiti.import(resolve(here, '../src/shared/packml-sim.ts'))
 const { AlarmBook } = await jiti.import(resolve(here, '../src/shared/alarm-sim.ts'))
+const { FlowRunner } = await jiti.import(resolve(here, '../src/shared/flow-sim.ts'))
+const { verifyRt } = await jiti.import(resolve(here, '../src/shared/compile.ts'))
 
 const PORT = Number(process.env.SPM_RUNTIME_PORT ?? 7600)
 const wss = new WebSocketServer({ host: '127.0.0.1', port: PORT })
 
-const tags = { DI_S1_PartPresent: false, 'AX_S1_X.pos': 0, AI_Sealer_Temp: 25, R_PartCount: 0, DO_S1_ClampValve: false }
 let seq = 0
-let pc = 0
-let t = 0
-let tick = 0
-const steps = ['wait part', 'move X to pick', 'clamp', 'seal', 'count']
+/** step 34: the downloaded program and its simulated engine (null = nothing loaded) */
+let rt = null
+let runner = null
+const onStep = (p) => {
+  const s = rt.flows[p.flow].steps[p.pc]
+  console.log(`step ${rt.flows[p.flow].name} pc ${p.pc} ${s.op} (${s.src})`)
+  broadcast({ t: 'evt', ev: 'step', ts: Date.now(), flow: p.flow, pc: p.pc })
+}
+const fresh = () => (runner = rt ? new FlowRunner(rt, onStep) : null) // Reset: every flow back to its Start
+const pcs = () => (runner ? Object.fromEntries(runner.pc.map((p, i) => [String(i), p])) : {})
+const vals = () => (runner ? Object.fromEntries([...runner.values].map(([id, v]) => [String(id), v])) : {})
 
 const send = (ws, msg) => ws.readyState === 1 && ws.send(JSON.stringify(msg))
 const broadcast = (msg) => wss.clients.forEach((ws) => send(ws, msg))
-const machineEvt = (s) => ({ t: 'evt', ev: 'machine', ts: Date.now(), state: s.state, mode: s.mode })
+const machineEvt = (s) => ({ t: 'evt', ev: 'machine', ts: Date.now(), state: s.state, mode: s.mode, prog: rt ? rt.crc : null })
 const alarms = new AlarmBook((e) => {
   console.log(`alarm ${e.act} ${e.code}${e.by ? ` by ${e.by}` : ''}`)
   broadcast({ t: 'evt', ts: Date.now(), ...e })
@@ -53,18 +65,20 @@ const machine = new PackMachine((s) => {
         setTimeout(() => alarms.clear('W0310'), 10000) // glue refilled
       }, 6000),
       setTimeout(() => {
+        if (rt) return // step 34: with a program loaded, let it run (no abort)
         alarms.raise('E1202')
         machine.abort() // P1 → Abort (design: E-stop, P1 alarm → Aborting)
       }, 12000)
     )
   }
+  if (s.state === 'RESETTING') fresh()
   if (s.state === 'STOPPED') alarms.clear('E1202') // cleared by Reset after the abort
 })
 const reply = (ws, id, r) => send(ws, { t: 'res', id, ...r })
 
 wss.on('connection', (ws) => {
   console.log('studio connected')
-  send(ws, { t: 'state', seq: ++seq, v: tags, pc: { 0: pc } })
+  send(ws, { t: 'state', seq: ++seq, v: vals(), pc: pcs() })
   send(ws, machineEvt(machine.status))
   send(ws, { t: 'evt', ts: Date.now(), ...alarms.snapshot() })
 
@@ -91,10 +105,22 @@ wss.on('connection', (ws) => {
       case 'ack':
         reply(ws, m.id, alarms.ack(m.code, m.user))
         break
-      case 'write':
-        if (!(m.tag in tags)) return send(ws, { t: 'res', id: m.id, ok: false, err: 'UNKNOWN_TAG', msg: `no tag ${m.tag}` })
-        tags[m.tag] = m.value
-        send(ws, { t: 'res', id: m.id, ok: true })
+      case 'download': {
+        if (machine.status.state !== 'STOPPED')
+          return reply(ws, m.id, { ok: false, err: 'STATE', msg: `download only in STOPPED (now ${machine.status.state})` })
+        const v = verifyRt(m.rt)
+        if (!v.ok) return reply(ws, m.id, v)
+        rt = m.rt
+        fresh()
+        console.log(`program ${rt.crc} loaded: ${rt.flows.length} flows, ${rt.flows.reduce((n, f) => n + f.steps.length, 0)} steps`)
+        reply(ws, m.id, { ok: true, crc: rt.crc })
+        broadcast(machineEvt(machine.status)) // everyone sees the new program CRC
+        break
+      }
+      case 'write': // a simulated value by tag id (step 34: the values live in the flow engine)
+        if (!runner || !Number.isInteger(m.tag)) return reply(ws, m.id, { ok: false, err: 'UNKNOWN_TAG', msg: `no tag ${m.tag} in the loaded program` })
+        runner.values.set(m.tag, m.value)
+        reply(ws, m.id, { ok: true })
         break
       default:
         send(ws, { t: 'res', id: m.id, ok: false, err: 'UNKNOWN_OP', msg: `op '${m.op}' not supported by mock` })
@@ -102,22 +128,10 @@ wss.on('connection', (ws) => {
   })
 })
 
-// 20 Hz state publishing, simple simulated machine
+// 20 Hz: the flow engine runs while EXECUTE; every cycle a state frame (pc per flow, values by tag id)
 setInterval(() => {
-  t += 0.05
-  tick += 1
-  tags['AI_Sealer_Temp'] = 180 + 5 * Math.sin(t)
-  if (machine.running) {
-    tags['AX_S1_X.pos'] = 300 + 300 * Math.sin(t * 0.8)
-    if (tick % 40 === 0) {
-      pc = (pc + 1) % steps.length
-      tags['DI_S1_PartPresent'] = pc !== 0
-      tags['DO_S1_ClampValve'] = pc >= 2 && pc <= 3
-      if (pc === 4) tags['R_PartCount'] += 1
-      broadcast({ t: 'evt', ev: 'step', ts: Date.now(), flow: 0, pc, name: steps[pc] })
-    }
-  }
-  broadcast({ t: 'state', seq: ++seq, v: { ...tags }, pc: { 0: pc } })
+  if (machine.running && runner) runner.tick(50)
+  broadcast({ t: 'state', seq: ++seq, v: vals(), pc: pcs() })
 }, 50)
 
 console.log(`mock runtime listening on ws://127.0.0.1:${PORT}`)

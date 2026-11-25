@@ -18,6 +18,7 @@ import {
   Info,
   Move,
   Network,
+  Download,
   Pause,
   Play,
   Plus,
@@ -99,7 +100,8 @@ export const ICONS = {
   // step 26
   decision: Split,
   // step 28: auto-layout ('tidy up')
-  layout: Network
+  layout: Network,
+  download: Download // step 34: program → runtime
 } satisfies Record<string, LucideIcon>
 
 export type IconName = keyof typeof ICONS

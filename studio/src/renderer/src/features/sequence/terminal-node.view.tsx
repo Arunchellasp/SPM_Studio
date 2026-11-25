@@ -1,6 +1,7 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { FlowNode } from './flow'
 import { IssueBadge } from './issue-badge.view'
+import { OnlineMark } from './online-mark.view'
 
 /**
  * Start and End: the rounded 'terminal' shape of flowcharts (ISO 5807), so they are told apart from steps
@@ -18,6 +19,7 @@ export function TerminalNode({ id, data, type, selected }: NodeProps<FlowNode>):
       <span>{data.label}</span>
       {start && <Handle type="source" position={Position.Bottom} aria-label="link out" />}
       <IssueBadge node={id} />
+      <OnlineMark node={id} />
     </div>
   )
 }

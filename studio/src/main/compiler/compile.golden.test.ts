@@ -8,7 +8,7 @@ import type { ProgramFile, TagFile } from '@shared/ipc'
 import { makeTagChecker } from '@shared/tags-schema'
 import programSchema from '../../../../schemas/program.schema.json'
 import rtSchema from '../../../../schemas/rt.schema.json'
-import { compile, describe as line } from './compile'
+import { compile, describe as line } from '@shared/compile'
 
 const GOLDEN = resolve(__dirname, 'golden')
 const tags = JSON.parse(readFileSync(resolve(__dirname, '../../../../projects/demo/tags.json'), 'utf8')) as TagFile

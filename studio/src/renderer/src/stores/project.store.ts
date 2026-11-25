@@ -22,6 +22,7 @@ import {
 import { checkTags, issueText } from '@shared/tags-rules'
 import { makeSimProject } from '../dev/sim-project'
 import { confirmDialog, toast } from './feedback.store'
+import { useOnline } from './online.store'
 import { useSequence } from './sequence.store'
 import { programDirty } from '../features/sequence/program-dirty'
 import { programText, toProgram } from '../features/sequence/program'
@@ -111,6 +112,8 @@ export const useProject = create<ProjectState>((set, get) => ({
         set({ project: res.project, dirty: false, past: [], future: [], saved: res.project.tags.tags })
         // step 27: the project's flowcharts replace the drawing in N02
         const problems = useSequence.getState().loadProgram(res.project.program ?? null, res.project.tags.tags)
+        useOnline.getState().clear()
+        if (res.project.program) void useOnline.getState().compile() // step 34: to map the runtime's pc to nodes
         const flows = res.project.program?.flows.length ?? 0
         toast(
           `Opened ${res.project.name} · ${res.project.tags.tags.length} tags${flows ? ` · ${flows} ${flows === 1 ? 'flow' : 'flows'}` : ''}`,
@@ -146,6 +149,8 @@ export const useProject = create<ProjectState>((set, get) => ({
       else {
         set({ dirty: false, saved: p.tags.tags })
         toast(res.changed ? `Saved ${res.file}` : 'No changes — tags.json is already up to date', res.changed ? 'done' : 'info')
+        const o = useOnline.getState() // step 34: tag ids may have moved — compile again if there is a program
+        if (o.rt || o.stage === 'compile') void o.compile()
       }
     } finally {
       set({ busy: false })
@@ -167,6 +172,7 @@ export const useProject = create<ProjectState>((set, get) => ({
       else {
         useSequence.getState().markSaved(programText(flows))
         toast(res.changed ? `Saved ${res.file}` : 'No changes — program.json is already up to date', res.changed ? 'done' : 'info')
+        void useOnline.getState().compile() // step 34: the canvas's step table = the saved program
       }
     } finally {
       set({ busy: false })

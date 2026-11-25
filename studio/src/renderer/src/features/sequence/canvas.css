@@ -188,3 +188,41 @@
   z-index: 1;
   cursor: help;
 }
+
+/* step 34: online — the live step glows (the state colour of EXECUTE), its tags' values under the nodes */
+.seq-live-ring {
+  position: absolute;
+  inset: -7px;
+  border-radius: var(--radius);
+  border: 3px solid var(--st-execute);
+  box-shadow: 0 0 14px 3px var(--st-execute);
+  pointer-events: none;
+  animation: seq-live 1.2s ease-in-out infinite;
+}
+@keyframes seq-live {
+  50% {
+    box-shadow: 0 0 4px 1px var(--st-execute);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .seq-live-ring {
+    animation: none;
+  }
+}
+.seq-live-val {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 6px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.seq-live-val-on {
+  border-color: var(--st-execute);
+  font-weight: 600;
+}

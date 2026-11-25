@@ -16,7 +16,7 @@ describe('ui store', () => {
     expect([useUi.getState().machineState, useUi.getState().mode]).toEqual(['EXECUTE', 'Manual'])
     useUi.getState().setMode('Auto') // no runtime here: refused, nothing changes
     expect(useUi.getState().mode).toBe('Manual')
-    expect(machineFrom({ ev: 'machine', ts: 0, state: 'HELD', mode: 'Auto' })).toEqual({ state: 'HELD', mode: 'Auto' })
+    expect(machineFrom({ ev: 'machine', ts: 0, state: 'HELD', mode: 'Auto' })).toEqual({ state: 'HELD', mode: 'Auto', prog: null })
     expect(machineFrom({ ev: 'machine', ts: 0, state: 'RUNNING', mode: 'Auto' })).toBeNull() // not a PackML state
     expect(machineFrom({ ev: 'step', ts: 0 })).toBeNull()
   })

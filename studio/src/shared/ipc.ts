@@ -14,7 +14,8 @@ export const IPC = {
   menuCommand: 'menu:command', // main → renderer (push): File menu item clicked
   projectExport: 'project:export', // renderer → main (invoke): save dialog, write .xlsx / .csv (step 22)
   projectImport: 'project:import', // renderer → main (invoke): open dialog, read .xlsx / .csv → tags (step 22)
-  projectSaveProgram: 'project:save-program' // renderer → main (invoke): check + write program.json (step 27)
+  projectSaveProgram: 'project:save-program', // renderer → main (invoke): check + write program.json (step 27)
+  projectBuild: 'project:build' // renderer → main (invoke): compile the saved program → program.rt.json, optionally download (step 34)
 } as const
 
 export interface AppInfo {
@@ -93,6 +94,11 @@ export interface ProjectInfo {
 }
 
 /** cancelled = the user closed the folder dialog; errors = why the folder could not be opened */
+/** step 34: result of Build / Download — the compiled step table (the canvas maps the live pc to nodes with it) */
+export type BuildResult =
+  | { ok: true; rt: import('./generated/rt').RtFile; file: string; downloaded: boolean }
+  | { ok: false; stage: 'project' | 'compile' | 'download'; errors: string[] }
+
 export type ProjectOpenResult = { ok: true; project: ProjectInfo } | { ok: false; cancelled?: boolean; errors: string[] }
 
 /** changed = false: the file on disk was already exactly this (nothing written) */
@@ -127,6 +133,11 @@ export interface StudioApi {
     importTags(): Promise<ProjectImportResult>
     /** step 27: writes program.json of the project opened last; refused when the schema check fails */
     saveProgram(program: ProgramFile): Promise<ProjectSaveResult>
+    /**
+     * step 34: compile the SAVED program.json + tags.json of the open project, write program.rt.json;
+     * download = also send it to the runtime (only in STOPPED; the runtime checks schema and CRC)
+     */
+    build(download: boolean): Promise<BuildResult>
   }
   /** File menu (Ctrl+O, Ctrl+S) */
   onMenu(cb: (cmd: MenuCommand) => void): () => void

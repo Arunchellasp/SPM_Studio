@@ -16,10 +16,10 @@
  * The compiler is the gate: anything open or wrong is an error with flow name and node id, and nothing is made.
  * (The editor only shows problems as badges — step 26.)
  */
-import type { ProgramFile, ProgramFlow, ProgramNode, Tag, TagFile } from '@shared/ipc'
-import type { RtFile, Flow as RtFlow, Step } from '@shared/generated/rt'
-import { compileExpr } from '@shared/expr'
-import { formatTagFile } from '@shared/tags-file'
+import type { ProgramFile, ProgramFlow, ProgramNode, Tag, TagFile } from './ipc'
+import type { RtFile, Flow as RtFlow, Step } from './generated/rt'
+import { compileExpr } from './expr'
+import { formatTagFile } from './tags-file'
 
 export interface CompileError {
   flow: string
@@ -180,7 +180,8 @@ function compileFlow(f: ProgramFlow, flowId: number, ids: Map<string, number>, t
         if (!expr) err(n.id, 'the condition is empty')
         else {
           const c = compileExpr(expr, tags, 'BOOL')
-          if (c.ok) rpn = c.rpn as [string, ...string[]] // never empty: an expression has at least one operand
+          if (c.ok)
+            rpn = c.rpn as [string, ...string[]] // never empty: an expression has at least one operand
           else err(n.id, `condition: ${c.error}`)
         }
         return { ...base, op: 'IF', rpn, yes: next(n, 'yes'), no: next(n, 'no') }
@@ -213,3 +214,18 @@ export function compile(program: ProgramFile, tagFile: TagFile): CompileResult {
 
 /** one line per error, for the CLI and Build output */
 export const describe = (e: CompileError): string => `${e.flow}${e.node ? ` · ${e.node}` : ''}: ${e.message}`
+
+/**
+ * Step 34 · what the runtime checks on a download (Software implementation › 6 / 5b): the schema version,
+ * and that the CRC matches the flows as sent. The mock runtime uses it now, the C runtime does the same.
+ */
+export function verifyRt(rt: unknown): { ok: true; crc: string } | { ok: false; err: 'SCHEMA' | 'CRC'; msg: string } {
+  const r = rt as Partial<RtFile> | null
+  if (!r || r.schema !== 'spm.rt/1')
+    return { ok: false, err: 'SCHEMA', msg: `schema must be "spm.rt/1", not ${JSON.stringify(r?.schema ?? null)}` }
+  if (!Array.isArray(r.flows) || typeof r.crc !== 'string' || typeof r.tags_crc !== 'string')
+    return { ok: false, err: 'SCHEMA', msg: 'flows, crc and tags_crc are required' }
+  const crc = crc32(formatRtFile({ ...(r as RtFile), crc: '00000000' }))
+  if (crc !== r.crc) return { ok: false, err: 'CRC', msg: `CRC mismatch: the file says ${r.crc}, its flows give ${crc}` }
+  return { ok: true, crc }
+}

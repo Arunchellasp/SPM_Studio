@@ -7,6 +7,9 @@
  */
 import { makeSimProject } from './sim-project'
 import { PackMachine } from '@shared/packml-sim'
+import { FlowRunner } from '@shared/flow-sim'
+import { verifyRt } from '@shared/compile'
+import type { RtFile } from '@shared/generated/rt'
 import { AlarmBook } from '@shared/alarm-sim'
 import { DEMO_OVERVIEW } from '../fixtures/demo'
 import type { PackCommand, PackMode } from '@shared/packml'
@@ -29,17 +32,13 @@ export function installSimApi(): void {
   const stateCbs = new Set<Cb<RuntimeState>>()
   const eventCbs = new Set<Cb<RuntimeEvent>>()
 
-  const tags: Record<string, number | boolean> = {
-    DI_S1_PartPresent: false,
-    'AX_S1_X.pos': 0,
-    AI_Sealer_Temp: 25,
-    R_PartCount: 0,
-    DO_S1_ClampValve: false
+  // step 34: the downloaded program runs in the same simulated flow engine as the mock runtime
+  let rt: RtFile | null = null
+  let runner: FlowRunner | null = null
+  const fresh = (): void => {
+    runner = rt ? new FlowRunner(rt, (p) => emitEvent({ ev: 'step', ts: Date.now(), flow: p.flow, pc: p.pc })) : null
   }
-  const steps = ['wait part', 'move X to pick', 'clamp', 'seal', 'count']
-  let pc = 0
   let seq = 0
-  let t = 0
   let tick = 0
 
   const status: RuntimeStatus = {
@@ -52,10 +51,11 @@ export function installSimApi(): void {
 
   const emitEvent = (e: RuntimeEvent): void => eventCbs.forEach((cb) => cb(e))
   // step 32: the same simulated PackML machine as the mock runtime
-  const machine = new PackMachine(() => {
+  const machine = new PackMachine((m) => {
+    if (m.state === 'RESETTING') fresh() // Reset: every flow back to its Start
     if (status.link === 'online' && runtime === 'running') emitEvent(machineEvt())
   })
-  const machineEvt = (): RuntimeEvent => ({ ev: 'machine', ts: Date.now(), ...machine.status })
+  const machineEvt = (): RuntimeEvent => ({ ev: 'machine', ts: Date.now(), ...machine.status, prog: rt ? rt.crc : null })
   // step 33: the alarm list starts like the design's N01 (E1202 unacked, W0310 acked)
   const alarms = new AlarmBook(
     (e) => {
@@ -119,21 +119,14 @@ export function installSimApi(): void {
   }
 
   setInterval(() => {
-    t += 0.05
     tick += 1
-    tags.AI_Sealer_Temp = 180 + 5 * Math.sin(t)
-    if (machine.running) {
-      tags['AX_S1_X.pos'] = 300 + 300 * Math.sin(t * 0.8)
-      if (tick % 40 === 0) {
-        pc = (pc + 1) % steps.length
-        tags.DI_S1_PartPresent = pc !== 0
-        tags.DO_S1_ClampValve = pc >= 2 && pc <= 3
-        if (pc === 4) tags.R_PartCount = (tags.R_PartCount as number) + 1
-        emitEvent({ ev: 'step', ts: Date.now(), flow: 0, pc, name: steps[pc] })
-      }
-    }
     if (status.link !== 'online' || runtime !== 'running') return // no frames from a stopped or hung runtime
-    const state: RuntimeState = { seq: ++seq, values: { ...tags }, pc: { '0': pc } }
+    if (machine.running && runner) runner.tick(50)
+    const state: RuntimeState = {
+      seq: ++seq,
+      values: runner ? Object.fromEntries([...runner.values].map(([id, v]) => [String(id), v])) : {},
+      pc: runner ? Object.fromEntries(runner.pc.map((p, i) => [String(i), p])) : {}
+    }
     stateCbs.forEach((cb) => cb(state))
     if (tick % 20 === 0) {
       status.cycleMaxUs = 1000 + Math.round(Math.random() * 150)
@@ -153,10 +146,20 @@ export function installSimApi(): void {
         return machine.setMode(args.mode as PackMode)
       case 'ack':
         return alarms.ack(args.code, args.user)
+      case 'download': {
+        if (machine.status.state !== 'STOPPED')
+          return { ok: false, err: 'STATE', msg: `download only in STOPPED (now ${machine.status.state})` }
+        const v = verifyRt(args.rt)
+        if (!v.ok) return v
+        rt = args.rt as RtFile
+        fresh()
+        emitEvent(machineEvt()) // the new program CRC
+        return { ok: true, crc: rt.crc }
+      }
       case 'write': {
-        const tag = String(args.tag)
-        if (!(tag in tags)) return { ok: false, err: 'UNKNOWN_TAG', msg: `no tag ${tag}` }
-        tags[tag] = args.value as number | boolean
+        if (!runner || !Number.isInteger(args.tag))
+          return { ok: false, err: 'UNKNOWN_TAG', msg: `no tag ${String(args.tag)} in the loaded program` }
+        runner.values.set(args.tag as number, args.value as number | boolean)
         return { ok: true }
       }
       default:
@@ -188,7 +191,7 @@ export function installSimApi(): void {
         return sub(eventCbs, cb, machineEvt())
       }
     },
-    ...makeSimProject()
+    ...makeSimProject(command)
   }
   window.spm = api
   window.spmSim = control

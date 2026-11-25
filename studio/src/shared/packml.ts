@@ -35,6 +35,8 @@ export type PackMode = (typeof MODES)[number]
 export interface MachineStatus {
   state: PackState
   mode: PackMode
+  /** step 34: CRC of the program the runtime has loaded (null = none); the canvas glows only when it is the canvas's own */
+  prog?: string | null
 }
 
 export const isActing = (s: PackState): s is ActingState => s in ACTING

@@ -72,7 +72,7 @@ test('UI-27.2 save, change, open again: the saved drawing comes back — nodes, 
   await expect(page.locator('.react-flow__node')).toHaveCount(3) // the Delay was not saved
   expect(await place(page, 'n1')).toBe(before)
   await expect(node(page, 'n1')).toContainText('WAIT DI_S1_PartPresent = TRUE · 5 s')
-  await expect(page.getByTestId('seq-status')).toContainText('2 links')
+  await expect(page.getByTestId('seq-status')).toHaveAttribute('title', / 2 links$/)
   await expect(page.getByTestId('program-dirty')).toHaveCount(0)
   // saving what was opened writes nothing
   await page.getByRole('button', { name: 'Save', exact: true }).click()

@@ -267,7 +267,8 @@ button.seq-build-item:focus-visible {
 .seq-flow-new {
   color: var(--muted);
 }
-.seq-save {
+.seq-save,
+.seq-download {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -277,4 +278,13 @@ button.seq-build-item:focus-visible {
 .seq-dirty {
   color: var(--accent-text);
   font-weight: 600;
+}
+
+/* step 34: the status says whether the canvas shows the running program */
+.seq-status-match {
+  color: var(--st-execute);
+  font-weight: 600;
+}
+.seq-status-other {
+  color: var(--muted);
 }

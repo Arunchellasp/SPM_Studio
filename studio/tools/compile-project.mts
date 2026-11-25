@@ -13,7 +13,7 @@ import { createJiti } from 'jiti'
 
 const here = fileURLToPath(new URL('.', import.meta.url))
 const jiti = createJiti(import.meta.url, { alias: { '@shared': resolve(here, '../src/shared') } })
-const { compile, describe } = (await jiti.import(resolve(here, '../src/main/compiler/compile.ts'))) as typeof import('../src/main/compiler/compile')
+const { compile, describe } = (await jiti.import(resolve(here, '../src/shared/compile.ts'))) as typeof import('../src/shared/compile')
 
 const dir = resolve(process.argv[2] ?? '.')
 for (const f of ['program.json', 'tags.json'])

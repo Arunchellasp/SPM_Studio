@@ -13,8 +13,13 @@ import { formatProgramFile } from '@shared/program-file'
 import { formatTagFile } from '@shared/tags-file'
 import { makeBigProject } from '@shared/big-project'
 import { checkTags, issueText } from '@shared/tags-rules'
+import { compile, describe as compileLine } from '@shared/compile'
+import type { CommandResult } from '@shared/ipc'
 
-export function makeSimProject(): Pick<StudioApi, 'project' | 'onMenu'> {
+/** step 34: the simulator's runtime takes the download (cmd download, like over the WebSocket) */
+export type SimDownload = (op: string, args: Record<string, unknown>) => Promise<CommandResult>
+
+export function makeSimProject(command?: SimDownload): Pick<StudioApi, 'project' | 'onMenu'> {
   // ?project=big in the address → a 1000-tag project (N03 speed test, step 18)
   const big = typeof location !== 'undefined' && new URLSearchParams(location.search).get('project') === 'big'
   const name = big ? 'big-1000' : 'demo'
@@ -25,7 +30,12 @@ export function makeSimProject(): Pick<StudioApi, 'project' | 'onMenu'> {
     project: {
       open: async () => ({
         ok: true,
-        project: { name, dir: `(browser) projects/${name}`, tags: JSON.parse(disk) as TagFile, program: programDisk ? (JSON.parse(programDisk) as ProgramFile) : null }
+        project: {
+          name,
+          dir: `(browser) projects/${name}`,
+          tags: JSON.parse(disk) as TagFile,
+          program: programDisk ? (JSON.parse(programDisk) as ProgramFile) : null
+        }
       }),
       save: async (tags) => {
         if (tags.schema !== 'spm.tags/1') return { ok: false, errors: ['schema: must be "spm.tags/1"'] }
@@ -38,6 +48,17 @@ export function makeSimProject(): Pick<StudioApi, 'project' | 'onMenu'> {
       },
       // step 22: no files in a browser — export only says where it would go; import returns a fixed
       // 'edited in Excel' sheet: one tag changed, two new, one bad row (for the import preview tests)
+      // step 34: like main — compile the SAVED files, 'write' program.rt.json, optionally download
+      build: async (download) => {
+        if (!programDisk) return { ok: false, stage: 'project', errors: ['no program.json yet — save the flows first'] }
+        const c = compile(JSON.parse(programDisk) as ProgramFile, JSON.parse(disk) as TagFile)
+        if (!c.ok) return { ok: false, stage: 'compile', errors: c.errors.map(compileLine) }
+        const file = `(browser) projects/${name}/program.rt.json`
+        if (!download) return { ok: true, rt: c.rt, file, downloaded: false }
+        const r = command ? await command('download', { rt: c.rt }) : { ok: false, msg: 'no runtime' }
+        if (!r.ok) return { ok: false, stage: 'download', errors: [`the runtime refused: ${r.msg ?? r.err ?? 'no reason given'}`] }
+        return { ok: true, rt: c.rt, file, downloaded: true }
+      },
       saveProgram: async (program) => {
         if (program.schema !== 'spm.program/1') return { ok: false, errors: ['schema: must be "spm.program/1"'] }
         const text = formatProgramFile(program)
@@ -48,7 +69,10 @@ export function makeSimProject(): Pick<StudioApi, 'project' | 'onMenu'> {
       exportTags: async () => ({ ok: true, file: `(browser) projects/${name}/${name}-tags.xlsx` }),
       importTags: async () => {
         const sheet = (JSON.parse(disk) as TagFile).tags.map((t) => (t.name === 'R_S1_Step' ? { ...t, desc: 'Edited in Excel' } : t))
-        sheet.push({ name: 'R_Excel_1', kind: 'REG', dtype: 'INT', scope: 'S1', init: 1 }, { name: 'R_Excel_2', kind: 'REG', dtype: 'BOOL', scope: 'S1', init: false })
+        sheet.push(
+          { name: 'R_Excel_1', kind: 'REG', dtype: 'INT', scope: 'S1', init: 1 },
+          { name: 'R_Excel_2', kind: 'REG', dtype: 'BOOL', scope: 'S1', init: false }
+        )
         return { ok: true, file: '(browser) tags-edited.xlsx', tags: sheet, errors: ["row 24 (R_Bad): column 'more' is not valid JSON"] }
       }
     },
