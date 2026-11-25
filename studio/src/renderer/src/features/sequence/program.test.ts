@@ -13,12 +13,23 @@ const tags = (demo as TagFile).tags as Tag[]
 function sample(): FlowDoc {
   const base = newFlow().nodes
   const w = { ...makeStep('wait_di', base), id: 'n1' }
-  w.data = { ...w.data, p: { tag: 'DI_S1_PartPresent', value: true, timeout_ms: 5000, alarm: 'A_301_NoPart' }, name: 'Part in', comment: 'sensor at the nest' }
+  w.data = {
+    ...w.data,
+    p: { tag: 'DI_S1_PartPresent', value: true, timeout_ms: 5000, alarm: 'A_301_NoPart' },
+    name: 'Part in',
+    comment: 'sensor at the nest'
+  }
   const d = { ...makeStep('if', [...base, w], { x: 0, y: 200 }), id: 'n2' }
   d.data = { ...d.data, p: { expr: 'R_PartCount >= 100' } }
   const s = { ...makeStep('set_do', [...base, w, d], { x: 320, y: 200 }), id: 'n3' }
   s.data = { ...s.data, p: { tag: 'DO_S1_ClampValve', value: true } }
-  const edges = [makeEdge('start', 'n1'), makeEdge('n1', 'n2'), makeEdge('n2', 'end', 'yes'), makeEdge('n2', 'n3', 'no'), makeEdge('n3', 'n1')]
+  const edges = [
+    makeEdge('start', 'n1'),
+    makeEdge('n1', 'n2'),
+    makeEdge('n2', 'end', 'yes'),
+    makeEdge('n2', 'n3', 'no'),
+    makeEdge('n3', 'n1')
+  ]
   return { name: 'S1_Main', station: 'S1', autostart: true, nodes: [...base, w, d, s], edges }
 }
 
@@ -59,7 +70,11 @@ describe('N02 program.json (step 27)', () => {
             { id: 'n1', type: 'delay', pos: [0, 96] },
             { id: 'n9', type: 'calc' as 'delay', pos: [0, 200] }
           ],
-          edges: [['start', 'n1'], ['n1', 'nX'], ['start', 'n1', 'yes']]
+          edges: [
+            ['start', 'n1'],
+            ['n1', 'nX'],
+            ['start', 'n1', 'yes']
+          ]
         }
       ]
     }

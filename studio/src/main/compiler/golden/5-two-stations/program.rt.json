@@ -1,11 +1,11 @@
 {
-  "schema": "spm.rt/1", "crc": "927CF0D8", "tags_crc": "D45C7CCE",
+  "schema": "spm.rt/1", "crc": "CFA08D8E", "tags_crc": "D45C7CCE",
   "flows": [
     {
       "name": "S1_Main", "id": 0, "station": "S1", "autostart": true,
       "steps": [
         {"i":0,"src":"start","op":"START","next":1},
-        {"i":1,"src":"n7","op":"IF","expr":"DI_S1_ClampClosed AND NOT DI_S1_ClampOpen","yes":2,"no":3},
+        {"i":1,"src":"n7","op":"IF","rpn":["T:7","T:8","NOT","AND"],"yes":2,"no":3},
         {"i":2,"src":"end","op":"END"},
         {"i":3,"src":"n9","op":"DELAY","ms":1000,"next":1}
       ]

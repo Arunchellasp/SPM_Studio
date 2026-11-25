@@ -8,6 +8,7 @@
  */
 import type { Edge } from '@xyflow/react'
 import type { Tag } from '@shared/ipc'
+import { compileExpr } from '@shared/expr'
 import { parseCondition } from './flow-expr'
 import { outlets, type FlowNode, type StepKind, type StepParams } from './flow'
 import { FIELDS, tagsFor } from './node-schema'
@@ -88,14 +89,20 @@ export const ruleTags: Rule = (nodes, _edges, tags) => {
   return out
 }
 
-/** a Decision's condition is well formed (an empty one is 'open': dashed, not listed) */
-export const ruleConditions: Rule = (nodes) =>
+/**
+ * a Decision's condition is well formed and — with an open project — of the right types (step 30); an empty one
+ * is 'open' (dashed, not listed); unknown tag names are ruleTags' problem, not listed twice
+ */
+export const ruleConditions: Rule = (nodes, _edges, tags) =>
   nodes.flatMap((n) => {
     if (n.type !== 'if') return []
     const expr = (n.data.p as StepParams['if']).expr
     if (!expr.trim()) return []
-    const r = parseCondition(expr)
-    return r.ok ? [] : [{ rule: 'bad-condition' as const, node: n.id, message: `condition: ${r.error}` }]
+    const syntax = parseCondition(expr)
+    if (!syntax.ok) return [{ rule: 'bad-condition' as const, node: n.id, message: `condition: ${syntax.error}` }]
+    if (!tags || syntax.names.some((name) => !tags.some((t) => t.name === name))) return []
+    const typed = compileExpr(expr, tags, 'BOOL')
+    return typed.ok ? [] : [{ rule: 'bad-condition' as const, node: n.id, message: `condition: ${typed.error}` }]
   })
 
 export const RULES: Rule[] = [ruleStart, ruleEnd, ruleOpenLinks, ruleReachable, ruleTags, ruleConditions]

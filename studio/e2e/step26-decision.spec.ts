@@ -97,7 +97,7 @@ test('UI-26.5 a bad condition is refused in the panel with the place of the erro
   await program(page, true)
   await pal(page, 'Decision').click()
   await setCondition(page, 'R_PartCount >=')
-  await expect(page.locator('.seq-props').getByRole('alert')).toHaveText('a tag, number or ( expected at the end')
+  await expect(page.locator('.seq-props').getByRole('alert')).toHaveText('Expected expression after >= (position 15)') // jsep's message since step 30
   await setCondition(page, 'R_Nothing > 1')
   await expect(page.locator('.seq-props').getByRole('alert')).toHaveText('no tag R_Nothing in the project')
   await expect(node(page, 'n1')).toContainText('IF condition?')

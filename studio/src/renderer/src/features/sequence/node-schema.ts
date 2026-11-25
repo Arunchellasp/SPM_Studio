@@ -5,6 +5,7 @@
  */
 import type { Tag } from '@shared/ipc'
 import type { StepKind, StepParams } from './flow'
+import { compileExpr } from '@shared/expr'
 import { parseCondition } from './flow-expr'
 
 export type FieldKind = 'tag' | 'number' | 'bool' | 'expr'
@@ -66,11 +67,9 @@ export function parseField(type: StepKind, f: FieldDef, raw: string | boolean, t
   const text = String(raw).trim()
   if (f.kind === 'expr') {
     if (!text) return { ok: true, value: '' } // open: dashed until filled
-    const r = parseCondition(text)
-    if (!r.ok) return { ok: false, error: r.error }
-    const unknown = tags.length ? r.names.filter((n) => !tags.some((t) => t.name === n)) : []
-    if (unknown.length) return { ok: false, error: `no tag ${unknown.join(', ')} in the project` }
-    return { ok: true, value: text }
+    // step 30: with the project's tags, types too (a condition must give TRUE / FALSE); without, the syntax
+    const r = tags.length ? compileExpr(text, tags, 'BOOL') : parseCondition(text)
+    return r.ok ? { ok: true, value: text } : { ok: false, error: r.error }
   }
   if (f.kind === 'number') {
     if (!/^\d+$/.test(text)) return { ok: false, error: `a whole number${f.unit ? ` in ${f.unit}` : ''}` }

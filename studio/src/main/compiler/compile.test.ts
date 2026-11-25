@@ -136,4 +136,27 @@ describe('compiler (step 29)', () => {
     expect(c.rt.tags_crc).not.toBe(a.rt.tags_crc)
     expect(a.text).toContain(`"crc": "${a.rt.crc}"`)
   })
+
+  it('U-30.6 the compiler: a condition becomes RPN; a wrong type is an error with the node id', () => {
+    const flow = (expr: string): ProgramFile =>
+      prog(
+        base(
+          [{ id: 'n7', type: 'if', pos: [0, 0], p: { expr } }],
+          [
+            ['start', 'n7'],
+            ['n7', 'end', 'yes'],
+            ['n7', 'end', 'no']
+          ]
+        )
+      )
+    const ok = compile(flow('R_PartCount >= 100 or DI_S1_PartPresent'), tags)
+    expect(ok.ok && ok.rt.flows[0]!.steps[1]).toMatchObject({ op: 'IF', rpn: ['T:17', 'K:100', 'GE', 'T:9', 'OR'] })
+    expect(errors(flow('R_PartCount + 1'))).toEqual([
+      'S1_Main · n7: condition: a condition must give TRUE / FALSE — R_PartCount + 1 gives a number'
+    ])
+    expect(errors(flow('AX_S1_X > 1'))).toEqual([
+      'S1_Main · n7: condition: AX_S1_X is an AXIS — it has no single value to use here (DI, DO, AI, AO, REG, RECIPE have)'
+    ])
+    expect(errors(flow('R_PartCount >'))).toEqual(['S1_Main · n7: condition: Expected expression after > (position 14)'])
+  })
 })

@@ -9,7 +9,7 @@
  *   3 Check graph        one START, every way out linked, every link to a node that exists, nothing unreachable
  *   4 Order steps        walk from START, depth first, yes before no: i = 0, 1, 2 …
  *   5 Resolve params     tag names → ids, kind check per op (the same rules as the property panel, step 25)
- *   6 Expressions        step 30 — for now the condition is carried as text ("expr")
+ *   6 Expressions        conditions → type check → RPN (src/shared/expr.ts, jsep — step 30)
  *   7 Functions          with the CALL node
  *   8 Emit               program.rt.json + CRC-32 of the flows and of tags.json
  *
@@ -18,6 +18,7 @@
  */
 import type { ProgramFile, ProgramFlow, ProgramNode, Tag, TagFile } from '@shared/ipc'
 import type { RtFile, Flow as RtFlow, Step } from '@shared/generated/rt'
+import { compileExpr } from '@shared/expr'
 import { formatTagFile } from '@shared/tags-file'
 
 export interface CompileError {
@@ -175,8 +176,14 @@ function compileFlow(f: ProgramFlow, flowId: number, ids: Map<string, number>, t
         return { ...base, op: 'DELAY', ms: number('ms', 1, 3600000, 'ms'), next: next(n) }
       case 'if': {
         const expr = typeof p.expr === 'string' ? p.expr.trim() : ''
+        let rpn: [string, ...string[]] = ['K:0']
         if (!expr) err(n.id, 'the condition is empty')
-        return { ...base, op: 'IF', expr: expr || '?', yes: next(n, 'yes'), no: next(n, 'no') }
+        else {
+          const c = compileExpr(expr, tags, 'BOOL')
+          if (c.ok) rpn = c.rpn as [string, ...string[]] // never empty: an expression has at least one operand
+          else err(n.id, `condition: ${c.error}`)
+        }
+        return { ...base, op: 'IF', rpn, yes: next(n, 'yes'), no: next(n, 'no') }
       }
       default:
         err(n.id, `node type ${n.type} cannot be compiled yet`)

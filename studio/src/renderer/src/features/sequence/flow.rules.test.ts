@@ -92,7 +92,7 @@ describe('N02 flow rules (step 26) — each rule on its own', () => {
   it('U-26.8 conditions: a bad one is listed with the parser message; an empty one is open (dashed), not listed', () => {
     const n = [...base, step('n1', 'if', { expr: 'A >' }), step('n2', 'if', { expr: '' }), step('n3', 'if', { expr: 'A > 1' })]
     expect(ruleConditions(n, [], tags)).toEqual([
-      { rule: 'bad-condition', node: 'n1', message: 'condition: a tag, number or ( expected at the end' }
+      { rule: 'bad-condition', node: 'n1', message: 'condition: Expected expression after > (position 4)' }
     ])
   })
 
@@ -104,5 +104,23 @@ describe('N02 flow rules (step 26) — each rule on its own', () => {
     const m = byNode(bad)
     expect([...m.keys()].sort()).toEqual(['end', 'n1', 'n9', 'start']) // End: no link reaches it any more
     expect(m.get('n1')!.map((i) => i.message)).toEqual(["'yes' way out is not linked", "'no' way out is not linked"])
+  })
+
+  it('U-30.5 conditions with the project open: a type error is a badge on its node; unknown tags are not listed twice; no project → syntax only', () => {
+    const n = [
+      ...base,
+      step('n1', 'if', { expr: 'R_PartCount AND DI_S1_PartPresent' }),
+      step('n2', 'if', { expr: 'R_PartCount >= 100' }),
+      step('n3', 'if', { expr: 'R_Gone > 1' })
+    ]
+    expect(ruleConditions(n, [], tags)).toEqual([
+      {
+        rule: 'bad-condition',
+        node: 'n1',
+        message: 'condition: AND needs TRUE / FALSE on both sides — R_PartCount is a number, DI_S1_PartPresent is TRUE / FALSE'
+      }
+    ])
+    expect(ruleConditions(n, [], undefined)).toEqual([])
+    expect(ruleTags(n, [], tags).map((i) => i.message)).toEqual(['no tag R_Gone in the project'])
   })
 })

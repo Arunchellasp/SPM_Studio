@@ -164,7 +164,7 @@ export interface Delay {
   next: number
 }
 /**
- * decide in one cycle: yes or no (the condition as written; step 30 adds it as RPN)
+ * decide in one cycle: evaluate the RPN, then go to yes or no
  */
 export interface If {
   /**
@@ -176,7 +176,12 @@ export interface If {
    */
   src: string
   op: 'IF'
-  expr: string
+  /**
+   * the condition in reverse Polish notation (step 30): T:<tag id> pushes the tag's value, K:<constant> a constant, an operator takes its operands from the stack; the result is TRUE / FALSE
+   *
+   * @minItems 1
+   */
+  rpn: [string, ...string[]]
   /**
    * index of the next step in this flow's steps
    */

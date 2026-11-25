@@ -60,7 +60,10 @@ describe('N02 copy / paste (step 28)', () => {
     const base = newFlow().nodes
     const d = { ...makeStep('if', base), id: 'n1', selected: true }
     const w = { ...makeStep('delay', [...base, d], { x: 300, y: 96 }), id: 'n2', selected: true }
-    return { nodes: [{ ...base[0]!, selected: true }, base[1]!, d, w], edges: [makeEdge('start', 'n1'), makeEdge('n1', 'n2', 'no'), makeEdge('n1', 'end', 'yes')] }
+    return {
+      nodes: [{ ...base[0]!, selected: true }, base[1]!, d, w],
+      edges: [makeEdge('start', 'n1'), makeEdge('n1', 'n2', 'no'), makeEdge('n1', 'end', 'yes')]
+    }
   }
 
   it('U-28.4 copy keeps ids unique: new ids, links only between the copies (re-pointed), a step down-right, selected', () => {
@@ -104,7 +107,11 @@ describe('N02 copy / paste (step 28)', () => {
 describe('N02 auto-layout (step 28)', () => {
   it('U-28.6 a messy flow is tidied: top to bottom along the links, nothing overlaps, on the grid; no goes to the side', async () => {
     const base = newFlow().nodes
-    const mk = (type: Parameters<typeof makeStep>[0], id: string, x: number, y: number): FlowNode => ({ ...makeStep(type, base), id, position: { x, y } })
+    const mk = (type: Parameters<typeof makeStep>[0], id: string, x: number, y: number): FlowNode => ({
+      ...makeStep(type, base),
+      id,
+      position: { x, y }
+    })
     // scattered on purpose: End at the top, the steps all over
     const nodes = [
       { ...base[0]!, position: { x: 700, y: 500 } },
@@ -114,7 +121,14 @@ describe('N02 auto-layout (step 28)', () => {
       mk('set_do', 'n3', 300, 300),
       mk('delay', 'n4', 320, 310) // overlaps n3
     ]
-    const edges = [makeEdge('start', 'n1'), makeEdge('n1', 'n2'), makeEdge('n2', 'end', 'yes'), makeEdge('n2', 'n3', 'no'), makeEdge('n3', 'n4'), makeEdge('n4', 'n1')]
+    const edges = [
+      makeEdge('start', 'n1'),
+      makeEdge('n1', 'n2'),
+      makeEdge('n2', 'end', 'yes'),
+      makeEdge('n2', 'n3', 'no'),
+      makeEdge('n3', 'n4'),
+      makeEdge('n4', 'n1')
+    ]
     const pos = await autoLayout(nodes, edges)
     const box = (id: string) => ({ ...pos.get(id)!, ...nodeSize(nodes.find((n) => n.id === id)!) })
     const y = (id: string) => pos.get(id)!.y

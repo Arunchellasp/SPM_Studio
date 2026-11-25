@@ -18,15 +18,15 @@ describe('N02 Decision condition (step 26)', () => {
     expect(ok('  R_S1_Step  =  3 ')).toEqual({ ok: true, names: ['R_S1_Step'] })
   })
 
-  it('U-26.2 errors say what was expected and where', () => {
+  it('U-26.2 errors say what was expected and where (messages of the jsep parser since step 30)', () => {
     expect(err('')).toBe('the condition is empty')
-    expect(err('R_PartCount >=')).toBe('a tag, number or ( expected at the end')
-    expect(err('A AND')).toBe('a tag, number or ( expected at the end')
-    expect(err('(A > 1')).toBe(') expected at the end')
-    expect(err('A > 1)')).toBe("a matching ( expected at ')' (position 6)")
-    expect(err('A B')).toBe("AND, OR or a comparison expected at 'B' (position 3)")
-    expect(err('A < B < C')).toBe("AND / OR between two comparisons expected at '<' (position 7)")
-    expect(err('A == 1')).toBe("a tag, number or ( expected at '=' (position 4)")
-    expect(err('A > 1 ; B')).toBe("';' is not allowed here (position 7)")
+    expect(err('R_PartCount >=')).toBe('Expected expression after >= (position 15)')
+    expect(err('A AND')).toBe('AND needs something on both sides')
+    expect(err('(A > 1')).toBe('Unclosed ( (position 7)')
+    expect(err('A > 1)')).toBe('Unexpected ")" (position 6)')
+    expect(err('A B')).toBe('an operator (AND, OR, =, < …) is missing between A and B')
+    // A < B < C is fine for the syntax since step 30 (jsep); the TYPE check refuses it — U-30.3
+    expect(err('A == 1')).toBe('Expected expression after = (position 4)')
+    expect(err('A > 1 ; B')).toBe('an operator (AND, OR, =, < …) is missing between (A > 1) and B')
   })
 })

@@ -328,13 +328,13 @@
     },
     "if": {
       "type": "object",
-      "description": "decide in one cycle: yes or no (the condition as written; step 30 adds it as RPN)",
+      "description": "decide in one cycle: evaluate the RPN, then go to yes or no",
       "additionalProperties": false,
       "required": [
         "i",
         "src",
         "op",
-        "expr",
+        "rpn",
         "yes",
         "no"
       ],
@@ -351,9 +351,14 @@
         "op": {
           "const": "IF"
         },
-        "expr": {
-          "type": "string",
-          "minLength": 1
+        "rpn": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^(T:\\d+|K:-?\\d+(\\.\\d+)?|OR|AND|NOT|EQ|NE|LT|LE|GT|GE|ADD|SUB|MUL|DIV|NEG)$"
+          },
+          "description": "the condition in reverse Polish notation (step 30): T:<tag id> pushes the tag's value, K:<constant> a constant, an operator takes its operands from the stack; the result is TRUE / FALSE"
         },
         "yes": {
           "type": "integer",
