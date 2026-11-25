@@ -144,7 +144,7 @@ int main(int argc, char **argv)
     uint64_t next = g.t0 + (uint64_t)g.cfg.stats_s * 1000000u, end = seconds > 0 ? g.t0 + (uint64_t)(seconds * 1e6) : 0;
     char line[512];
     while (!os_shutdown_requested() && (!end || os_now_us() < end)) {
-        os_sleep_ms(5);
+        os_sleep_ms(1);  /* step 36: 1 ms, so an answer leaves within ~1 ms of the RT cycle (measured: 5 ms sleep → 5 ms median) */
         comm_pump(comm); /* answers, machine and alarm events out; state frames at 20 Hz */
         if (os_now_us() < next) continue;
         next += (uint64_t)g.cfg.stats_s * 1000000u;

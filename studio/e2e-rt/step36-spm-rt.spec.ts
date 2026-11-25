@@ -3,12 +3,14 @@
  *   UI-36.1 link Online with the runtime's version and cycle · UI-36.2 Reset / Start / Hold / Stop through the queue
  *   UI-36.3 the alarm demo on the SimCard: banner, Ack · UI-36.4 open the project, Download → the runtime's CRC
  *   UI-36.5 unplug (runtime killed) → OFFLINE within 3 s; replug (started again) → Online by itself
+ *   UI-36.6 answers come back fast: ping and command round trips (a second client next to the studio)
  */
 import { spawn, type ChildProcess } from 'node:child_process'
 import { copyFileSync, existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { _electron as electron, expect, test, type ElectronApplication, type Locator, type Page } from '@playwright/test'
+import WebSocket from 'ws'
 
 const STUDIO = resolve(__dirname, '..')
 const REPO = resolve(STUDIO, '..')
@@ -141,4 +143,39 @@ test('UI-36.5 unplug: spm_rt killed → OFFLINE within 3 s, buttons off; replug:
   await expect(link(page)).toHaveText('Online · 1.00 ms', { timeout: 10_000 }) // nobody clicked anything
   await expect(pill(page)).toHaveText('STOPPED') // a fresh runtime: its own state, not the old one
   await expect(page.getByTestId('seq-status')).toHaveText(/no program/) // and no program until the next Download
+})
+
+test('UI-36.6 answers come back fast: 50 pings and 50 commands, p95 under 20 ms (TCP_NODELAY; was ~44 ms)', async () => {
+  const ws = new WebSocket(`ws://127.0.0.1:${PORT}`)
+  await new Promise<void>((ok, fail) => {
+    ws.once('open', () => ok())
+    ws.once('error', fail)
+  })
+  const rtt = async (msg: object, match: (m: { t: string; id?: number }) => boolean): Promise<number> => {
+    const t0 = performance.now()
+    const got = new Promise<void>((ok) => {
+      const on = (d: WebSocket.RawData): void => {
+        if (match(JSON.parse(d.toString()) as { t: string; id?: number })) {
+          ws.off('message', on)
+          ok()
+        }
+      }
+      ws.on('message', on)
+    })
+    ws.send(JSON.stringify(msg))
+    await got
+    return performance.now() - t0
+  }
+  const ping: number[] = []
+  const cmd: number[] = []
+  for (let i = 0; i < 50; i++) {
+    ping.push(await rtt({ t: 'ping' }, (m) => m.t === 'pong'))
+    const id = 9000 + i // 'hold' in STOPPED: refused by the RT cycle — the full way through queue, cycle, ring and pump
+    cmd.push(await rtt({ t: 'cmd', id, op: 'hold' }, (m) => m.t === 'res' && m.id === id))
+  }
+  ws.close()
+  const p95 = (v: number[]): number => [...v].sort((a, b) => a - b)[Math.floor(0.95 * (v.length - 1))]!
+  console.log(`ping p95 ${p95(ping).toFixed(2)} ms · command p95 ${p95(cmd).toFixed(2)} ms`)
+  expect(p95(ping)).toBeLessThan(20)
+  expect(p95(cmd)).toBeLessThan(20)
 })

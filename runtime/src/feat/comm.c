@@ -409,7 +409,8 @@ Comm *comm_start(const CommConf *conf, Err *e)
     memcpy(c->last, vtri_read(conf->values), sizeof(Value) * conf->db->n);
     char port[32];
     snprintf(port, sizeof port, "127.0.0.1:%u", conf->port); /* only this PC (design: remote access later, with a token) */
-    const char *opts[] = {"listening_ports", port, "num_threads", "16", "websocket_timeout_ms", "3600000", "enable_websocket_ping_pong", "no", NULL};
+    const char *opts[] = {"listening_ports", port, "num_threads", "16", "websocket_timeout_ms", "3600000", "enable_websocket_ping_pong", "no",
+                          "tcp_nodelay", "1", NULL}; /* small frames go out at once (Nagle + delayed ACK: ~40 ms per answer) */
     struct mg_callbacks cb;
     memset(&cb, 0, sizeof cb);
     mg_init_library(0);
