@@ -6,6 +6,7 @@
  * - ping every second; link marked offline if no pong for 2.5 s (checked every 250 ms → OFFLINE within 3 s)
  * - while retrying, the link stays 'offline' (no flicker to 'connecting' on every try) — step 31
  * - keeps the last machine state and the alarm list, so a window that loads later gets them (getReplay) — step 33
+ * - every new connection starts clean (values, pc, replay) — it may be a different runtime — step 34
  */
 import { EventEmitter } from 'node:events'
 import WebSocket from 'ws'
@@ -97,6 +98,12 @@ export class RuntimeBridge extends EventEmitter<BridgeEvents> {
     ws.on('open', () => {
       this.backoff = LINK.BACKOFF_MIN_MS
       this.lastPong = Date.now()
+      // step 34 (found on the PC): a new connection may be a new runtime — forget the old values, pc and
+      // replay copies; the runtime sends what it has now (state frame, machine, alarms) right after connecting
+      this.state = { seq: 0, values: {}, pc: {} }
+      this.lastMachine = undefined
+      this.alarms = null
+      this.dirty = true
       this.setStatus({ link: 'online', lastError: undefined })
       ws.send(JSON.stringify({ t: 'ping' }))
     })

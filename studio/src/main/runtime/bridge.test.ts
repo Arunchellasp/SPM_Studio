@@ -125,4 +125,32 @@ describe('RuntimeBridge', () => {
       { ev: 'alarms', ts: 1, list: [{ code: 'W0310', text: 'Glue level low', priority: 3, time: '13:00:00', acked: false, active: true }] }
     ])
   })
+
+  it('U-34.6 a new connection starts clean: values and pc of the previous runtime are not kept (found on the PC)', async () => {
+    const serve = (port: number, first: object): Promise<string> =>
+      new Promise((resolve) => {
+        server = new WebSocketServer({ host: '127.0.0.1', port }, () =>
+          resolve(`ws://127.0.0.1:${(server!.address() as AddressInfo).port}`)
+        )
+        server.on('connection', (ws: WebSocket) => {
+          ws.send(JSON.stringify({ t: 'state', seq: 1, ...first }))
+          ws.on('message', (raw) => JSON.parse(raw.toString()).t === 'ping' && ws.send(JSON.stringify({ t: 'pong' })))
+        })
+      })
+    const url = await serve(0, { v: { '9': true, '12': false }, pc: { '0': 2 } })
+    const port = Number(url.split(':').pop())
+    bridge = new RuntimeBridge(url)
+    const first = waitFor<void>((res) => bridge!.on('state', (st) => st.values['9'] === true && res()))
+    bridge.start()
+    await first
+    for (const c of server!.clients) c.terminate()
+    await new Promise<void>((r) => server!.close(() => r()))
+    // the runtime restarts: nothing loaded yet, so it sends no values and no pc
+    const second = waitFor<void>((res) => bridge!.on('status', (st) => st.link === 'online' && res()), 6000)
+    await serve(port, { v: {}, pc: {} })
+    await second
+    await new Promise((r) => setTimeout(r, 200))
+    expect([bridge.getState().values, bridge.getState().pc]).toEqual([{}, {}]) // exact: toMatchObject({}) would match anything
+    expect(bridge.getReplay()).toEqual([])
+  }, 10000)
 })
