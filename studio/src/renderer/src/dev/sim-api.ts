@@ -6,6 +6,8 @@
  * the simulated runtime, so the header's OFFLINE can be tried without Electron.
  */
 import { makeSimProject } from './sim-project'
+import { PackMachine } from '@shared/packml-sim'
+import type { PackCommand, PackMode } from '@shared/packml'
 import { LINK, type CommandResult, type RuntimeEvent, type RuntimeState, type RuntimeStatus, type StudioApi } from '@shared/ipc'
 
 type Cb<T> = (v: T) => void
@@ -30,7 +32,6 @@ export function installSimApi(): void {
     DO_S1_ClampValve: false
   }
   const steps = ['wait part', 'move X to pick', 'clamp', 'seal', 'count']
-  let running = false
   let pc = 0
   let seq = 0
   let t = 0
@@ -43,6 +44,13 @@ export function installSimApi(): void {
     cycleUs: 1000,
     cycleMaxUs: 1000
   }
+
+  const emitEvent = (e: RuntimeEvent): void => eventCbs.forEach((cb) => cb(e))
+  // step 32: the same simulated PackML machine as the mock runtime
+  const machine = new PackMachine(() => {
+    if (status.link === 'online' && runtime === 'running') emitEvent(machineEvt())
+  })
+  const machineEvt = (): RuntimeEvent => ({ ev: 'machine', ts: Date.now(), ...machine.status })
 
   // ---------------------------------------------------------------- the link, like bridge.ts
   let runtime: SimRuntime = 'running'
@@ -68,6 +76,7 @@ export function installSimApi(): void {
     backoff = LINK.BACKOFF_MIN_MS
     lastPong = Date.now()
     setStatus({ link: 'online', lastError: undefined })
+    emitEvent(machineEvt()) // like the mock runtime: the machine state on every new connection
   }
   setInterval(() => {
     if (status.link === 'online' && runtime === 'running') lastPong = Date.now() // ping answered
@@ -91,13 +100,11 @@ export function installSimApi(): void {
     get: () => runtime
   }
 
-  const emitEvent = (e: RuntimeEvent): void => eventCbs.forEach((cb) => cb(e))
-
   setInterval(() => {
     t += 0.05
     tick += 1
     tags.AI_Sealer_Temp = 180 + 5 * Math.sin(t)
-    if (running) {
+    if (machine.running) {
       tags['AX_S1_X.pos'] = 300 + 300 * Math.sin(t * 0.8)
       if (tick % 40 === 0) {
         pc = (pc + 1) % steps.length
@@ -120,13 +127,12 @@ export function installSimApi(): void {
     if (status.link !== 'online') return { ok: false, err: 'OFFLINE', msg: 'runtime not connected' }
     switch (op) {
       case 'start':
-        running = true
-        emitEvent({ ev: 'mode', ts: Date.now(), mode: 'AUTO' })
-        return { ok: true }
+      case 'hold':
       case 'stop':
-        running = false
-        emitEvent({ ev: 'mode', ts: Date.now(), mode: 'STOP' })
-        return { ok: true }
+      case 'reset':
+        return machine.command(op as PackCommand)
+      case 'mode':
+        return machine.setMode(args.mode as PackMode)
       case 'write': {
         const tag = String(args.tag)
         if (!(tag in tags)) return { ok: false, err: 'UNKNOWN_TAG', msg: `no tag ${tag}` }
@@ -157,7 +163,7 @@ export function installSimApi(): void {
       command,
       onStatus: (cb) => sub(statusCbs, cb, { ...status }),
       onState: (cb) => sub(stateCbs, cb),
-      onEvent: (cb) => sub(eventCbs, cb)
+      onEvent: (cb) => sub(eventCbs, cb, machineEvt())
     },
     ...makeSimProject()
   }

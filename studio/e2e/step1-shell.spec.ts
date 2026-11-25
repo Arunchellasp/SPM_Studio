@@ -36,6 +36,9 @@ test('UI-1.4 mode switch selects one mode', async ({ page }) => {
 })
 
 test('UI-1.5 machine commands are disabled without a runtime', async ({ page }) => {
+  // since step 32 the browser simulator is a connected runtime: stop it first
+  await page.evaluate(() => (window as unknown as { spmSim: { set(r: string): void } }).spmSim.set('stopped'))
+  await expect(page.getByTestId('runtime-link')).toHaveText('OFFLINE')
   for (const name of ['Start', 'Hold', 'Stop', 'Reset']) {
     await expect(page.locator('.header-commands button', { hasText: name })).toBeDisabled()
   }

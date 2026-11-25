@@ -3,9 +3,12 @@
  * Types only — no values. The values come from fixtures/ today and from the C runtime later.
  */
 
-/** PackML machine state (N00 › Machine state pill) */
-export type MachineState = 'STOPPED' | 'IDLE' | 'STARTING' | 'EXECUTE' | 'HELD' | 'SUSPENDED' | 'ABORTED' | 'COMPLETE'
-export type Mode = 'Auto' | 'Manual' | 'Maintenance'
+import type { PackMode, PackState } from '@shared/packml'
+import type { Role } from '@shared/roles'
+
+/** PackML machine state (N00 › Machine state pill); step 32: all 17 states of the design, from shared/packml.ts */
+export type MachineState = PackState
+export type Mode = PackMode
 /** alarm priority P1 (critical) … P4 (low), ISA-18.2 */
 export type Priority = 1 | 2 | 3 | 4
 /**
@@ -35,4 +38,6 @@ export interface CellInfo {
   user: string
   state: MachineState
   mode: Mode
+  /** step 32: what the user may do (shared/roles.ts); a login sets it in phase J */
+  role: Role
 }

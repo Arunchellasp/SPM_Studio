@@ -6,6 +6,8 @@ export interface SegmentOption<T extends string> {
   value: T
   label?: ReactNode // defaults to the value
   disabled?: boolean
+  /** tooltip, e.g. why a segment is off (step 32) */
+  title?: string
 }
 
 /**
@@ -65,6 +67,7 @@ export function Segmented<T extends string>({
             aria-checked={on}
             tabIndex={i === current ? 0 : -1} // only the selected segment is a Tab stop
             disabled={it.disabled}
+            title={it.title}
             className="seg-item"
             onClick={() => onChange(it.value)}
           >

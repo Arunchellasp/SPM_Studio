@@ -11,7 +11,8 @@ export const DEMO_CELL = {
   name: 'Line 3 · Trim dispensing cell',
   user: 'A. Engineer',
   state: 'EXECUTE',
-  mode: 'Auto'
+  mode: 'Auto',
+  role: 'Engineer'
 } satisfies CellInfo
 
 /** the three signals most station cards show */

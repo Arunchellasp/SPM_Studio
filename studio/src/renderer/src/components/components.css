@@ -18,7 +18,17 @@
 .st-idle {
   background: var(--st-idle);
 }
-.st-starting {
+/* step 32: every acting state (PackML: dashed in the design) is the blue 'acting' colour of STARTING */
+.st-starting,
+.st-resetting,
+.st-completing,
+.st-holding,
+.st-unholding,
+.st-suspending,
+.st-unsuspending,
+.st-stopping,
+.st-aborting,
+.st-clearing {
   background: var(--st-starting);
 }
 .st-execute {
@@ -34,6 +44,11 @@
 }
 .st-complete {
   background: var(--st-complete);
+}
+
+/* step 32: runtime offline → the state shown is only the last one known */
+.state-pill-stale {
+  opacity: 0.45;
 }
 
 /* small pill inside cards */

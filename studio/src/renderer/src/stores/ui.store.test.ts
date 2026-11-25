@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { useUi } from './ui.store'
+import { machineFrom, useLive } from './live.store'
 
 describe('ui store', () => {
   beforeEach(() => useUi.setState({ activeScreen: 'operate', mode: 'Auto', alarms: [] }))
@@ -9,9 +10,14 @@ describe('ui store', () => {
     expect(useUi.getState().activeScreen).toBe('tags')
   })
 
-  it('changes mode', () => {
-    useUi.getState().setMode('Manual')
+  it('U-32.10 state and mode follow the runtime (evt machine via live.store), not a click', () => {
+    useLive.setState({ machine: { state: 'EXECUTE', mode: 'Manual' } })
+    expect([useUi.getState().machineState, useUi.getState().mode]).toEqual(['EXECUTE', 'Manual'])
+    useUi.getState().setMode('Auto') // no runtime here: refused, nothing changes
     expect(useUi.getState().mode).toBe('Manual')
+    expect(machineFrom({ ev: 'machine', ts: 0, state: 'HELD', mode: 'Auto' })).toEqual({ state: 'HELD', mode: 'Auto' })
+    expect(machineFrom({ ev: 'machine', ts: 0, state: 'RUNNING', mode: 'Auto' })).toBeNull() // not a PackML state
+    expect(machineFrom({ ev: 'step', ts: 0 })).toBeNull()
   })
 
   it('acknowledges only the top alarm (highest priority, wherever it is in the list)', () => {

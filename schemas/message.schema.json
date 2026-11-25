@@ -26,6 +26,7 @@
     },
     {
       "type": "object", "required": ["t", "ev", "ts"],
+      "description": "ev 'machine' (step 32): sent on connect and on every change — state = one of the 17 PackML states (studio/src/shared/packml.ts), mode = Auto | Manual | Maintenance. Commands: cmd op start | hold | stop | reset, and op mode with 'mode'; a refusal is res ok false, err STATE | MODE, msg = the reason.",
       "properties": { "t": { "const": "evt" }, "ev": { "type": "string" }, "ts": { "type": "number" } }
     }
   ]

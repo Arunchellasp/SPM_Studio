@@ -4,19 +4,25 @@
  * mode and alarms come from the C runtime instead of these defaults.
  * Types: model/machine.ts · sample values: fixtures/demo.ts (step 11).
  * Step 14: alarms and events start from the sample data; Ack writes an event.
+ * Step 32: machine state and mode follow the runtime (live.store); setMode asks the runtime.
  */
 import { create } from 'zustand'
 import { applyTheme, loadTheme, saveTheme, type Theme } from '../app/theme'
 import { DEMO_CELL, DEMO_OVERVIEW } from '../fixtures/demo'
 import { clockText, sortAlarms, topAlarm } from '../features/alarms/alarms'
 import type { Alarm, MachineEvent, MachineState, Mode } from '../model/machine'
+import type { Role } from '@shared/roles'
+import { useLive } from './live.store'
+import { runtimeCommand } from './runtime-command'
 
 interface UiState {
   // shell context
   cellName: string
   userName: string
+  /** step 32: the logged-in user's role (sample data until the login of phase J) */
+  userRole: Role
   activeScreen: string
-  // machine (placeholders until the runtime is connected)
+  // machine: STOPPED / Auto until the runtime has sent its state (step 32)
   machineState: MachineState
   mode: Mode
   alarms: Alarm[] // always sorted: priority, then newest first
@@ -25,6 +31,7 @@ interface UiState {
   theme: Theme
   // actions
   openScreen: (id: string) => void
+  /** asks the runtime; the mode shown changes when the runtime confirms (evt 'machine') */
   setMode: (m: Mode) => void
   ackAlarm: (code: string) => void
   ackTopAlarm: () => void
@@ -34,6 +41,7 @@ interface UiState {
 export const useUi = create<UiState>((set) => ({
   cellName: DEMO_CELL.name, // from the sample data (step 11), later from the project file
   userName: DEMO_CELL.user,
+  userRole: DEMO_CELL.role,
   // a plain id, not SCREENS[0].id: screens.ts imports screen views that use this store,
   // so importing screens.ts here would be a circle (found in step 10)
   activeScreen: 'operate',
@@ -45,7 +53,7 @@ export const useUi = create<UiState>((set) => ({
   theme: loadTheme(), // what was chosen last time on this PC (default light)
 
   openScreen: (id) => set({ activeScreen: id }),
-  setMode: (mode) => set({ mode }),
+  setMode: (mode) => void runtimeCommand('mode', { mode }),
   ackAlarm: (code) =>
     set((s) => {
       const a = s.alarms.find((x) => x.code === code)
@@ -66,3 +74,8 @@ export const useUi = create<UiState>((set) => ({
     set({ theme })
   }
 }))
+
+/** step 32: the header shows what the runtime says (kept as it was when the link drops) */
+useLive.subscribe((l, prev) => {
+  if (l.machine && l.machine !== prev.machine) useUi.setState({ machineState: l.machine.state, mode: l.machine.mode })
+})
