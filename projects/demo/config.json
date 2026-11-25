@@ -2,7 +2,7 @@
   "schema": "spm.config/1",
   "card": "sim",
   "cycle_us": 1000,
-  "spin_us": 200,
+  "spin_us": 800,
   "cpu": -1,
   "tags": "tags.json",
   "program": "program.rt.json",

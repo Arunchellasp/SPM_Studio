@@ -71,6 +71,9 @@ int main(int argc, char **argv)
 {
     const char *cfg_path = "config.json";
     double seconds = 0; /* 0 = until Ctrl+C */
+#ifdef _WIN32
+    SetConsoleOutputCP(CP_UTF8); /* the log lines are UTF-8 ("·", "µ") */
+#endif
     for (int i = 1; i < argc; i++) {
         if (str_eq(argv[i], "--version") || str_eq(argv[i], "-v")) {
             printf("spm_rt %s\n", SPM_RT_VERSION);

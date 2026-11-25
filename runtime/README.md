@@ -20,7 +20,7 @@ On Windows itself: the same CMake commands with MSVC Build Tools or MinGW-w64.
 |---|---|---|
 | `card` | `"sim"` | the I/O card driver (gts, adv, delta: later) |
 | `cycle_us` | `1000` | the cycle, 250 … 10000 µs |
-| `spin_us` | `200` | the last part of each wait is done on the clock (a timer alone wakes too late) |
+| `spin_us` | `200` | the last part of each wait is done on the clock (a timer alone wakes too late). Windows: 800 (the demo) — on the machine PC the timer woke up to 500 µs late; 200 → 31 % of cycles within 10 µs, 500 → 94 %, 800 → 97 % |
 | `cpu` | `-1` | pin the RT thread to this core (-1: no) |
 | `tags` / `program` / `log` | `tags.json` / `program.rt.json` / `logs/spm_rt.log` | relative to config.json |
 | `ws_port` | `7600` | the studio link (step 36) |
