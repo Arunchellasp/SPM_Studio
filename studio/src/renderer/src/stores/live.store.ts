@@ -1,7 +1,7 @@
-/* PARKED (not imported yet): connected to the screens in the runtime-link step. */
 /**
  * Live store: the single copy of runtime status, state and recent events in the renderer.
  * Components select only the slice they show, so only they re-render.
+ * Step 31: connected at start-up (main.tsx); the header's runtime link reads status.
  */
 import { create } from 'zustand'
 import type { RuntimeEvent, RuntimeState, RuntimeStatus } from '@shared/ipc'

@@ -28,6 +28,19 @@ export interface AppInfo {
 
 export type LinkState = 'connecting' | 'online' | 'offline'
 
+/**
+ * Link timing (step 31), shared by the bridge (main) and the browser simulator, so both behave alike.
+ * A stopped runtime closes the socket → OFFLINE at once; a hung one stops answering pings →
+ * OFFLINE when no pong came for STALE_MS, checked every WATCHDOG_MS: at most 2.75 s, inside the 3 s the roadmap asks.
+ */
+export const LINK = {
+  PING_MS: 1000,
+  WATCHDOG_MS: 250,
+  STALE_MS: 2500,
+  BACKOFF_MIN_MS: 500,
+  BACKOFF_MAX_MS: 5000
+} as const
+
 export interface RuntimeStatus {
   link: LinkState
   url: string
@@ -88,7 +101,8 @@ export type ProjectSaveResult = { ok: true; changed: boolean; file: string } | {
 /** step 22: Excel / CSV */
 export type ProjectExportResult = { ok: true; file: string } | { ok: false; cancelled?: boolean; errors: string[] }
 /** errors = rows that could not be read (the others are in tags) */
-export type ProjectImportResult = { ok: true; file: string; tags: Tag[]; errors: string[] } | { ok: false; cancelled?: boolean; errors: string[] }
+export type ProjectImportResult =
+  { ok: true; file: string; tags: Tag[]; errors: string[] } | { ok: false; cancelled?: boolean; errors: string[] }
 
 /** File menu items forwarded to the screens */
 export type MenuCommand = 'project.open' | 'project.save' | 'project.import' | 'project.export'

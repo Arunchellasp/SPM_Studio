@@ -53,6 +53,45 @@
   border-radius: var(--radius);
 }
 
+/* step 31: user · clock and the runtime link stacked on the right; the chip has a fixed width,
+   so Online ↔ OFFLINE never changes the column and nothing in the header moves */
+.header-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+.header-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  width: var(--link-w);
+  height: 20px;
+  padding: 0 8px;
+  border-radius: var(--radius);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  color: var(--header-muted);
+}
+.link-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--link-online);
+}
+.link-connecting .link-dot {
+  background: var(--link-connecting);
+}
+.link-offline {
+  background: var(--link-offline);
+  color: var(--header-text);
+  font-weight: 700;
+}
+.link-offline .link-dot {
+  background: var(--header-text);
+}
+
 .header-user {
   color: var(--header-muted);
   white-space: nowrap;

@@ -42,6 +42,11 @@
   --st-held: #f9a825;
   --st-aborted: #d32f2f;
   --st-complete: #455a64;
+  /* step 31: runtime link in the header (same colours as the states, not changed by the dark theme) */
+  --link-online: var(--st-execute);
+  --link-connecting: var(--st-held);
+  --link-offline: var(--st-aborted);
+  --link-w: 132px; /* header chip under the clock: fits 'Online · 10.00 ms' at 12 px */
   --on-state: #ffffff; /* text on state pills and priority icons */
   --on-amber: #000000; /* text on amber (HELD, SUSPENDED, P3) for contrast */
 

@@ -1,13 +1,21 @@
-/* PARKED (not imported yet): browser simulator, used again in the runtime-link step. */
 /**
  * Browser simulator for window.spm.
  * Used only when the screens run outside Electron (plain browser preview, web demo).
  * Behaves like tools/mock-runtime.mjs: 20 Hz state, step / mode events, start / stop / write.
+ * Step 31: the link behaves like the bridge (same LINK timing): window.spmSim stops, hangs or starts
+ * the simulated runtime, so the header's OFFLINE can be tried without Electron.
  */
 import { makeSimProject } from './sim-project'
-import type { CommandResult, RuntimeEvent, RuntimeState, RuntimeStatus, StudioApi } from '@shared/ipc'
+import { LINK, type CommandResult, type RuntimeEvent, type RuntimeState, type RuntimeStatus, type StudioApi } from '@shared/ipc'
 
 type Cb<T> = (v: T) => void
+
+/** running = answers; stopped = process gone (socket closes, connects refused); hung = socket open, no answer */
+export type SimRuntime = 'running' | 'stopped' | 'hung'
+export interface SimRuntimeControl {
+  set(r: SimRuntime): void
+  get(): SimRuntime
+}
 
 export function installSimApi(): void {
   const statusCbs = new Set<Cb<RuntimeStatus>>()
@@ -36,6 +44,53 @@ export function installSimApi(): void {
     cycleMaxUs: 1000
   }
 
+  // ---------------------------------------------------------------- the link, like bridge.ts
+  let runtime: SimRuntime = 'running'
+  let lastPong = Date.now()
+  let backoff: number = LINK.BACKOFF_MIN_MS
+  let retry: ReturnType<typeof setTimeout> | undefined
+  const setStatus = (patch: Partial<RuntimeStatus>): void => {
+    Object.assign(status, patch)
+    statusCbs.forEach((cb) => cb({ ...status }))
+  }
+  const closed = (): void => {
+    setStatus({ link: 'offline' })
+    clearTimeout(retry)
+    retry = setTimeout(connect, backoff)
+    backoff = Math.min(backoff * 2, LINK.BACKOFF_MAX_MS)
+  }
+  function connect(): void {
+    if (runtime === 'stopped') {
+      setStatus({ lastError: 'connect ECONNREFUSED (simulated runtime stopped)' })
+      closed()
+      return
+    }
+    backoff = LINK.BACKOFF_MIN_MS
+    lastPong = Date.now()
+    setStatus({ link: 'online', lastError: undefined })
+  }
+  setInterval(() => {
+    if (status.link === 'online' && runtime === 'running') lastPong = Date.now() // ping answered
+  }, LINK.PING_MS)
+  setInterval(() => {
+    if (status.link === 'online' && Date.now() - lastPong > LINK.STALE_MS) {
+      setStatus({ lastError: `no answer for ${LINK.STALE_MS / 1000} s (heartbeat lost)` })
+      closed()
+    }
+  }, LINK.WATCHDOG_MS)
+  const control: SimRuntimeControl = {
+    set(r) {
+      const was = runtime
+      runtime = r
+      if (r === 'stopped' && status.link === 'online') {
+        setStatus({ lastError: undefined })
+        closed() // the socket closes with the process
+      }
+      if (r === 'running' && was === 'hung' && status.link === 'online') lastPong = Date.now()
+    },
+    get: () => runtime
+  }
+
   const emitEvent = (e: RuntimeEvent): void => eventCbs.forEach((cb) => cb(e))
 
   setInterval(() => {
@@ -52,6 +107,7 @@ export function installSimApi(): void {
         emitEvent({ ev: 'step', ts: Date.now(), flow: 0, pc, name: steps[pc] })
       }
     }
+    if (status.link !== 'online' || runtime !== 'running') return // no frames from a stopped or hung runtime
     const state: RuntimeState = { seq: ++seq, values: { ...tags }, pc: { '0': pc } }
     stateCbs.forEach((cb) => cb(state))
     if (tick % 20 === 0) {
@@ -61,6 +117,7 @@ export function installSimApi(): void {
   }, 50)
 
   const command = async (op: string, args: Record<string, unknown> = {}): Promise<CommandResult> => {
+    if (status.link !== 'online') return { ok: false, err: 'OFFLINE', msg: 'runtime not connected' }
     switch (op) {
       case 'start':
         running = true
@@ -105,4 +162,5 @@ export function installSimApi(): void {
     ...makeSimProject()
   }
   window.spm = api
+  window.spmSim = control
 }

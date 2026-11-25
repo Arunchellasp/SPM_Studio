@@ -3,16 +3,15 @@
  * - reconnects with back-off
  * - request / response by id, with timeout
  * - merges state diffs, forwards them to windows at most ~30 times per second
- * - heartbeat every second; link marked offline if no pong for 3 s
+ * - ping every second; link marked offline if no pong for 2.5 s (checked every 250 ms → OFFLINE within 3 s)
+ * - while retrying, the link stays 'offline' (no flicker to 'connecting' on every try) — step 31
  */
 import { EventEmitter } from 'node:events'
 import WebSocket from 'ws'
 import { parseFrame, type CmdMsg } from '@shared/protocol'
-import type { CommandResult, RuntimeEvent, RuntimeState, RuntimeStatus } from '@shared/ipc'
+import { LINK, type CommandResult, type RuntimeEvent, type RuntimeState, type RuntimeStatus } from '@shared/ipc'
 
 const REQUEST_TIMEOUT_MS = 2000
-const HEARTBEAT_MS = 1000
-const STALE_MS = 3000
 const PUBLISH_MS = 33
 
 type Pending = { resolve: (r: CommandResult) => void; timer: NodeJS.Timeout }
@@ -27,10 +26,11 @@ export class RuntimeBridge extends EventEmitter<BridgeEvents> {
   private ws: WebSocket | null = null
   private nextId = 1
   private pending = new Map<number, Pending>()
-  private backoff = 500
+  private backoff: number = LINK.BACKOFF_MIN_MS
   private stopped = false
   private lastPong = 0
   private heartbeat?: NodeJS.Timeout
+  private watchdog?: NodeJS.Timeout
   private publishTimer?: NodeJS.Timeout
   private dirty = false
   private state: RuntimeState = { seq: 0, values: {}, pc: {} }
@@ -44,13 +44,15 @@ export class RuntimeBridge extends EventEmitter<BridgeEvents> {
   start(): void {
     this.stopped = false
     this.connect()
-    this.heartbeat = setInterval(() => this.tick(), HEARTBEAT_MS)
+    this.heartbeat = setInterval(() => this.ping(), LINK.PING_MS)
+    this.watchdog = setInterval(() => this.watch(), LINK.WATCHDOG_MS)
     this.publishTimer = setInterval(() => this.flush(), PUBLISH_MS)
   }
 
   stop(): void {
     this.stopped = true
     clearInterval(this.heartbeat)
+    clearInterval(this.watchdog)
     clearInterval(this.publishTimer)
     this.ws?.close()
     this.failPending('bridge stopped')
@@ -83,12 +85,12 @@ export class RuntimeBridge extends EventEmitter<BridgeEvents> {
   // ------------------------------------------------------------------ internals
   private connect(): void {
     if (this.stopped) return
-    this.setStatus({ link: 'connecting' })
+    if (this.status.link !== 'offline') this.setStatus({ link: 'connecting' }) // first try only
     const ws = new WebSocket(this.url)
     this.ws = ws
 
     ws.on('open', () => {
-      this.backoff = 500
+      this.backoff = LINK.BACKOFF_MIN_MS
       this.lastPong = Date.now()
       this.setStatus({ link: 'online', lastError: undefined })
       ws.send(JSON.stringify({ t: 'ping' }))
@@ -104,7 +106,7 @@ export class RuntimeBridge extends EventEmitter<BridgeEvents> {
       this.setStatus({ link: 'offline' })
       if (!this.stopped) {
         setTimeout(() => this.connect(), this.backoff)
-        this.backoff = Math.min(this.backoff * 2, 5000)
+        this.backoff = Math.min(this.backoff * 2, LINK.BACKOFF_MAX_MS)
       }
     })
   }
@@ -144,14 +146,15 @@ export class RuntimeBridge extends EventEmitter<BridgeEvents> {
     }
   }
 
-  private tick(): void {
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      if (Date.now() - this.lastPong > STALE_MS) {
-        this.setStatus({ lastError: 'heartbeat lost' })
-        this.ws.terminate()
-        return
-      }
-      this.ws.send(JSON.stringify({ t: 'ping' }))
+  private ping(): void {
+    if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify({ t: 'ping' }))
+  }
+
+  /** a runtime that hangs keeps the socket open but stops answering: drop the link, reconnect */
+  private watch(): void {
+    if (this.ws?.readyState === WebSocket.OPEN && Date.now() - this.lastPong > LINK.STALE_MS) {
+      this.setStatus({ lastError: `no answer for ${LINK.STALE_MS / 1000} s (heartbeat lost)` })
+      this.ws.terminate()
     }
   }
 

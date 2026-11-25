@@ -4,6 +4,7 @@ import { Segmented } from '../components/segmented.view'
 import { StatePill } from '../components/state-pill.view'
 import type { Mode } from '../model/machine'
 import { useUi } from '../stores/ui.store'
+import { RuntimeLink } from './runtime-link.view'
 
 const MODES: readonly Mode[] = ['Auto', 'Manual', 'Maintenance']
 const COMMANDS: { id: IconName; label: string }[] = [
@@ -14,7 +15,7 @@ const COMMANDS: { id: IconName; label: string }[] = [
 ]
 
 /**
- * Header (56 px): product · cell · machine state · mode · commands · user and clock.
+ * Header (56 px): product · cell · machine state · mode · commands · user and clock, runtime link under them (step 31).
  * Same on every screen.
  */
 export function Header(): React.JSX.Element {
@@ -43,8 +44,12 @@ export function Header(): React.JSX.Element {
         ))}
       </div>
 
-      <div className="header-user">
-        {userName} · <Clock />
+      {/* step 31: user · clock on top, runtime link below — two short lines take no extra width (1280 / 1366) */}
+      <div className="header-side">
+        <div className="header-user">
+          {userName} · <Clock />
+        </div>
+        <RuntimeLink />
       </div>
     </header>
   )
