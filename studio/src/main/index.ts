@@ -17,6 +17,7 @@ import {
   type TagFile
 } from '@shared/ipc'
 import { RuntimeBridge } from './runtime/bridge'
+import { sendTo } from './window-send'
 import { openProject, saveTags, saveProgram } from './project/store'
 import { buildMenu } from './project/menu'
 import { exportTags, formatOf, importTags } from './project/exchange'
@@ -65,6 +66,7 @@ function createWindow(): void {
   })
 
   win.once('ready-to-show', () => win?.show())
+  win.on('closed', () => (win = null)) // step 33: nothing may be sent to it any more
 
   // never open new windows; external http(s) links go to the system browser
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -90,10 +92,10 @@ function createWindow(): void {
 
   // push current link status and state as soon as the screen is ready
   win.webContents.on('did-finish-load', () => {
-    win?.webContents.send(IPC.runtimeStatus, bridge.getStatus())
-    win?.webContents.send(IPC.runtimeState, bridge.getState())
+    sendTo(win, IPC.runtimeStatus, bridge.getStatus())
+    sendTo(win, IPC.runtimeState, bridge.getState())
     // step 33: machine state + alarm list, which the runtime sent before this page existed (reload)
-    for (const e of bridge.getReplay()) win?.webContents.send(IPC.runtimeEvent, e)
+    for (const e of bridge.getReplay()) sendTo(win, IPC.runtimeEvent, e)
   })
 }
 
@@ -208,9 +210,9 @@ function registerIpc(): void {
     }
   })
 
-  bridge.on('status', (s) => win?.webContents.send(IPC.runtimeStatus, s))
-  bridge.on('state', (s) => win?.webContents.send(IPC.runtimeState, s))
-  bridge.on('event', (ev) => win?.webContents.send(IPC.runtimeEvent, ev))
+  bridge.on('status', (s) => sendTo(win, IPC.runtimeStatus, s))
+  bridge.on('state', (s) => sendTo(win, IPC.runtimeState, s))
+  bridge.on('event', (ev) => sendTo(win, IPC.runtimeEvent, ev))
 }
 
 // ---------------------------------------------------------------- lifecycle
@@ -218,7 +220,7 @@ app.whenReady().then(() => {
   // deny every permission request (camera, notifications, …) by default
   session.defaultSession.setPermissionRequestHandler((_wc, _perm, cb) => cb(false))
   registerIpc()
-  Menu.setApplicationMenu(buildMenu((cmd) => win?.webContents.send(IPC.menuCommand, cmd), isDev))
+  Menu.setApplicationMenu(buildMenu((cmd) => sendTo(win, IPC.menuCommand, cmd), isDev))
   createWindow()
   bridge.start()
 
