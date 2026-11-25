@@ -368,7 +368,8 @@ static int on_data(struct mg_connection *conn, int bits, char *data, size_t len,
                 break;
             }
             *m.cmd.prog = p;
-            c->c.log("download: program %s, %u flows, %u steps (tags_crc %s)", p.crc, p.n_flows, p.n_steps, p.tags_crc);
+            c->c.log("download: program %s, %u flow%s, %u step%s (tags_crc %s)", p.crc, p.n_flows, p.n_flows == 1 ? "" : "s", p.n_steps,
+                     p.n_steps == 1 ? "" : "s", p.tags_crc);
         }
         os_mutex_lock(&c->lock);
         Client *k = client_of(c, conn);
