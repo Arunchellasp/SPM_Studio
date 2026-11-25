@@ -102,6 +102,20 @@ function Canvas(): React.JSX.Element {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={(c: Connection) => void connect(c)}
+          // a link let go anywhere on a node connects to it — no need to hit its 10 px dot (found on the PC,
+          // physical test P-26.2: the middle of an 80 px Decision is beyond the 40 px catch radius)
+          onConnectEnd={(event, state) => {
+            // React Flow made the link itself when it found a fitting dot (isValid). Otherwise — no dot near, or the
+            // nearest dot was an exit (a Decision's own 'yes' dot is closest to its lower half) — the node under the
+            // pointer is the target; connect() checks the rules and says why when it refuses (e.g. into Start)
+            if (state.isValid || !state.fromNode || state.fromHandle?.type !== 'source') return
+            const p = 'changedTouches' in event ? event.changedTouches[0] : event
+            if (!p) return
+            const under = document.elementFromPoint(p.clientX, p.clientY)?.closest('.react-flow__node')
+            const target = under?.getAttribute('data-id')
+            if (!target || target === state.fromNode.id) return
+            connect({ source: state.fromNode.id, sourceHandle: state.fromHandle.id ?? null, target, targetHandle: null })
+          }}
           // step 28: undo steps for what React Flow changes by itself — a drag (from where it started) and Delete
           onNodeDragStart={() => record()}
           onNodeDragStop={() => dropIfUnmoved()}
