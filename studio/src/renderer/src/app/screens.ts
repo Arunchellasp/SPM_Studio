@@ -10,6 +10,7 @@ import { AdminScreen } from '../features/admin/admin-screen.view'
 import { OverviewScreen } from '../features/overview/overview-screen.view'
 import { TagsScreen } from '../features/tags/tags-screen.view'
 import { SequenceScreen } from '../features/sequence/sequence-screen.view'
+import { AlarmsScreen } from '../features/alarms/alarms-screen.view'
 
 export interface ScreenDef {
   id: string
@@ -73,7 +74,8 @@ export const ALL_SCREENS: ScreenDef[] = [
     icon: 'alarms',
     label: 'Alarms',
     title: 'Alarms › Active and history',
-    purpose: 'Priority, state, first-out, shelving'
+    purpose: 'Priority, state, first-out, shelving',
+    view: AlarmsScreen // step 33: the Active list, fed by the runtime
   },
   {
     id: 'trace',

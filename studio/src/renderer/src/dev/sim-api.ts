@@ -7,6 +7,8 @@
  */
 import { makeSimProject } from './sim-project'
 import { PackMachine } from '@shared/packml-sim'
+import { AlarmBook } from '@shared/alarm-sim'
+import { DEMO_OVERVIEW } from '../fixtures/demo'
 import type { PackCommand, PackMode } from '@shared/packml'
 import { LINK, type CommandResult, type RuntimeEvent, type RuntimeState, type RuntimeStatus, type StudioApi } from '@shared/ipc'
 
@@ -17,6 +19,9 @@ export type SimRuntime = 'running' | 'stopped' | 'hung'
 export interface SimRuntimeControl {
   set(r: SimRuntime): void
   get(): SimRuntime
+  /** step 33: raise / clear a demo alarm (E1202, W0310) as the runtime would */
+  raise(code: string): void
+  clear(code: string): void
 }
 
 export function installSimApi(): void {
@@ -51,6 +56,13 @@ export function installSimApi(): void {
     if (status.link === 'online' && runtime === 'running') emitEvent(machineEvt())
   })
   const machineEvt = (): RuntimeEvent => ({ ev: 'machine', ts: Date.now(), ...machine.status })
+  // step 33: the alarm list starts like the design's N01 (E1202 unacked, W0310 acked)
+  const alarms = new AlarmBook(
+    (e) => {
+      if (status.link === 'online' && runtime === 'running') emitEvent({ ts: Date.now(), ...e })
+    },
+    DEMO_OVERVIEW.alarms.map((a) => ({ ...a, active: true }))
+  )
 
   // ---------------------------------------------------------------- the link, like bridge.ts
   let runtime: SimRuntime = 'running'
@@ -77,6 +89,7 @@ export function installSimApi(): void {
     lastPong = Date.now()
     setStatus({ link: 'online', lastError: undefined })
     emitEvent(machineEvt()) // like the mock runtime: the machine state on every new connection
+    emitEvent({ ts: Date.now(), ...alarms.snapshot() }) // … and the whole alarm list
   }
   setInterval(() => {
     if (status.link === 'online' && runtime === 'running') lastPong = Date.now() // ping answered
@@ -97,7 +110,12 @@ export function installSimApi(): void {
       }
       if (r === 'running' && was === 'hung' && status.link === 'online') lastPong = Date.now()
     },
-    get: () => runtime
+    get: () => runtime,
+    raise: (code) => {
+      alarms.raise(code)
+      if (code === 'E1202') machine.abort() // P1 → Abort, as in the mock runtime
+    },
+    clear: (code) => alarms.clear(code)
   }
 
   setInterval(() => {
@@ -133,6 +151,8 @@ export function installSimApi(): void {
         return machine.command(op as PackCommand)
       case 'mode':
         return machine.setMode(args.mode as PackMode)
+      case 'ack':
+        return alarms.ack(args.code, args.user)
       case 'write': {
         const tag = String(args.tag)
         if (!(tag in tags)) return { ok: false, err: 'UNKNOWN_TAG', msg: `no tag ${tag}` }
@@ -163,7 +183,10 @@ export function installSimApi(): void {
       command,
       onStatus: (cb) => sub(statusCbs, cb, { ...status }),
       onState: (cb) => sub(stateCbs, cb),
-      onEvent: (cb) => sub(eventCbs, cb, machineEvt())
+      onEvent: (cb) => {
+        setTimeout(() => cb({ ts: Date.now(), ...alarms.snapshot() }), 0)
+        return sub(eventCbs, cb, machineEvt())
+      }
     },
     ...makeSimProject()
   }

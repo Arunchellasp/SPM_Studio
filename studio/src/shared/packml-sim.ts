@@ -3,7 +3,7 @@
  * tools/mock-runtime.mjs (WebSocket) and the browser simulator (dev/sim-api.ts) run the same one.
  * Commands follow packml.ts; an acting state (STARTING …) finishes after ACTING_MS by itself.
  */
-import { changeMode, command, isActing, settle, type MachineStatus, type PackCommand, type PackMode } from './packml'
+import { abort, changeMode, command, isActing, settle, type MachineStatus, type PackCommand, type PackMode } from './packml'
 
 export const ACTING_MS = 800
 
@@ -23,6 +23,15 @@ export class PackMachine {
     clearTimeout(this.timer)
     this.timer = setTimeout(() => this.set({ state: settle(this.status.state) }), ACTING_MS)
     return { ok: true }
+  }
+
+  /** step 33: a P1 alarm aborts the machine (ABORTING → ABORTED); nothing happens in the abort group */
+  abort(): void {
+    const r = abort(this.status.state)
+    if (!r.ok) return
+    this.set({ state: r.next })
+    clearTimeout(this.timer)
+    this.timer = setTimeout(() => this.set({ state: settle(this.status.state) }), ACTING_MS)
   }
 
   setMode(mode: PackMode): SimReply {

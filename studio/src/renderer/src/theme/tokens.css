@@ -47,6 +47,7 @@
   --link-connecting: var(--st-held);
   --link-offline: var(--st-aborted);
   --link-w: 132px; /* header chip under the clock: fits 'Online · 10.00 ms' at 12 px */
+  --n07-list-w: 1560px; /* step 33: N07 active alarm list (Improved design) */
   --on-state: #ffffff; /* text on state pills and priority icons */
   --on-amber: #000000; /* text on amber (HELD, SUSPENDED, P3) for contrast */
 

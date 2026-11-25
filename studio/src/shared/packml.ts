@@ -68,6 +68,12 @@ export function command(state: PackState, cmd: PackCommand): CommandResult {
 /** an acting state has finished → the wait state it leads to */
 export const settle = (s: PackState): PackState => (isActing(s) ? ACTING[s] : s)
 
+/** Abort (step 33): a P1 alarm or the E-stop — from every state except the abort group */
+const NO_ABORT: readonly PackState[] = ['ABORTING', 'ABORTED', 'CLEARING']
+export function abort(state: PackState): { ok: true; next: 'ABORTING' } | { ok: false; reason: string } {
+  return NO_ABORT.includes(state) ? { ok: false, reason: `already ${state}` } : { ok: true, next: 'ABORTING' }
+}
+
 /** the mode may change only while the machine stands (PackML: in a wait state where nothing moves) */
 const MODE_STATES: readonly PackState[] = ['STOPPED', 'IDLE', 'ABORTED']
 export function changeMode(state: PackState, mode: PackMode): { ok: true } | { ok: false; reason: string } {

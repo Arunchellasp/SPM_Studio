@@ -1,14 +1,21 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { AlarmCard } from './alarm-card.view'
 import { AlarmBanner } from '../../shell/alarm-banner.view'
 import { DEMO_OVERVIEW } from '../../fixtures/demo'
 import { sortAlarms } from '../alarms/alarms'
 import { useUi } from '../../stores/ui.store'
+import { fakeRuntime } from '../../stores/test-runtime'
 
-beforeEach(() => useUi.setState({ alarms: sortAlarms(DEMO_OVERVIEW.alarms), events: [...DEMO_OVERVIEW.events] }))
-afterEach(cleanup)
+beforeEach(() => {
+  fakeRuntime() // step 33: Ack is a command to the runtime; this one answers like it
+  useUi.setState({ alarms: sortAlarms(DEMO_OVERVIEW.alarms), events: [...DEMO_OVERVIEW.events] })
+})
+afterEach(() => {
+  cleanup()
+  vi.unstubAllGlobals()
+})
 
 const rows = (): HTMLElement[] =>
   within(screen.getByRole('table', { name: 'Active alarms and events' }))
@@ -34,7 +41,7 @@ describe('AlarmCard (N01)', () => {
       ['Event', '']
     ])
   })
-  it('Ack in the list: row becomes acked, action becomes Shelve, an event is added on top of the events', () => {
+  it('Ack in the list: row becomes acked (when the runtime answers), action becomes Shelve, an event is added on top of the events', () => {
     render(<AlarmCard />)
     fireEvent.click(screen.getByRole('button', { name: 'Ack E1202' }))
     expect(rows()[0].children[4].textContent).toBe('Active · acked')

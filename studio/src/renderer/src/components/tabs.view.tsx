@@ -8,6 +8,8 @@ export interface TabItem {
   /** what the panel shows while this tab is selected */
   content: ReactNode
   disabled?: boolean
+  /** tooltip, e.g. why a tab is off (step 33) */
+  title?: string
 }
 
 /**
@@ -70,6 +72,7 @@ export function Tabs({ label, tabs, value, defaultValue, onChange, className = '
               aria-controls={`${base}-panel`}
               tabIndex={on ? 0 : -1}
               disabled={t.disabled}
+              title={t.title}
               className="tab"
               onClick={() => select(t.id)}
             >

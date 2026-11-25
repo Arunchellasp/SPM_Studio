@@ -10,7 +10,7 @@ import type { Role } from '@shared/roles'
 export type MachineState = PackState
 export type Mode = PackMode
 /** alarm priority P1 (critical) … P4 (low), ISA-18.2 */
-export type Priority = 1 | 2 | 3 | 4
+export type { Priority } from '@shared/alarms'
 /**
  * how a value is shown (N00 › Value states): colour only when a person must look
  *   forced = a person overrode it (amber + ⓕ) · fault = bad value (light red)
@@ -18,13 +18,8 @@ export type Priority = 1 | 2 | 3 | 4
  */
 export type ValueState = 'normal' | 'forced' | 'warn' | 'fault'
 
-export interface Alarm {
-  code: string // E1202 (error) / W0310 (warning)
-  text: string
-  priority: Priority
-  time: string // hh:mm:ss, local machine time
-  acked: boolean
-}
+/** an active alarm; step 33: the same shape the runtime sends (shared/alarms.ts), active = false once its condition has gone */
+export type { AlarmEntry as Alarm } from '@shared/alarms'
 
 /** a line in the event list (not an alarm: nothing to acknowledge) */
 export interface MachineEvent {

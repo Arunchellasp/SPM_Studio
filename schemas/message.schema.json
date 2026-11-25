@@ -26,7 +26,7 @@
     },
     {
       "type": "object", "required": ["t", "ev", "ts"],
-      "description": "ev 'machine' (step 32): sent on connect and on every change — state = one of the 17 PackML states (studio/src/shared/packml.ts), mode = Auto | Manual | Maintenance. Commands: cmd op start | hold | stop | reset, and op mode with 'mode'; a refusal is res ok false, err STATE | MODE, msg = the reason.",
+      "description": "ev 'machine' (step 32): sent on connect and on every change — state = one of the 17 PackML states (studio/src/shared/packml.ts), mode = Auto | Manual | Maintenance. Commands: cmd op start | hold | stop | reset, and op mode with 'mode'; a refusal is res ok false, err STATE | MODE, msg = the reason. ev 'alarms' (step 33): on connect, list = the active alarms [{ code, text, priority 1-4, time hh:mm:ss, acked, active }]; ev 'alarm': act raise { code, text, priority, time } | ack { code, time, by } | clear { code, time } — an alarm leaves the list when acked and cleared (studio/src/shared/alarms.ts). Command: cmd op ack { code, user }, refused with err ALARM.",
       "properties": { "t": { "const": "evt" }, "ev": { "type": "string" }, "ts": { "type": "number" } }
     }
   ]

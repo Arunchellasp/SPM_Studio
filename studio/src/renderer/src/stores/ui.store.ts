@@ -5,11 +5,13 @@
  * Types: model/machine.ts · sample values: fixtures/demo.ts (step 11).
  * Step 14: alarms and events start from the sample data; Ack writes an event.
  * Step 32: machine state and mode follow the runtime (live.store); setMode asks the runtime.
+ * Step 33: alarms follow the runtime's alarm events; Ack asks the runtime (the fixtures are the start until it answers).
  */
 import { create } from 'zustand'
 import { applyTheme, loadTheme, saveTheme, type Theme } from '../app/theme'
 import { DEMO_CELL, DEMO_OVERVIEW } from '../fixtures/demo'
-import { clockText, sortAlarms, topAlarm } from '../features/alarms/alarms'
+import { sortAlarms, topAlarm } from '../features/alarms/alarms'
+import { alarmFrom, applyAlarm } from '@shared/alarms'
 import type { Alarm, MachineEvent, MachineState, Mode } from '../model/machine'
 import type { Role } from '@shared/roles'
 import { useLive } from './live.store'
@@ -54,16 +56,8 @@ export const useUi = create<UiState>((set) => ({
 
   openScreen: (id) => set({ activeScreen: id }),
   setMode: (mode) => void runtimeCommand('mode', { mode }),
-  ackAlarm: (code) =>
-    set((s) => {
-      const a = s.alarms.find((x) => x.code === code)
-      if (!a || a.acked) return {} // nothing to do (unknown or already acknowledged)
-      return {
-        alarms: s.alarms.map((x) => (x.code === code ? { ...x, acked: true } : x)),
-        // every acknowledgement is recorded: who, what, when (audit trail starts here)
-        events: [{ time: clockText(new Date()), text: `${code} acknowledged by ${s.userName}` }, ...s.events]
-      }
-    }),
+  // step 33: the runtime acknowledges (with who); the list and the event line change when its evt 'alarm' arrives
+  ackAlarm: (code) => void runtimeCommand('ack', { code, user: useUi.getState().userName }),
   ackTopAlarm: () => {
     const top = topAlarm(useUi.getState().alarms)
     if (top) useUi.getState().ackAlarm(top.code)
@@ -78,4 +72,12 @@ export const useUi = create<UiState>((set) => ({
 /** step 32: the header shows what the runtime says (kept as it was when the link drops) */
 useLive.subscribe((l, prev) => {
   if (l.machine && l.machine !== prev.machine) useUi.setState({ machineState: l.machine.state, mode: l.machine.mode })
+  // step 33: every alarm event from the runtime → the alarm list (banner, N01, N07) and the event list
+  const e = l.events[0]
+  const a = e && l.events !== prev.events ? alarmFrom(e) : null
+  if (a)
+    useUi.setState((s) => {
+      const r = applyAlarm(s.alarms, a)
+      return { alarms: sortAlarms(r.alarms), events: r.line ? [r.line, ...s.events] : s.events }
+    })
 })

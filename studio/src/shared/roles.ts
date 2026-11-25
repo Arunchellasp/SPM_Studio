@@ -6,13 +6,14 @@
 export const ROLES = ['Viewer', 'Operator', 'Technician', 'Engineer'] as const
 export type Role = (typeof ROLES)[number]
 
-export type Action = 'start' | 'hold' | 'stop' | 'reset' | 'mode:Auto' | 'mode:Manual' | 'mode:Maintenance'
+export type Action = 'start' | 'hold' | 'stop' | 'reset' | 'ack' | 'mode:Auto' | 'mode:Manual' | 'mode:Maintenance'
 
 const MAY: Record<Action, readonly Role[]> = {
   stop: ROLES,
   start: ['Operator', 'Technician', 'Engineer'],
   hold: ['Operator', 'Technician', 'Engineer'],
   reset: ['Operator', 'Technician', 'Engineer'],
+  ack: ['Operator', 'Technician', 'Engineer'], // step 33: acknowledging is an operator's job; a Viewer only looks
   'mode:Auto': ['Technician', 'Engineer'],
   'mode:Manual': ['Technician', 'Engineer'],
   'mode:Maintenance': ['Engineer']

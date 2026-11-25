@@ -1,0 +1,17 @@
+/* N07 Alarms (step 33): tabs, then the active list card, 1560 wide as in the design */
+.n07 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+.n07-card {
+  width: var(--n07-list-w);
+  max-width: 100%;
+}
+.n07-table .prio {
+  vertical-align: middle;
+}
+.n07-note {
+  margin: var(--gap) 0 0;
+  color: var(--muted);
+}

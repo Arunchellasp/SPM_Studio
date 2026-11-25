@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useUi } from './ui.store'
 import { machineFrom, useLive } from './live.store'
+import { fakeRuntime } from './test-runtime'
 
 describe('ui store', () => {
   beforeEach(() => useUi.setState({ activeScreen: 'operate', mode: 'Auto', alarms: [] }))
@@ -28,11 +29,14 @@ describe('ui store', () => {
       ],
       events: []
     })
+    const command = fakeRuntime() // step 33: the runtime acknowledges; the list comes back sorted
     useUi.getState().ackTopAlarm()
+    expect(command).toHaveBeenCalledWith('ack', { code: 'E1202', user: useUi.getState().userName })
     expect(useUi.getState().alarms.map((a) => [a.code, a.acked])).toEqual([
-      ['W0310', false],
-      ['E1202', true]
+      ['E1202', true],
+      ['W0310', false]
     ])
+    vi.unstubAllGlobals()
   })
 
   it('starts with the sample alarms, sorted (step 14)', async () => {

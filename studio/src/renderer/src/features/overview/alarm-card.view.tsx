@@ -5,7 +5,8 @@ import { PriorityIcon } from '../../components/priority-icon.view'
 import { Table, type Column } from '../../components/table.view'
 import { toast } from '../../stores/feedback.store'
 import { useUi } from '../../stores/ui.store'
-import { alarmStateText } from '../alarms/alarms'
+import { ackView, alarmStateText } from '../alarms/alarms'
+import { useLive } from '../../stores/live.store'
 import './overview.css'
 
 /** one line of the list: an active alarm or an event */
@@ -20,6 +21,8 @@ export function AlarmCard(): React.JSX.Element {
   const alarms = useUi((s) => s.alarms)
   const events = useUi((s) => s.events)
   const ackAlarm = useUi((s) => s.ackAlarm)
+  const role = useUi((s) => s.userRole)
+  const link = useLive((s) => s.status.link)
 
   const rows: Row[] = [...alarms.map((a): Row => ({ kind: 'alarm', a })), ...events.map((e, n): Row => ({ kind: 'event', e, n }))]
 
@@ -41,10 +44,19 @@ export function AlarmCard(): React.JSX.Element {
       width: 200,
       render: (r) => {
         if (r.kind === 'event') return ''
-        if (!r.a.acked)
+        if (!r.a.acked) {
+          const v = ackView(r.a, link, role) // step 33: online + role
           return (
             <span className="alm-actions">
-              <Button size="sm" variant="ghost" className="alm-btn" onClick={() => ackAlarm(r.a.code)} aria-label={`Ack ${r.a.code}`}>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="alm-btn"
+                disabled={!v.enabled}
+                title={v.why}
+                onClick={() => ackAlarm(r.a.code)}
+                aria-label={`Ack ${r.a.code}`}
+              >
                 Ack
               </Button>
               ·{/* help texts and shelving belong to N07 Alarms (phase D); here they only say so */}
@@ -53,6 +65,7 @@ export function AlarmCard(): React.JSX.Element {
               </Button>
             </span>
           )
+        }
         return (
           <Button size="sm" variant="ghost" className="alm-btn" onClick={() => toast(`Shelving ${r.a.code} comes with N07 Alarms`)}>
             Shelve 1 h
