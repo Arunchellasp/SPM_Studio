@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 #include "../base/base_inc.h"
+#include "../../third_party/cjson/cJSON.h"
 
 /* ---------------------------------------------------------------- config.json */
 #define SPM_PATH_MAX 512
@@ -16,9 +17,10 @@ typedef struct RtConfig {
     char tags_path[SPM_PATH_MAX];    /* default tags.json */
     char program_path[SPM_PATH_MAX]; /* default program.rt.json (loaded from step 37) */
     char log_path[SPM_PATH_MAX];     /* default logs/spm_rt.log */
-    uint16_t ws_port;                /* default 7600 (served from step 36) */
+    uint16_t ws_port;                /* WebSocket server for the studio, 127.0.0.1 only, default 7600 */
     uint32_t stats_s;                /* a stats line every N s, default 10 */
     uint32_t sim_cyl_ms;             /* SimCard: cylinder sensors follow the valve after N ms, default 200 */
+    uint8_t sim_demo_alarms;         /* SimCard: the mock runtime's alarm demo (W0310, E1202), default off */
 } RtConfig;
 int cfg_load(const char *path, RtConfig *cfg, Err *e);
 
@@ -66,5 +68,16 @@ typedef struct TagDB {
 int tagdb_load(const char *path, Arena *a, TagDB *db, Err *e);
 int tagdb_find(const TagDB *db, const char *name); /* id, or -1 */
 const char *kind_name(TagKind k);
+
+/* ---------------------------------------------------------------- a downloaded program (prog.c) */
+typedef struct RtProg {
+    char crc[9], tags_crc[9];
+    uint16_t n_flows;
+    uint32_t n_steps;
+} RtProg;
+/* the file's canonical text (shared/compile.ts formatRtFile) with "crc" = crc; malloc'd, NULL when out of memory */
+char *rt_format(const cJSON *rt, const char *crc);
+/* shared/compile.ts verifyRt: 0 = ok (out filled); else code = "SCHEMA" or "CRC" and the reason in e */
+int prog_verify(const cJSON *rt, RtProg *out, char code[8], Err *e);
 
 #endif

@@ -1,0 +1,1 @@
+civetweb 1.16 (https://github.com/civetweb/civetweb, tag v1.16), src/civetweb.c + include/civetweb.h + needed .inl, unchanged. Built with NO_SSL NO_CGI NO_CACHING USE_WEBSOCKET NO_FILES (no file is ever served).

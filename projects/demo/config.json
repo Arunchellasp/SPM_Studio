@@ -9,5 +9,5 @@
   "log": "logs/spm_rt.log",
   "ws_port": 7600,
   "stats_s": 10,
-  "sim": { "cylinder_ms": 200 }
+  "sim": { "cylinder_ms": 200, "demo_alarms": true }
 }

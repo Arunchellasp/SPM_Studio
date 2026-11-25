@@ -6,5 +6,5 @@
     "outDir": "node_modules/.tsbuild/e2e",
     "tsBuildInfoFile": "node_modules/.tsbuild/e2e.tsbuildinfo"
   },
-  "include": ["playwright.config.ts", "e2e/**/*.ts"]
+  "include": ["playwright.config.ts", "playwright.rt.config.ts", "e2e/**/*.ts", "e2e-rt/**/*.ts"]
 }

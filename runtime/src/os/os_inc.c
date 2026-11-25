@@ -22,7 +22,9 @@
 #include <unistd.h>
 #endif
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "os_inc.h"
 
 /* ---------------------------------------------------------------- clock */
@@ -141,9 +143,83 @@ void os_atomic_store(volatile uint32_t *p, uint32_t v)
     __atomic_store_n(p, v, __ATOMIC_SEQ_CST);
 #endif
 }
+uint32_t os_atomic_xchg(volatile uint32_t *p, uint32_t v)
+{
+#ifdef _WIN32
+    return (uint32_t)InterlockedExchange((volatile LONG *)p, (LONG)v);
+#else
+    return __atomic_exchange_n(p, v, __ATOMIC_SEQ_CST);
+#endif
+}
 
 /* ---------------------------------------------------------------- shutdown */
 static volatile uint32_t g_shutdown;
+/* ---------------------------------------------------------------- wall clock, mutex (comm side) */
+#ifdef _WIN32
+uint64_t os_wall_ms(void)
+{
+    FILETIME ft;
+    GetSystemTimeAsFileTime(&ft);
+    uint64_t t = ((uint64_t)ft.dwHighDateTime << 32) | ft.dwLowDateTime; /* 100 ns since 1601 */
+    return t / 10000u - 11644473600000ull;
+}
+void os_clock_text(uint64_t wall_ms, char out[9])
+{
+    time_t s = (time_t)(wall_ms / 1000u);
+    struct tm tm;
+    localtime_s(&tm, &s);
+    snprintf(out, 9, "%02d:%02d:%02d", tm.tm_hour, tm.tm_min, tm.tm_sec);
+}
+int os_mutex_init(OsMutex *m)
+{
+    CRITICAL_SECTION *cs = (CRITICAL_SECTION *)malloc(sizeof *cs);
+    if (!cs) return 1;
+    InitializeCriticalSection(cs);
+    m->h = cs;
+    return 0;
+}
+void os_mutex_lock(OsMutex *m) { EnterCriticalSection((CRITICAL_SECTION *)m->h); }
+void os_mutex_unlock(OsMutex *m) { LeaveCriticalSection((CRITICAL_SECTION *)m->h); }
+void os_mutex_free(OsMutex *m)
+{
+    if (!m->h) return;
+    DeleteCriticalSection((CRITICAL_SECTION *)m->h);
+    free(m->h);
+    m->h = NULL;
+}
+#else
+uint64_t os_wall_ms(void)
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    return (uint64_t)ts.tv_sec * 1000u + (uint64_t)ts.tv_nsec / 1000000u;
+}
+void os_clock_text(uint64_t wall_ms, char out[9])
+{
+    time_t s = (time_t)(wall_ms / 1000u);
+    struct tm tm;
+    localtime_r(&s, &tm);
+    snprintf(out, 9, "%02d:%02d:%02d", tm.tm_hour, tm.tm_min, tm.tm_sec);
+}
+int os_mutex_init(OsMutex *m)
+{
+    pthread_mutex_t *x = (pthread_mutex_t *)malloc(sizeof *x);
+    if (!x) return 1;
+    pthread_mutex_init(x, NULL);
+    m->h = x;
+    return 0;
+}
+void os_mutex_lock(OsMutex *m) { pthread_mutex_lock((pthread_mutex_t *)m->h); }
+void os_mutex_unlock(OsMutex *m) { pthread_mutex_unlock((pthread_mutex_t *)m->h); }
+void os_mutex_free(OsMutex *m)
+{
+    if (!m->h) return;
+    pthread_mutex_destroy((pthread_mutex_t *)m->h);
+    free(m->h);
+    m->h = NULL;
+}
+#endif
+
 #ifdef _WIN32
 static BOOL WINAPI on_ctrl(DWORD type)
 {

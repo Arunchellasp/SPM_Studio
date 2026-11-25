@@ -87,6 +87,12 @@ int cfg_load(const char *path, RtConfig *cfg, Err *e)
         d = cfg->sim_cyl_ms;
         if (!rc && sim) rc = num_in(sim, "cylinder_ms", 0, 60000, &d, path, e);
         if (!rc) cfg->sim_cyl_ms = (uint32_t)d; /* d is the default when the key is missing */
+        for (const cJSON *it = sim ? sim->child : NULL; !rc && it; it = it->next)
+            if (!str_eq(it->string, "cylinder_ms") && !str_eq(it->string, "demo_alarms"))
+                rc = err_set(e, 1, "%s: unknown setting \"sim.%s\"", path, it->string);
+        const cJSON *demo = sim ? cJSON_GetObjectItemCaseSensitive(sim, "demo_alarms") : NULL;
+        if (!rc && demo && !cJSON_IsBool(demo)) rc = err_set(e, 1, "%s: \"sim.demo_alarms\" must be true or false", path);
+        if (!rc) cfg->sim_demo_alarms = (uint8_t)cJSON_IsTrue(demo);
     }
     if (!rc && cfg->spin_us >= cfg->cycle_us) rc = err_set(e, 1, "%s: \"spin_us\" (%u) must be less than \"cycle_us\" (%u)", path, cfg->spin_us, cfg->cycle_us);
     if (!rc && !str_eq(cfg->card, "sim"))

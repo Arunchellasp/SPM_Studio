@@ -59,3 +59,36 @@ jobs:
       - run: cmake --build runtime/build --config Release
       # step 35: Unity tests of the runtime (config and tag loading, SimCard, jitter stats, RT thread)
       - run: ctest --test-dir runtime/build -C Release --output-on-failure
+      # step 36: also the studio link (messages, PackML, alarms, download check, a WebSocket round trip)
+
+  studio-with-runtime:
+    # step 36: the built Electron app against the built C runtime (no simulator, no mock): UI-36.1 … 36.5
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: studio/package-lock.json
+      - run: cmake -S runtime -B runtime/build
+      - run: cmake --build runtime/build --config Release --target spm_rt
+      - run: npm ci
+        working-directory: studio
+      - name: test:rt (Windows)
+        if: runner.os == 'Windows'
+        run: npm run test:rt
+        working-directory: studio
+      - name: test:rt (Linux, virtual display)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm run test:rt
+        working-directory: studio
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: rt-report-${{ matrix.os }}
+          path: studio/test-results/

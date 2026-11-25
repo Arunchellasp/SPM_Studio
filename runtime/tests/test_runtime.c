@@ -1,5 +1,6 @@
 /*
- * Unity tests of the runtime (step 35): config and tag loading, SimCard model, jitter statistics, the RT thread.
+ * Unity tests of the runtime. Step 35: config and tag loading, SimCard model, jitter statistics, the RT thread.
+ * Step 36 (test_link.c): messages, PackML, alarms, the machine, the download check, queues, a WebSocket round trip.
  * Built from the same unity build as spm_rt (src/spm_rt_all.c); ctest runs them (CI on Windows and Linux).
  */
 #ifdef _WIN32
@@ -7,6 +8,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 #endif
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -246,6 +248,8 @@ static void test_U35_7_rt_thread_runs_the_cycle_every_period_and_hands_over_stat
     TEST_ASSERT_EQUAL_UINT64(g_calls, g_st.total.n);
 }
 
+#include "test_link.c"
+
 int main(void)
 {
     const char *env = getenv("SPM_PROJECTS");
@@ -258,5 +262,13 @@ int main(void)
     RUN_TEST(test_U35_5_io_map_refuses_a_channel_twice_and_addresses_the_card_does_not_have);
     RUN_TEST(test_U35_6_jitter_stats_period_jitter_lateness_exec_overruns_histogram);
     RUN_TEST(test_U35_7_rt_thread_runs_the_cycle_every_period_and_hands_over_stats);
+    RUN_TEST(test_U36_1_decode_ping_commands_and_mistakes);
+    RUN_TEST(test_U36_2_encode_the_same_json_as_the_mock_runtime);
+    RUN_TEST(test_U36_3_packml_table_and_texts_are_the_studios);
+    RUN_TEST(test_U36_4_alarm_list_rule_raise_ack_clear);
+    RUN_TEST(test_U36_5_machine_commands_acting_states_alarm_demo_download_ack);
+    RUN_TEST(test_U36_6_download_check_crc_of_the_studios_file);
+    RUN_TEST(test_U36_7_queue_ring_and_triple_buffer);
+    RUN_TEST(test_U36_8_websocket_round_trip_connect_ping_command_download);
     return UNITY_END();
 }

@@ -1,0 +1,47 @@
+{
+  "schema": "spm.program/1",
+  "flows": [
+    {
+      "name": "S1_Main",
+      "nodes": [
+        {
+          "id": "start",
+          "type": "start",
+          "pos": [64, 16]
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "pos": [64, 304]
+        },
+        {
+          "id": "n1",
+          "type": "wait_di",
+          "pos": [16, 112],
+          "p": {
+            "tag": "DI_S1_PartPresent",
+            "value": true,
+            "timeout_ms": 5000,
+            "alarm": ""
+          }
+        },
+        {
+          "id": "n2",
+          "type": "set_do",
+          "pos": [16, 208],
+          "p": {
+            "tag": "DO_S1_ClampValve",
+            "value": false
+          }
+        }
+      ],
+      "edges": [
+        ["start", "n1"],
+        ["n1", "n2"],
+        ["n2", "end"]
+      ],
+      "station": "S1",
+      "autostart": false
+    }
+  ]
+}

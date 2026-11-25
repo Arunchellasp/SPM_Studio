@@ -1,9 +1,13 @@
 /*
  * spm_rt — the SPM real-time runtime (Software implementation › 5a).
  * Step 35: load config.json + tags.json, open the card (SimCard), bind the I/O, run the cycle every
- * cycle_us with jitter statistics, log them. Next: WebSocket server (step 36), flow engine (step 37).
+ * cycle_us with jitter statistics, log them.
+ * Step 36: the studio link — WebSocket server on 127.0.0.1:ws_port with the mock runtime's messages; commands go
+ * through a queue into the RT cycle, which runs the machine (PackML, alarms) and publishes the tag values.
+ * Next: flow engine (step 37).
  *
  *   spm_rt [config.json] [--seconds N]     (Ctrl+C stops; outputs go to safe, the summary is logged)
+ *   exit codes: 1 config · 2 tags · 3 card · 4 I/O map · 5 RT thread · 6 WebSocket port
  */
 #ifdef _WIN32
 #ifndef _CRT_SECURE_NO_WARNINGS
@@ -27,6 +31,14 @@ typedef struct Runtime {
     CycleStats stats;
     OsRt rt;
     uint64_t t0, last_us;
+    /* step 36: the machine (RT thread) and the link to the studio */
+    Machine machine;
+    CmdQueue cmdq;
+    EvRing events;
+    ValueTriple values;
+    uint64_t sec_start;
+    uint32_t per_max_cur;
+    volatile uint32_t per_max_1s; /* longest period in the last second → pong cycle_max_us */
 } Runtime;
 static Runtime g;
 static FILE *g_log;
@@ -48,17 +60,28 @@ static void logf_(const char *fmt, ...)
     }
 }
 
-/* design 5b: inputs → (commands, flows, alarms: steps 36–37) → outputs → stats. No allocation, no I/O to files here. */
+/* design 5b: inputs → commands → (flows: step 37) → machine → outputs → publish → stats.
+ * No allocation, no waiting, no file or socket here. */
 static void rt_cycle(void *user, uint64_t deadline_us, uint64_t start_us)
 {
     Runtime *r = (Runtime *)user;
     uint32_t dt = r->last_us ? (uint32_t)(start_us - r->last_us) : r->cfg.cycle_us;
     r->last_us = start_us;
-    r->card.vt->read_inputs(&r->card, dt);
+    if (dt > r->per_max_cur) r->per_max_cur = dt;
+    if (start_us - r->sec_start >= 1000000u) { /* the longest period of the last second, for the studio's link chip */
+        os_atomic_store(&r->per_max_1s, r->per_max_cur);
+        r->per_max_cur = 0;
+        r->sec_start = start_us;
+    }
+    r->card.vt->read_inputs(&r->card, dt);                                               /* 1. inputs */
     io_read_inputs(&r->tags, &r->card, &r->io, (uint32_t)((start_us - r->t0) / 1000u));
     r->card.vt->axes_update(&r->card, dt);
-    io_write_outputs(&r->tags, &r->card, &r->io);
-    stats_cycle(&r->stats, deadline_us, start_us, os_now_us());
+    Cmd c;
+    for (int k = 0; k < 16 && !cmdq_pop(&r->cmdq, &c); k++) machine_cmd(&r->machine, &c, start_us, &r->tags, &r->card); /* 2. commands */
+    machine_tick(&r->machine, start_us);                                                  /* 4. machine */
+    io_write_outputs(&r->tags, &r->card, &r->io);                                         /* 5. outputs */
+    vtri_publish(&r->values, &r->tags);                                                   /* 6. values → comm */
+    stats_cycle(&r->stats, deadline_us, start_us, os_now_us());                           /* 7. statistics */
 }
 
 static int fail(int code, const Err *e)
@@ -98,6 +121,14 @@ int main(int argc, char **argv)
     logf_("tags %u from %s (tags_crc %08X) · I/O %u in, %u out · card %s · %u cylinder(s) in the sim model", g.tags.n, g.cfg.tags_path,
           g.tags.crc, g.io.n_in, g.io.n_out, g.card.vt->name, ((SimCard *)g.card.impl)->n_cyl);
 
+    machine_init(&g.machine, &g.events, g.cfg.sim_demo_alarms);
+    if (vtri_init(&g.values, g.tags.n, &g.arena)) return fail(2, &(Err){"out of memory (value buffers)"});
+    vtri_publish(&g.values, &g.tags);
+    CommConf cc = {g.cfg.ws_port, SPM_RT_VERSION, g.cfg.cycle_us, &g.per_max_1s, &g.tags, &g.cmdq, &g.events, &g.values, logf_};
+    Comm *comm = comm_start(&cc, &e);
+    if (!comm) return fail(6, &e);
+    logf_("link: ws://127.0.0.1:%u (this PC only) · %s", g.cfg.ws_port,
+          g.cfg.sim_demo_alarms ? "SimCard alarm demo on (W0310 after 6 s, E1202 after 12 s in EXECUTE)" : "alarm demo off");
     stats_init(&g.stats, g.cfg.cycle_us);
     g.rt.period_us = g.cfg.cycle_us;
     g.rt.spin_us = g.cfg.spin_us;
@@ -113,7 +144,8 @@ int main(int argc, char **argv)
     uint64_t next = g.t0 + (uint64_t)g.cfg.stats_s * 1000000u, end = seconds > 0 ? g.t0 + (uint64_t)(seconds * 1e6) : 0;
     char line[512];
     while (!os_shutdown_requested() && (!end || os_now_us() < end)) {
-        os_sleep_ms(50);
+        os_sleep_ms(5);
+        comm_pump(comm); /* answers, machine and alarm events out; state frames at 20 Hz */
         if (os_now_us() < next) continue;
         next += (uint64_t)g.cfg.stats_s * 1000000u;
         CycleWin w;
@@ -125,6 +157,10 @@ int main(int argc, char **argv)
         logf_("t=%.0f s  %s  missed %u", (double)(os_now_us() - g.t0) / 1e6, line, g.rt.missed);
     }
     os_rt_stop(&g.rt);
+    comm_pump(comm);
+    comm_stop(comm);
+    if (g.events.lost) logf_("WARNING: %u events were lost (event ring full)", g.events.lost);
+    free(g.machine.prog);
     io_all_safe(&g.tags, &g.card, &g.io);
     card_close(&g.card);
     stats_line(&g.stats.total, line, sizeof line);

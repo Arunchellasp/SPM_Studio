@@ -18,6 +18,20 @@ int os_mkdirs_for(const char *file_path); /* create the folders a file will be w
 /* 32-bit atomics between the RT thread and the main thread (no C11 <stdatomic.h>: MSVC) */
 uint32_t os_atomic_load(volatile uint32_t *p);
 void os_atomic_store(volatile uint32_t *p, uint32_t v);
+uint32_t os_atomic_xchg(volatile uint32_t *p, uint32_t v); /* returns the old value */
+
+/* wall clock: ms since 1970 (for "ts" in messages) and local "hh:mm:ss" (alarm times, as the studio's clockText) */
+uint64_t os_wall_ms(void);
+void os_clock_text(uint64_t wall_ms, char out[9]);
+
+/* a mutex for the comm side (never taken by the RT thread) */
+typedef struct OsMutex {
+    void *h;
+} OsMutex;
+int os_mutex_init(OsMutex *m);
+void os_mutex_lock(OsMutex *m);
+void os_mutex_unlock(OsMutex *m);
+void os_mutex_free(OsMutex *m);
 
 /* Ctrl+C / SIGTERM / console close → os_shutdown_requested() */
 void os_shutdown_install(void);

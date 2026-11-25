@@ -23,7 +23,8 @@
     "test:ui": "playwright test",
     "test:watch": "vitest",
     "test:ui:headed": "playwright test --headed",
-    "test:ui:debug": "playwright test --ui"
+    "test:ui:debug": "playwright test --ui",
+    "test:rt": "electron-vite build && playwright test -c playwright.rt.config.ts"
   },
   "author": "Arun P",
   "license": "UNLICENSED",
