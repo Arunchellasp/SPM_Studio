@@ -1,0 +1,12 @@
+{
+  "schema": "spm.rt/1", "crc": "4F77F0B1", "tags_crc": "D45C7CCE",
+  "flows": [
+    {
+      "name": "S1_Main", "id": 0, "station": "S1", "autostart": false,
+      "steps": [
+        {"i":0,"src":"start","op":"START","next":1},
+        {"i":1,"src":"end","op":"END"}
+      ]
+    }
+  ]
+}

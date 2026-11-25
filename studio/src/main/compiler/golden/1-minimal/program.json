@@ -1,0 +1,34 @@
+{
+  "schema": "spm.program/1",
+  "flows": [
+    {
+      "name": "S1_Main",
+      "station": "S1",
+      "autostart": false,
+      "nodes": [
+        {
+          "id": "start",
+          "type": "start",
+          "pos": [
+            0,
+            0
+          ]
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "pos": [
+            0,
+            240
+          ]
+        }
+      ],
+      "edges": [
+        [
+          "start",
+          "end"
+        ]
+      ]
+    }
+  ]
+}

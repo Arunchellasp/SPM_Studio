@@ -1,0 +1,105 @@
+{
+  "schema": "spm.program/1",
+  "flows": [
+    {
+      "name": "S1_Main",
+      "station": "S1",
+      "autostart": false,
+      "nodes": [
+        {
+          "id": "start",
+          "type": "start",
+          "pos": [
+            0,
+            0
+          ]
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "pos": [
+            0,
+            400
+          ]
+        },
+        {
+          "id": "n1",
+          "type": "wait_di",
+          "pos": [
+            -48,
+            96
+          ],
+          "p": {
+            "tag": "DI_S1_PartPresent",
+            "value": true,
+            "timeout_ms": 0,
+            "alarm": ""
+          }
+        },
+        {
+          "id": "n2",
+          "type": "if",
+          "pos": [
+            -48,
+            224
+          ],
+          "p": {
+            "expr": "R_PartCount >= 100"
+          },
+          "name": "Batch full?"
+        },
+        {
+          "id": "n3",
+          "type": "set_do",
+          "pos": [
+            288,
+            224
+          ],
+          "p": {
+            "tag": "DO_S1_Vacuum",
+            "value": true
+          }
+        },
+        {
+          "id": "n4",
+          "type": "delay",
+          "pos": [
+            288,
+            336
+          ],
+          "p": {
+            "ms": 500
+          }
+        }
+      ],
+      "edges": [
+        [
+          "start",
+          "n1"
+        ],
+        [
+          "n1",
+          "n2"
+        ],
+        [
+          "n2",
+          "end",
+          "yes"
+        ],
+        [
+          "n2",
+          "n3",
+          "no"
+        ],
+        [
+          "n3",
+          "n4"
+        ],
+        [
+          "n4",
+          "n1"
+        ]
+      ]
+    }
+  ]
+}

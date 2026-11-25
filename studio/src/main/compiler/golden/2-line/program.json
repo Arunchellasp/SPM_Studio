@@ -1,0 +1,99 @@
+{
+  "schema": "spm.program/1",
+  "flows": [
+    {
+      "name": "S1_Main",
+      "station": "S1",
+      "autostart": false,
+      "nodes": [
+        {
+          "id": "start",
+          "type": "start",
+          "pos": [
+            0,
+            0
+          ]
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "pos": [
+            0,
+            624
+          ]
+        },
+        {
+          "id": "n1",
+          "type": "wait_di",
+          "pos": [
+            -48,
+            96
+          ],
+          "p": {
+            "tag": "DI_S1_PartPresent",
+            "value": true,
+            "timeout_ms": 5000,
+            "alarm": "A_301_NoPart"
+          }
+        },
+        {
+          "id": "n2",
+          "type": "set_do",
+          "pos": [
+            -48,
+            208
+          ],
+          "p": {
+            "tag": "DO_S1_ClampValve",
+            "value": true
+          }
+        },
+        {
+          "id": "n3",
+          "type": "delay",
+          "pos": [
+            -48,
+            320
+          ],
+          "p": {
+            "ms": 300
+          }
+        },
+        {
+          "id": "n4",
+          "type": "set_do",
+          "pos": [
+            -48,
+            432
+          ],
+          "p": {
+            "tag": "DO_S1_ClampValve",
+            "value": false
+          }
+        }
+      ],
+      "edges": [
+        [
+          "start",
+          "n1"
+        ],
+        [
+          "n1",
+          "n2"
+        ],
+        [
+          "n2",
+          "n3"
+        ],
+        [
+          "n3",
+          "n4"
+        ],
+        [
+          "n4",
+          "end"
+        ]
+      ]
+    }
+  ]
+}

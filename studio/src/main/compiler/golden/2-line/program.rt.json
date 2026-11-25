@@ -1,0 +1,16 @@
+{
+  "schema": "spm.rt/1", "crc": "A1BA7084", "tags_crc": "D45C7CCE",
+  "flows": [
+    {
+      "name": "S1_Main", "id": 0, "station": "S1", "autostart": false,
+      "steps": [
+        {"i":0,"src":"start","op":"START","next":1},
+        {"i":1,"src":"n1","op":"WAIT_DI","tag":9,"val":1,"tmo":5000,"alarm":4,"next":2},
+        {"i":2,"src":"n2","op":"SET_DO","tag":11,"val":1,"next":3},
+        {"i":3,"src":"n3","op":"DELAY","ms":300,"next":4},
+        {"i":4,"src":"n4","op":"SET_DO","tag":11,"val":0,"next":5},
+        {"i":5,"src":"end","op":"END"}
+      ]
+    }
+  ]
+}

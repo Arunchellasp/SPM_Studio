@@ -1,0 +1,371 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "spm.rt/1",
+  "title": "SPM compiled program (program.rt.json — what the C runtime loads)",
+  "description": "Made by the compiler (studio/src/main/compiler/compile.ts, step 29) from program.json + tags.json (Software implementation › 4d). Names are replaced by numbers: tags by their index in tags.json, nodes by step numbers 0, 1, 2 … in walking order from START. The runtime needs no parsing in its real-time loop.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "crc",
+    "tags_crc",
+    "flows"
+  ],
+  "properties": {
+    "schema": {
+      "const": "spm.rt/1"
+    },
+    "crc": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{8}$",
+      "description": "CRC-32 of the flows as written (the runtime checks the download)"
+    },
+    "tags_crc": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{8}$",
+      "description": "CRC-32 of tags.json as saved — tag ids are only valid with exactly that tag table"
+    },
+    "flows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/flow"
+      }
+    }
+  },
+  "$defs": {
+    "flow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "id",
+        "station",
+        "autostart",
+        "steps"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "flow number = index in flows"
+        },
+        "station": {
+          "type": "string"
+        },
+        "autostart": {
+          "type": "boolean"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/step"
+          }
+        }
+      }
+    },
+    "step": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/start"
+        },
+        {
+          "$ref": "#/$defs/end"
+        },
+        {
+          "$ref": "#/$defs/wait_di"
+        },
+        {
+          "$ref": "#/$defs/set_do"
+        },
+        {
+          "$ref": "#/$defs/move_abs"
+        },
+        {
+          "$ref": "#/$defs/delay"
+        },
+        {
+          "$ref": "#/$defs/if"
+        }
+      ]
+    },
+    "start": {
+      "type": "object",
+      "description": "the flow begins here",
+      "additionalProperties": false,
+      "required": [
+        "i",
+        "src",
+        "op",
+        "next"
+      ],
+      "properties": {
+        "i": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "step number = index in steps"
+        },
+        "src": {
+          "type": "string",
+          "description": "editor node id (program.json) — the screens highlight the live step with it"
+        },
+        "op": {
+          "const": "START"
+        },
+        "next": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "index of the next step in this flow's steps"
+        }
+      }
+    },
+    "end": {
+      "type": "object",
+      "description": "the flow is finished",
+      "additionalProperties": false,
+      "required": [
+        "i",
+        "src",
+        "op"
+      ],
+      "properties": {
+        "i": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "step number = index in steps"
+        },
+        "src": {
+          "type": "string",
+          "description": "editor node id (program.json) — the screens highlight the live step with it"
+        },
+        "op": {
+          "const": "END"
+        }
+      }
+    },
+    "wait_di": {
+      "type": "object",
+      "description": "wait until the input has the value; after tmo ms raise the alarm (if any)",
+      "additionalProperties": false,
+      "required": [
+        "i",
+        "src",
+        "op",
+        "tag",
+        "val",
+        "tmo",
+        "next"
+      ],
+      "properties": {
+        "i": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "step number = index in steps"
+        },
+        "src": {
+          "type": "string",
+          "description": "editor node id (program.json) — the screens highlight the live step with it"
+        },
+        "op": {
+          "const": "WAIT_DI"
+        },
+        "tag": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "tag id = index of the tag in tags.json"
+        },
+        "val": {
+          "enum": [
+            0,
+            1
+          ]
+        },
+        "tmo": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "ms; 0 = wait for ever"
+        },
+        "alarm": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "ALARM tag id raised on timeout"
+        },
+        "next": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "index of the next step in this flow's steps"
+        }
+      }
+    },
+    "set_do": {
+      "type": "object",
+      "description": "set the output",
+      "additionalProperties": false,
+      "required": [
+        "i",
+        "src",
+        "op",
+        "tag",
+        "val",
+        "next"
+      ],
+      "properties": {
+        "i": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "step number = index in steps"
+        },
+        "src": {
+          "type": "string",
+          "description": "editor node id (program.json) — the screens highlight the live step with it"
+        },
+        "op": {
+          "const": "SET_DO"
+        },
+        "tag": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "tag id = index of the tag in tags.json"
+        },
+        "val": {
+          "enum": [
+            0,
+            1
+          ]
+        },
+        "next": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "index of the next step in this flow's steps"
+        }
+      }
+    },
+    "move_abs": {
+      "type": "object",
+      "description": "move the axis to the point; done when in position",
+      "additionalProperties": false,
+      "required": [
+        "i",
+        "src",
+        "op",
+        "axis",
+        "point",
+        "spd",
+        "next"
+      ],
+      "properties": {
+        "i": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "step number = index in steps"
+        },
+        "src": {
+          "type": "string",
+          "description": "editor node id (program.json) — the screens highlight the live step with it"
+        },
+        "op": {
+          "const": "MOVE_ABS"
+        },
+        "axis": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "tag id = index of the tag in tags.json"
+        },
+        "point": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "tag id = index of the tag in tags.json"
+        },
+        "spd": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "% of the axis speed"
+        },
+        "next": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "index of the next step in this flow's steps"
+        }
+      }
+    },
+    "delay": {
+      "type": "object",
+      "description": "wait ms",
+      "additionalProperties": false,
+      "required": [
+        "i",
+        "src",
+        "op",
+        "ms",
+        "next"
+      ],
+      "properties": {
+        "i": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "step number = index in steps"
+        },
+        "src": {
+          "type": "string",
+          "description": "editor node id (program.json) — the screens highlight the live step with it"
+        },
+        "op": {
+          "const": "DELAY"
+        },
+        "ms": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "next": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "index of the next step in this flow's steps"
+        }
+      }
+    },
+    "if": {
+      "type": "object",
+      "description": "decide in one cycle: yes or no (the condition as written; step 30 adds it as RPN)",
+      "additionalProperties": false,
+      "required": [
+        "i",
+        "src",
+        "op",
+        "expr",
+        "yes",
+        "no"
+      ],
+      "properties": {
+        "i": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "step number = index in steps"
+        },
+        "src": {
+          "type": "string",
+          "description": "editor node id (program.json) — the screens highlight the live step with it"
+        },
+        "op": {
+          "const": "IF"
+        },
+        "expr": {
+          "type": "string",
+          "minLength": 1
+        },
+        "yes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "index of the next step in this flow's steps"
+        },
+        "no": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "index of the next step in this flow's steps"
+        }
+      }
+    }
+  }
+}

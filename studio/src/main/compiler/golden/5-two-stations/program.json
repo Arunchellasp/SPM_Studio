@@ -1,0 +1,132 @@
+{
+  "schema": "spm.program/1",
+  "flows": [
+    {
+      "name": "S1_Main",
+      "station": "S1",
+      "autostart": true,
+      "nodes": [
+        {
+          "id": "n9",
+          "type": "delay",
+          "pos": [
+            300,
+            200
+          ],
+          "p": {
+            "ms": 1000
+          }
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "pos": [
+            0,
+            400
+          ]
+        },
+        {
+          "id": "n7",
+          "type": "if",
+          "pos": [
+            0,
+            200
+          ],
+          "p": {
+            "expr": "DI_S1_ClampClosed AND NOT DI_S1_ClampOpen"
+          }
+        },
+        {
+          "id": "start",
+          "type": "start",
+          "pos": [
+            0,
+            0
+          ]
+        }
+      ],
+      "edges": [
+        [
+          "n7",
+          "n9",
+          "no"
+        ],
+        [
+          "n9",
+          "n7"
+        ],
+        [
+          "start",
+          "n7"
+        ],
+        [
+          "n7",
+          "end",
+          "yes"
+        ]
+      ]
+    },
+    {
+      "name": "S2_Main",
+      "station": "S2",
+      "autostart": false,
+      "nodes": [
+        {
+          "id": "start",
+          "type": "start",
+          "pos": [
+            0,
+            0
+          ]
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "pos": [
+            0,
+            352
+          ]
+        },
+        {
+          "id": "a1",
+          "type": "wait_di",
+          "pos": [
+            -48,
+            96
+          ],
+          "p": {
+            "tag": "DI_S2_DoorClosed",
+            "value": true,
+            "timeout_ms": 10000
+          }
+        },
+        {
+          "id": "a2",
+          "type": "set_do",
+          "pos": [
+            -48,
+            208
+          ],
+          "p": {
+            "tag": "DO_S2_HeaterOn",
+            "value": true
+          }
+        }
+      ],
+      "edges": [
+        [
+          "start",
+          "a1"
+        ],
+        [
+          "a1",
+          "a2"
+        ],
+        [
+          "a2",
+          "end"
+        ]
+      ]
+    }
+  ]
+}

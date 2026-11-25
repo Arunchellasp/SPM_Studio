@@ -1,0 +1,16 @@
+{
+  "schema": "spm.rt/1", "crc": "9F77561C", "tags_crc": "D45C7CCE",
+  "flows": [
+    {
+      "name": "S1_Main", "id": 0, "station": "S1", "autostart": false,
+      "steps": [
+        {"i":0,"src":"start","op":"START","next":1},
+        {"i":1,"src":"n1","op":"WAIT_DI","tag":9,"val":1,"tmo":0,"next":2},
+        {"i":2,"src":"n2","op":"IF","expr":"R_PartCount >= 100","yes":3,"no":4},
+        {"i":3,"src":"end","op":"END"},
+        {"i":4,"src":"n3","op":"SET_DO","tag":12,"val":1,"next":5},
+        {"i":5,"src":"n4","op":"DELAY","ms":500,"next":1}
+      ]
+    }
+  ]
+}

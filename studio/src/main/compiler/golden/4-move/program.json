@@ -1,0 +1,86 @@
+{
+  "schema": "spm.program/1",
+  "flows": [
+    {
+      "name": "S1_Main",
+      "station": "S1",
+      "autostart": false,
+      "nodes": [
+        {
+          "id": "start",
+          "type": "start",
+          "pos": [
+            0,
+            0
+          ]
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "pos": [
+            0,
+            432
+          ]
+        },
+        {
+          "id": "n1",
+          "type": "move_abs",
+          "pos": [
+            -48,
+            96
+          ],
+          "p": {
+            "axis": "AX_S1_X",
+            "point": "P_S1_Pick",
+            "speed": 80
+          }
+        },
+        {
+          "id": "n2",
+          "type": "wait_di",
+          "pos": [
+            -48,
+            208
+          ],
+          "p": {
+            "tag": "DI_S1_ClampClosed",
+            "value": true,
+            "timeout_ms": 0
+          }
+        },
+        {
+          "id": "n3",
+          "type": "move_abs",
+          "pos": [
+            -48,
+            320
+          ],
+          "p": {
+            "axis": "AX_S1_Z",
+            "point": "P_S1_Place",
+            "speed": 50
+          },
+          "comment": "Z down to place"
+        }
+      ],
+      "edges": [
+        [
+          "start",
+          "n1"
+        ],
+        [
+          "n1",
+          "n2"
+        ],
+        [
+          "n2",
+          "n3"
+        ],
+        [
+          "n3",
+          "end"
+        ]
+      ]
+    }
+  ]
+}
