@@ -1,0 +1,13 @@
+{
+  "schema": "spm.config/1",
+  "card": "sim",
+  "cycle_us": 1000,
+  "spin_us": 200,
+  "cpu": -1,
+  "tags": "tags.json",
+  "program": "program.rt.json",
+  "log": "logs/spm_rt.log",
+  "ws_port": 7600,
+  "stats_s": 10,
+  "sim": { "cylinder_ms": 200 }
+}

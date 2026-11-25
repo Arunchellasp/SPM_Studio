@@ -15,3 +15,7 @@ studio/scratch/
 
 # backups written by File › Save (one older tags.json per project) — step 16
 *.json.bak
+
+# step 35: other runtime builds (Windows cross-build, clang) and the runtime's logs in a project
+runtime/build-*/
+projects/*/logs/

@@ -8,6 +8,6 @@
 #define SPM_RT_VERSION "0.0.0-dev"
 #endif
 
-#define SPM_WS_PORT_DEFAULT 7600
+#define SPM_WS_PORT_DEFAULT 7600 /* config.json ws_port (the server comes in step 36) */
 
 #endif

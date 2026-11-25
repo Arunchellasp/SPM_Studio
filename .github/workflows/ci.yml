@@ -57,3 +57,5 @@ jobs:
       - uses: actions/checkout@v5
       - run: cmake -S runtime -B runtime/build
       - run: cmake --build runtime/build --config Release
+      # step 35: Unity tests of the runtime (config and tag loading, SimCard, jitter stats, RT thread)
+      - run: ctest --test-dir runtime/build -C Release --output-on-failure
