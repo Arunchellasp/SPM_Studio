@@ -1,5 +1,6 @@
 /** Step 24 · First node types: palette drag and drop, shapes, a 6-node flow. */
 import { expect, test, type Locator, type Page } from '@playwright/test'
+import { stableBox } from './support/stable-box'
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
@@ -17,8 +18,8 @@ async function dropAt(page: Page, title: string, fx: number, fy: number): Promis
   await palette(page, title).dragTo(canvas(page), { targetPosition: { x: box.width * fx, y: box.height * fy } })
 }
 async function link(page: Page, from: Locator, to: Locator): Promise<void> {
-  const a = (await from.locator('.react-flow__handle.source').boundingBox())!
-  const b = (await to.locator('.react-flow__handle.target').boundingBox())!
+  const a = await stableBox(from.locator('.react-flow__handle.source'))
+  const b = await stableBox(to.locator('.react-flow__handle.target'))
   await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2)
   await page.mouse.down()
   await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 12 })

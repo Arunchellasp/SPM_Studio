@@ -1,5 +1,6 @@
 /** Step 27 · N02 save / load + tree: program.json, several flows per station, the tree selects the flow. */
 import { expect, test, type Locator, type Page } from '@playwright/test'
+import { stableBox } from './support/stable-box'
 
 const pal = (page: Page, t: string): Locator => page.getByRole('list', { name: 'Node palette' }).getByRole('button', { name: t, exact: true })
 const node = (page: Page, id: string): Locator => page.locator(`.react-flow__node[data-id="${id}"]`)
@@ -19,8 +20,8 @@ async function program(page: Page): Promise<void> {
   await page.locator('.rail-item', { hasText: 'Program' }).click()
 }
 async function link(page: Page, from: string, to: string): Promise<void> {
-  const a = (await node(page, from).locator('.react-flow__handle.source').boundingBox())!
-  const b = (await node(page, to).boundingBox())!
+  const a = await stableBox(node(page, from).locator('.react-flow__handle.source'))
+  const b = await stableBox(node(page, to))
   await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2)
   await page.mouse.down()
   await page.mouse.move(b.x + b.width / 2, b.y + 8, { steps: 10 })
