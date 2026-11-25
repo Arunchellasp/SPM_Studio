@@ -97,4 +97,32 @@ describe('RuntimeBridge', () => {
     expect(Date.now() - t0).toBeLessThan(3000)
     expect(off.lastError).toBe('no answer for 2.5 s (heartbeat lost)')
   }, 10000)
+
+  it('U-33.9 the bridge keeps the machine state and the alarm list for a window that loads later (reload, second window)', async () => {
+    server = null
+    const url = await new Promise<string>((resolve) => {
+      server = new WebSocketServer({ host: '127.0.0.1', port: 0 }, () =>
+        resolve(`ws://127.0.0.1:${(server!.address() as AddressInfo).port}`)
+      )
+      server.on('connection', (ws: WebSocket) => {
+        const evt = (e: object): void => ws.send(JSON.stringify({ t: 'evt', ts: 1, ...e }))
+        evt({ ev: 'machine', state: 'EXECUTE', mode: 'Auto' })
+        evt({ ev: 'alarms', list: [] })
+        evt({ ev: 'alarm', act: 'raise', code: 'W0310', text: 'Glue level low', priority: 3, time: '13:00:00' })
+        evt({ ev: 'machine', state: 'ABORTED', mode: 'Auto' })
+        ws.on('message', (raw) => JSON.parse(raw.toString()).t === 'ping' && ws.send(JSON.stringify({ t: 'pong' })))
+      })
+    })
+    bridge = new RuntimeBridge(url)
+    const fourth = waitFor<void>((res) => {
+      let n = 0
+      bridge!.on('event', () => ++n === 4 && res())
+    })
+    bridge.start()
+    await fourth
+    expect(bridge.getReplay()).toEqual([
+      { t: 'evt', ts: 1, ev: 'machine', state: 'ABORTED', mode: 'Auto' },
+      { ev: 'alarms', ts: 1, list: [{ code: 'W0310', text: 'Glue level low', priority: 3, time: '13:00:00', acked: false, active: true }] }
+    ])
+  })
 })

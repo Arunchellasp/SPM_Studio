@@ -6,7 +6,16 @@ import { join } from 'node:path'
 import { app, BrowserWindow, dialog, ipcMain, Menu, session, shell } from 'electron'
 import { z } from 'zod'
 import { basename, join as joinPath } from 'node:path'
-import { IPC, type AppInfo, type ProjectExportResult, type ProjectImportResult, type ProjectOpenResult, type ProgramFile, type ProjectSaveResult, type TagFile } from '@shared/ipc'
+import {
+  IPC,
+  type AppInfo,
+  type ProjectExportResult,
+  type ProjectImportResult,
+  type ProjectOpenResult,
+  type ProgramFile,
+  type ProjectSaveResult,
+  type TagFile
+} from '@shared/ipc'
 import { RuntimeBridge } from './runtime/bridge'
 import { openProject, saveTags, saveProgram } from './project/store'
 import { buildMenu } from './project/menu'
@@ -83,6 +92,8 @@ function createWindow(): void {
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send(IPC.runtimeStatus, bridge.getStatus())
     win?.webContents.send(IPC.runtimeState, bridge.getState())
+    // step 33: machine state + alarm list, which the runtime sent before this page existed (reload)
+    for (const e of bridge.getReplay()) win?.webContents.send(IPC.runtimeEvent, e)
   })
 }
 
@@ -94,7 +105,10 @@ function trusted(e: Electron.IpcMainInvokeEvent): boolean {
 
 // a light shape check before the real one (Ajv + tags.schema.json in project/store.ts)
 const SaveArgs = z.object({ schema: z.string(), tags: z.array(z.object({ name: z.string(), kind: z.string() }).loose()) })
-const ProgramArgs = z.object({ schema: z.literal('spm.program/1'), flows: z.array(z.object({ name: z.string(), nodes: z.array(z.unknown()), edges: z.array(z.unknown()) }).loose()) })
+const ProgramArgs = z.object({
+  schema: z.literal('spm.program/1'),
+  flows: z.array(z.object({ name: z.string(), nodes: z.array(z.unknown()), edges: z.array(z.unknown()) }).loose())
+})
 
 const CommandArgs = z.object({
   op: z.string().regex(/^[a-z_]{1,32}$/),

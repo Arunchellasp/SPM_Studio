@@ -5,10 +5,12 @@
  * - merges state diffs, forwards them to windows at most ~30 times per second
  * - ping every second; link marked offline if no pong for 2.5 s (checked every 250 ms → OFFLINE within 3 s)
  * - while retrying, the link stays 'offline' (no flicker to 'connecting' on every try) — step 31
+ * - keeps the last machine state and the alarm list, so a window that loads later gets them (getReplay) — step 33
  */
 import { EventEmitter } from 'node:events'
 import WebSocket from 'ws'
 import { parseFrame, type CmdMsg } from '@shared/protocol'
+import { alarmFrom, applyAlarm, type AlarmEntry } from '@shared/alarms'
 import { LINK, type CommandResult, type RuntimeEvent, type RuntimeState, type RuntimeStatus } from '@shared/ipc'
 
 const REQUEST_TIMEOUT_MS = 2000
@@ -35,6 +37,9 @@ export class RuntimeBridge extends EventEmitter<BridgeEvents> {
   private dirty = false
   private state: RuntimeState = { seq: 0, values: {}, pc: {} }
   private status: RuntimeStatus
+  /** step 33: what a window needs that the runtime sends only on connect or on a change */
+  private lastMachine?: RuntimeEvent
+  private alarms: AlarmEntry[] | null = null
 
   constructor(private readonly url: string) {
     super()
@@ -137,12 +142,31 @@ export class RuntimeBridge extends EventEmitter<BridgeEvents> {
         this.dirty = true
         break
       case 'evt':
+        this.remember(msg as RuntimeEvent)
         this.emit('event', msg as RuntimeEvent)
         break
       case 'pong':
         this.lastPong = Date.now()
         this.setStatus({ runtimeVersion: msg.version, cycleUs: msg.cycle_us, cycleMaxUs: msg.cycle_max_us })
         break
+    }
+  }
+
+  /** the events a newly loaded window needs to show the machine as it is now (sent on did-finish-load) */
+  getReplay(): RuntimeEvent[] {
+    const out: RuntimeEvent[] = []
+    if (this.lastMachine) out.push(this.lastMachine)
+    if (this.alarms) out.push({ ev: 'alarms', ts: this.alarmTs, list: this.alarms })
+    return out
+  }
+
+  private alarmTs = 0
+  private remember(e: RuntimeEvent): void {
+    if (e.ev === 'machine') this.lastMachine = e
+    const a = alarmFrom(e)
+    if (a) {
+      this.alarms = applyAlarm(this.alarms ?? [], a).alarms // the same rule as the screens
+      this.alarmTs = e.ts
     }
   }
 
