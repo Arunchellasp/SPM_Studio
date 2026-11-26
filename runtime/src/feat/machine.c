@@ -435,7 +435,8 @@ int prog_load_file(const char *path, const TagDB *db, Prog **out, Err *e)
     cJSON *rt = rc ? NULL : cJSON_ParseWithLength(text, len);
     if (!rc && !rt) rc = err_set(e, 7, "%s is not valid JSON", path);
     RtProg meta;
-    char code[8];
+    memset(&meta, 0, sizeof meta); /* MSVC C4701 */
+    char code[8] = "";
     Err why = {""};
     if (!rc && (prog_verify(rt, &meta, code, &why) || prog_build(rt, db, out, code, &why)))
         rc = err_set(e, 7, "%s refused (%s): %s", path, code, why.msg);
