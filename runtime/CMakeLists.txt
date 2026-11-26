@@ -25,7 +25,7 @@ function(spm_strict target)
   if(MSVC)
     target_compile_options(${target} PRIVATE /W4 /WX /wd4996)
   else()
-    target_compile_options(${target} PRIVATE -Wall -Wextra -Werror)
+    target_compile_options(${target} PRIVATE -Wall -Wextra -Wshadow -Werror)
   endif()
 endfunction()
 

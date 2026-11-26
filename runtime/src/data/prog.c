@@ -371,10 +371,10 @@ int prog_build(const cJSON *rt, const TagDB *db, Prog **out, char code[8], Err *
                     const char *w = cJSON_IsString(x) ? x->valuestring : "";
                     if (w[0] == 'T' && w[1] == ':') {
                         char *end;
-                        long id = strtol(w + 2, &end, 10);
-                        if (*end || id < 0 || id >= db->n) BAD("flow \"%s\" step %d (%s): RPN \"%s\" is not a tag id", where, si, st->src, w);
+                        long tid = strtol(w + 2, &end, 10);
+                        if (*end || tid < 0 || tid >= db->n) BAD("flow \"%s\" step %d (%s): RPN \"%s\" is not a tag id", where, si, st->src, w);
                         tk->k = RK_TAG;
-                        tk->tag = (uint16_t)id;
+                        tk->tag = (uint16_t)tid;
                         depth++;
                     } else if (w[0] == 'K' && w[1] == ':') {
                         char *end;
