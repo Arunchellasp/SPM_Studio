@@ -95,7 +95,7 @@ typedef struct Cmd {
     int32_t tag;
     uint8_t is_bool;
     double value;
-    RtProg *prog; /* download: checked on the comm side; the RT cycle only swaps the pointer */
+    Prog *prog; /* download: checked and built on the comm side; the RT cycle only swaps the pointer */
 } Cmd;
 #define CMDQ_N 256
 typedef struct CmdQueue {
@@ -107,7 +107,7 @@ int cmdq_pop(CmdQueue *q, Cmd *c);        /* RT side; 0 = got one */
 
 /* RT → comm: events and answers, one producer (RT) and one consumer (the pump). Events are never dropped
  * on purpose: 4096 entries; if it is ever full the event is counted in 'lost' (design 'Comm thread'). */
-typedef enum EvType { EV_RES, EV_MACHINE, EV_ALARM, EV_FREE } EvType;
+typedef enum EvType { EV_RES, EV_MACHINE, EV_ALARM, EV_FREE, EV_STEP, EV_LOG } EvType;
 typedef struct Ev {
     uint8_t type;
     uint32_t client; /* EV_RES: to this client only */
@@ -120,6 +120,8 @@ typedef struct Ev {
     char code[16], by[48];
     const char *text;
     void *free_me; /* EV_FREE / EV_RES: memory the comm side gives back (an old or refused program) */
+    uint8_t flow;  /* EV_STEP */
+    uint16_t pc;
 } Ev;
 #define EVR_N 4096
 typedef struct EvRing {
@@ -134,25 +136,51 @@ int evr_pop(EvRing *r, Ev *e);         /* comm side; 0 = got one */
  * has a complete one to read; nobody waits (the design's 'double buffer', with a spare so neither side blocks) */
 typedef struct ValueTriple {
     Value *buf[3];
+    uint16_t pc[3][FLOW_MAX]; /* step 37: the step of each flow, travels with the values */
+    uint8_t nf[3];
     uint16_t n;
     volatile uint32_t mid; /* index of the middle buffer | 4 when it holds a newer copy */
     uint32_t back, front;  /* back: RT only · front: comm only */
 } ValueTriple;
 int vtri_init(ValueTriple *t, uint16_t n, Arena *a);
-void vtri_publish(ValueTriple *t, const TagDB *db); /* RT: copy every tag value, then swap */
-const Value *vtri_read(ValueTriple *t);            /* comm: the newest complete copy */
+void vtri_publish(ValueTriple *t, const TagDB *db, const uint16_t *pc, uint8_t nf); /* RT: every tag value + flow steps, then swap */
+const Value *vtri_read(ValueTriple *t);                                               /* comm: the newest complete copy */
+const uint16_t *vtri_pcs(const ValueTriple *t, uint8_t *nf);                          /* comm: the steps of that copy */
+
+/* step 37: one running instance per flow (design 5d) */
+typedef enum FlowState { FS_RUN, FS_ERR } FlowState;
+typedef enum StepRes { R_BUSY, R_DONE, R_ERR } StepRes;
+typedef struct FlowInst {
+    uint16_t pc;
+    int32_t jump;    /* IF / END set it: where to go instead of next */
+    uint8_t entered; /* the step's first call has happened (MOVE_ABS issued its move) */
+    uint8_t raised;  /* this WAIT_DI raised its timeout alarm */
+    uint8_t state;   /* FlowState */
+    uint64_t t_step; /* µs when the step began */
+    uint32_t cycles; /* END reached since the last Reset / Download */
+} FlowInst;
 
 typedef struct Machine {
     PackState state;
     PackMode mode;
     uint64_t acting_until; /* µs; 0 = not acting */
-    RtProg *prog;
+    Prog *prog;
+    FlowInst inst[FLOW_MAX];
+    uint16_t pcs[FLOW_MAX]; /* inst[i].pc, packed for the value buffer */
+    uint32_t cycles_total;  /* END passes since start-up (log) */
+    TagDB *db;              /* step 37: what the flows read and write */
+    Card *card;
     AlarmList alarms;
     EvRing *out;
     uint8_t demo;                                  /* SimCard alarm demo (config sim.demo_alarms) */
     uint64_t t_w0310, t_w0310_clear, t_e1202; /* demo timers, µs; 0 = off */
 } Machine;
 void machine_init(Machine *m, EvRing *out, int demo);
+void machine_bind(Machine *m, TagDB *db, Card *card); /* step 37: the flows' tags and card */
+void machine_flows(Machine *m, uint64_t now_us);      /* RT step 3: one tick of every flow, only in EXECUTE */
+void machine_start_program(Machine *m, Prog *p, uint64_t now_us); /* at start-up, before the RT thread: program.rt.json */
+/* step 37: program.rt.json at start-up — 0 = loaded, 1 = no file (no program), else 7 and the reason */
+int prog_load_file(const char *path, const TagDB *db, Prog **out, Err *e);
 void machine_cmd(Machine *m, const Cmd *c, uint64_t now_us, TagDB *db, Card *card); /* RT: one command → events + answer */
 void machine_tick(Machine *m, uint64_t now_us);                                    /* RT: acting states, demo timers */
 
@@ -174,7 +202,8 @@ char *msg_machine(uint64_t ts, uint8_t state, uint8_t mode, const char *prog);
 char *msg_alarm(uint64_t ts, const Ev *e, const char *time);
 char *msg_alarms(uint64_t ts, const AlarmList *l);
 /* state frame: changed = NULL → every tag; else only tags whose value differs from prev */
-char *msg_state(uint32_t seq, const TagDB *db, const Value *v, const Value *prev);
+char *msg_state(uint32_t seq, const TagDB *db, const Value *v, const Value *prev, const uint16_t *pc, uint8_t nf);
+char *msg_step(uint64_t ts, uint8_t flow, uint16_t pc);
 
 /* ================================================================ step 36 · the WebSocket server (civetweb) */
 typedef void (*CommLog)(const char *fmt, ...);

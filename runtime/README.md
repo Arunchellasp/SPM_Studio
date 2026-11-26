@@ -2,7 +2,9 @@
 
 The machine program. Runs on its own (Windows service / Linux process), owns all hardware access, and serves the studio on `ws://127.0.0.1:7600` (from step 36).
 
-**Now (step 36):** loads `config.json` + `tags.json`, opens the card (SimCard), binds the I/O, and runs the cycle every `cycle_us` (default 1 ms) at the highest priority the OS gives, with jitter statistics logged every `stats_s` seconds (step 35). It serves the studio on `ws://127.0.0.1:ws_port` with the same messages as the mock runtime: machine states and commands (PackML), modes, alarms and Ack, Download (CRC checked), state frames of the tag values (step 36). Next: flow engine (step 37) — then the downloaded program runs.
+**Now (step 37):** the flow engine — `program.rt.json` (loaded at start-up, or downloaded from the studio) runs while the machine is in EXECUTE: one instance per flow, one handler per op (START, SET_DO, WAIT_DI with timeout alarm, DELAY, MOVE_ABS on the card, IF with RPN, END = next cycle), never blocking. Hold pauses the flows and stops the axes; Stop halts them in the same cycle, stops the axes and switches the outputs off; Reset puts every flow back to its Start. The demo project has a demo flow that cycles on the SimCard by itself (~2 s per cycle). Exit code 7: program.rt.json refused.
+
+**Step 36:** loads `config.json` + `tags.json`, opens the card (SimCard), binds the I/O, and runs the cycle every `cycle_us` (default 1 ms) at the highest priority the OS gives, with jitter statistics logged every `stats_s` seconds (step 35). It serves the studio on `ws://127.0.0.1:ws_port` with the same messages as the mock runtime: machine states and commands (PackML), modes, alarms and Ack, Download (CRC checked), state frames of the tag values (step 36). Next: flow engine (step 37) — then the downloaded program runs.
 
 On the PC: close `start-mock-runtime.cmd`, double-click **`start-runtime.cmd`** (repo root), then start the studio as always.
 

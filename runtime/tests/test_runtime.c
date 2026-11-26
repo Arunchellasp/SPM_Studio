@@ -1,6 +1,7 @@
 /*
  * Unity tests of the runtime. Step 35: config and tag loading, SimCard model, jitter statistics, the RT thread.
  * Step 36 (test_link.c): messages, PackML, alarms, the machine, the download check, queues, a WebSocket round trip.
+ * Step 37 (test_flow.c): the flow engine — op handlers, the demo flow 1000 cycles, instant stop.
  * Built from the same unity build as spm_rt (src/spm_rt_all.c); ctest runs them (CI on Windows and Linux).
  */
 #ifdef _WIN32
@@ -249,6 +250,7 @@ static void test_U35_7_rt_thread_runs_the_cycle_every_period_and_hands_over_stat
 }
 
 #include "test_link.c"
+#include "test_flow.c"
 
 int main(void)
 {
@@ -270,5 +272,13 @@ int main(void)
     RUN_TEST(test_U36_6_download_check_crc_of_the_studios_file);
     RUN_TEST(test_U36_7_queue_ring_and_triple_buffer);
     RUN_TEST(test_U36_8_websocket_round_trip_connect_ping_command_download);
+    RUN_TEST(test_U37_1_axes_points_and_alarms_from_tags_json);
+    RUN_TEST(test_U37_2_step_table_from_the_demo_and_what_it_refuses);
+    RUN_TEST(test_U37_3_rpn_gives_what_the_studios_evalRpn_gives);
+    RUN_TEST(test_U37_4_each_op_handler_on_the_simcard);
+    RUN_TEST(test_U37_5_the_demo_flow_runs_1000_cycles_on_the_simcard);
+    RUN_TEST(test_U37_6_stop_is_instant_hold_resumes_the_move);
+    RUN_TEST(test_U37_7_program_at_start_up_missing_or_refused);
+    RUN_TEST(test_U37_8_pc_in_state_frames_and_step_events);
     return UNITY_END();
 }

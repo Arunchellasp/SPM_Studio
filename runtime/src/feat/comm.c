@@ -224,7 +224,12 @@ char *msg_alarms(uint64_t ts, const AlarmList *l)
     return buf_done(&b, rc);
 }
 static int has_value(const Tag *t) { return t->dtype == D_BOOL || t->dtype == D_INT || t->dtype == D_DINT || t->dtype == D_REAL; }
-char *msg_state(uint32_t seq, const TagDB *db, const Value *v, const Value *prev)
+char *msg_step(uint64_t ts, uint8_t flow, uint16_t pc)
+{
+    Buf b = {0};
+    return buf_done(&b, buf_fmt(&b, "{\"t\":\"evt\",\"ev\":\"step\",\"ts\":%llu,\"flow\":%u,\"pc\":%u}", (unsigned long long)ts, flow, pc));
+}
+char *msg_state(uint32_t seq, const TagDB *db, const Value *v, const Value *prev, const uint16_t *pc, uint8_t nf)
 {
     Buf b = {0};
     int rc = buf_fmt(&b, "{\"t\":\"state\",\"seq\":%u,\"v\":{", seq), first = 1;
@@ -240,7 +245,9 @@ char *msg_state(uint32_t seq, const TagDB *db, const Value *v, const Value *prev
         else
             rc |= buf_fmt(&b, "%d", (int)v[i].i);
     }
-    rc |= buf_str(&b, "},\"pc\":{}}"); /* pc per flow: the flow engine, step 37 */
+    rc |= buf_str(&b, "},\"pc\":{"); /* step 37: the step of every flow (by flow id) */
+    for (uint8_t i = 0; i < nf && !rc; i++) rc |= buf_fmt(&b, i ? ",\"%u\":%u" : "\"%u\":%u", i, pc[i]);
+    rc |= buf_str(&b, "}}");
     return buf_done(&b, rc);
 }
 
@@ -261,9 +268,15 @@ struct Comm {
     char prog[9];
     AlarmList alarms;
     Value *last; /* tag values in the last state frame */
+    uint16_t last_pc[FLOW_MAX];
+    uint8_t last_nf;
     uint32_t seq;
     uint64_t next_state_us;
+    /* step events: at most one per flow every STEP_EV_US — the newest step wins (state frames carry it anyway) */
+    int32_t step_pending[FLOW_MAX]; /* -1 = nothing to send */
+    uint64_t step_sent_us[FLOW_MAX];
 };
+#define STEP_EV_US 20000u
 
 static void send_conn(struct mg_connection *conn, char *text) /* frees text */
 {
@@ -307,7 +320,7 @@ static void on_ready(struct mg_connection *conn, void *user)
             break;
         }
     uint64_t ts = os_wall_ms();
-    send_conn(conn, msg_state(++c->seq, c->c.db, c->last, NULL)); /* as the mock: state, machine, alarms */
+    send_conn(conn, msg_state(++c->seq, c->c.db, c->last, NULL, c->last_pc, c->last_nf)); /* as the mock: state, machine, alarms */
     send_conn(conn, msg_machine(ts, c->state, c->mode, c->prog));
     send_conn(conn, msg_alarms(ts, &c->alarms));
     uint32_t n = c->n_cl;
@@ -355,19 +368,16 @@ static int on_data(struct mg_connection *conn, int bits, char *data, size_t len,
     }
     case MSG_BAD_CMD: answer(c, conn, m.cmd.id, m.err, m.why); break;
     case MSG_CMD: {
-        if (m.cmd.op == OP_DOWNLOAD) { /* the heavy part (parse, CRC) here, not in the RT cycle */
+        if (m.cmd.op == OP_DOWNLOAD) { /* the heavy part (parse, CRC, step table) here, not in the RT cycle */
             RtProg p;
             char code[8];
             Err e = {""};
-            if (prog_verify(m.rt, &p, code, &e)) {
+            if (prog_verify(m.rt, &p, code, &e) || prog_build(m.rt, c->c.db, &m.cmd.prog, code, &e)) {
+                c->c.log("download refused: %s %s", code, e.msg);
                 answer(c, conn, m.cmd.id, code, e.msg);
                 break;
             }
-            if (!(m.cmd.prog = (RtProg *)malloc(sizeof p))) {
-                answer(c, conn, m.cmd.id, "MEMORY", "out of memory");
-                break;
-            }
-            *m.cmd.prog = p;
+            m.cmd.prog->meta = p;
             c->c.log("download: program %s, %u flow%s, %u step%s (tags_crc %s)", p.crc, p.n_flows, p.n_flows == 1 ? "" : "s", p.n_steps,
                      p.n_steps == 1 ? "" : "s", p.tags_crc);
         }
@@ -407,6 +417,7 @@ Comm *comm_start(const CommConf *conf, Err *e)
         return NULL;
     }
     memcpy(c->last, vtri_read(conf->values), sizeof(Value) * conf->db->n);
+    for (int i = 0; i < FLOW_MAX; i++) c->step_pending[i] = -1;
     char port[32];
     snprintf(port, sizeof port, "127.0.0.1:%u", conf->port); /* only this PC (design: remote access later, with a token) */
     const char *opts[] = {"listening_ports", port, "num_threads", "16", "websocket_timeout_ms", "3600000", "enable_websocket_ping_pong", "no",
@@ -456,9 +467,14 @@ void comm_pump(Comm *c)
             alarm_apply(&c->alarms, (AlarmAct)e.act, e.code, e.text, e.priority, time);
             broadcast(c, msg_alarm(ts, &e, time));
             break;
-        case EV_FREE: break;
+        case EV_STEP:
+            if (e.flow < FLOW_MAX) c->step_pending[e.flow] = e.pc;
+            break;
+        case EV_FREE:
+        case EV_LOG: break;
         }
         os_mutex_unlock(&c->lock);
+        if (e.type == EV_LOG) c->c.log("%s", e.msg);
         if (e.type == EV_MACHINE)
             c->c.log("machine %s · %s%s%s", pack_state_name((PackState)e.state), pack_mode_name((PackMode)e.mode), e.prog[0] ? " · program " : "", e.prog);
         else if (e.type == EV_ALARM)
@@ -470,14 +486,28 @@ void comm_pump(Comm *c)
         free(e.free_me);
     }
     uint64_t now = os_now_us();
+    for (int i = 0; i < FLOW_MAX; i++) /* step events, the newest per flow, at most every 20 ms */
+        if (c->step_pending[i] >= 0 && now - c->step_sent_us[i] >= STEP_EV_US) {
+            char *t = msg_step(os_wall_ms(), (uint8_t)i, (uint16_t)c->step_pending[i]);
+            c->step_pending[i] = -1;
+            c->step_sent_us[i] = now;
+            os_mutex_lock(&c->lock);
+            broadcast(c, t);
+            os_mutex_unlock(&c->lock);
+        }
     if (now < c->next_state_us) return;
     c->next_state_us = now + 50000u; /* 20 Hz */
     const Value *v = vtri_read(c->c.values);
-    if (!memcmp(v, c->last, sizeof(Value) * c->c.db->n)) return; /* nothing changed: no frame */
-    char *text = msg_state(c->seq + 1, c->c.db, v, c->last);
+    uint8_t nf;
+    const uint16_t *pc = vtri_pcs(c->c.values, &nf);
+    int pcs_same = nf == c->last_nf && !memcmp(pc, c->last_pc, sizeof(uint16_t) * nf);
+    if (pcs_same && !memcmp(v, c->last, sizeof(Value) * c->c.db->n)) return; /* nothing changed: no frame */
+    char *text = msg_state(c->seq + 1, c->c.db, v, c->last, pc, nf);
     os_mutex_lock(&c->lock);
     c->seq++;
     memcpy(c->last, v, sizeof(Value) * c->c.db->n);
+    memcpy(c->last_pc, pc, sizeof(uint16_t) * nf);
+    c->last_nf = nf;
     broadcast(c, text);
     os_mutex_unlock(&c->lock);
 }

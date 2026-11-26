@@ -37,6 +37,7 @@ typedef struct CardVt {
     void (*write_outputs)(Card *c);
     void (*axes_update)(Card *c, uint32_t dt_us);
     int (*move_abs)(Card *c, int axis, double pos, double vel);
+    void (*stop_axes)(Card *c); /* step 37: every axis stops where it is (Stop, Hold, Abort) */
     void (*close)(Card *c);
 } CardVt;
 

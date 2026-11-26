@@ -117,13 +117,13 @@ static void test_U36_2_encode_the_same_json_as_the_mock_runtime(void)
     Err er = {""};
     TEST_ASSERT_EQUAL_INT(0, tagdb_load(demo("tags.json"), &A, &db, &er));
     Value *v = (Value *)calloc(db.n, sizeof *v), *prev = (Value *)calloc(db.n, sizeof *v);
-    char *full = msg_state(1, &db, v, NULL);
+    char *full = msg_state(1, &db, v, NULL, NULL, 0);
     TEST_ASSERT_NOT_NULL(strstr(full, "\"9\":false"));
     TEST_ASSERT_NOT_NULL(strstr(full, "\"0\":0"));
     free(full);
     v[9].b = 1;
     v[0].f = 21.5f;
-    ASSERT_JSON("{\"t\":\"state\",\"seq\":2,\"v\":{\"0\":21.5,\"9\":true},\"pc\":{}}", msg_state(2, &db, v, prev));
+    ASSERT_JSON("{\"t\":\"state\",\"seq\":2,\"v\":{\"0\":21.5,\"9\":true},\"pc\":{}}", msg_state(2, &db, v, prev, NULL, 0));
     free(v);
     free(prev);
 }
@@ -285,8 +285,8 @@ static void test_U36_5_machine_commands_acting_states_alarm_demo_download_ack(vo
     TEST_ASSERT_EQUAL_INT(AL_CLEAR, e.act);
     TEST_ASSERT_NULL(alarm_find(&m.alarms, "W0310"));
     /* download only in STOPPED: refused programs go back to be freed */
-    RtProg *p = (RtProg *)calloc(1, sizeof *p);
-    snprintf(p->crc, sizeof p->crc, "8FF94EA7");
+    Prog *p = (Prog *)calloc(1, sizeof *p);
+    snprintf(p->meta.crc, sizeof p->meta.crc, "8FF94EA7");
     c = cmd(OP_DOWNLOAD, 5);
     c.prog = p;
     machine_cmd(&m, &c, x + 17000000, NULL, NULL);
@@ -398,12 +398,12 @@ static void test_U36_7_queue_ring_and_triple_buffer(void)
     ValueTriple t;
     TEST_ASSERT_EQUAL_INT(0, vtri_init(&t, db.n, &A));
     db.t[9].v.b = 1;
-    vtri_publish(&t, &db);
+    vtri_publish(&t, &db, NULL, 0);
     db.t[9].v.b = 0;
-    vtri_publish(&t, &db); /* two publishes before a read: the reader gets the newest */
+    vtri_publish(&t, &db, NULL, 0); /* two publishes before a read: the reader gets the newest */
     TEST_ASSERT_EQUAL_UINT8(0, vtri_read(&t)[9].b);
     db.t[9].v.b = 1;
-    vtri_publish(&t, &db);
+    vtri_publish(&t, &db, NULL, 0);
     TEST_ASSERT_EQUAL_UINT8(1, vtri_read(&t)[9].b);
     TEST_ASSERT_EQUAL_UINT8(1, vtri_read(&t)[9].b); /* nothing new: the same copy */
     TEST_ASSERT_TRUE(t.back != t.front && t.back != (t.mid & 3u) && t.front != (t.mid & 3u)); /* three distinct buffers */
@@ -468,7 +468,7 @@ static void test_U36_8_websocket_round_trip_connect_ping_command_download(void)
     TEST_ASSERT_EQUAL_INT(0, tagdb_load(demo("tags.json"), &A, &db, &e));
     ValueTriple vt;
     TEST_ASSERT_EQUAL_INT(0, vtri_init(&vt, db.n, &A));
-    vtri_publish(&vt, &db);
+    vtri_publish(&vt, &db, NULL, 0);
     machine_init(&m, &r, 0);
     volatile uint32_t cmax = 1042;
     CommConf cc = {17600, "0.3.0-test", 1000, &cmax, &db, &q, &r, &vt, test_log};
@@ -515,23 +515,25 @@ static void test_U36_8_websocket_round_trip_connect_ping_command_download(void)
     send_text(cl, msg);
     TEST_ASSERT_TRUE(wait_cmd(&q, &c));
     TEST_ASSERT_EQUAL_INT(OP_DOWNLOAD, c.op);
-    TEST_ASSERT_EQUAL_STRING("8FF94EA7", c.prog->crc);
+    TEST_ASSERT_EQUAL_STRING("8FF94EA7", c.prog->meta.crc);
     machine_cmd(&m, &c, os_now_us(), &db, NULL);
-    TEST_ASSERT_EQUAL_INT(9, wait_rx(cm, 9));
+    TEST_ASSERT_EQUAL_INT(10, wait_rx(cm, 10));
     TEST_ASSERT_EQUAL_STRING("{\"t\":\"res\",\"id\":23,\"ok\":true,\"crc\":\"8FF94EA7\"}", g_rx[7]);
     TEST_ASSERT_NOT_NULL(strstr(g_rx[8], "\"prog\":\"8FF94EA7\""));
+    TEST_ASSERT_NOT_NULL(strstr(g_rx[9], "\"ev\":\"step\"")); /* step 37: every flow announced at its Start */
+    TEST_ASSERT_NOT_NULL(strstr(g_rx[9], "\"flow\":0,\"pc\":0}"));
     char *bad = strstr(msg, "\"tmo\":5000");
     TEST_ASSERT_NOT_NULL(bad);
     memcpy(bad, "\"tmo\":5001", 10); /* one digit changed */
     send_text(cl, msg);
-    TEST_ASSERT_EQUAL_INT(10, wait_rx(cm, 10));
-    TEST_ASSERT_NOT_NULL(strstr(g_rx[9], "\"ok\":false,\"err\":\"CRC\""));
+    TEST_ASSERT_EQUAL_INT(11, wait_rx(cm, 11));
+    TEST_ASSERT_NOT_NULL(strstr(g_rx[10], "\"ok\":false,\"err\":\"CRC\""));
 
     /* values: a changed tag reaches the studio in the next state frame */
     db.t[9].v.b = 1;
-    vtri_publish(&vt, &db);
-    TEST_ASSERT_EQUAL_INT(11, wait_rx(cm, 11));
-    TEST_ASSERT_NOT_NULL(strstr(g_rx[10], "\"v\":{\"9\":true}"));
+    vtri_publish(&vt, &db, NULL, 0);
+    TEST_ASSERT_EQUAL_INT(12, wait_rx(cm, 12));
+    TEST_ASSERT_NOT_NULL(strstr(g_rx[11], "\"v\":{\"9\":true}"));
 
     mg_close_connection(cl);
     for (int k = 0; k < 100 && comm_clients(cm); k++) os_sleep_ms(5);

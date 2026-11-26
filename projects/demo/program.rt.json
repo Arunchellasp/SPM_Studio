@@ -1,0 +1,19 @@
+{
+  "schema": "spm.rt/1", "crc": "20D80EEF", "tags_crc": "D45C7CCE",
+  "flows": [
+    {
+      "name": "S1_Main", "id": 0, "station": "S1", "autostart": false,
+      "steps": [
+        {"i":0,"src":"start","op":"START","next":1},
+        {"i":1,"src":"clamp","op":"SET_DO","tag":11,"val":1,"next":2},
+        {"i":2,"src":"closed","op":"WAIT_DI","tag":7,"val":1,"tmo":2000,"alarm":4,"next":3},
+        {"i":3,"src":"pick","op":"MOVE_ABS","axis":2,"point":14,"spd":100,"next":4},
+        {"i":4,"src":"dwell","op":"DELAY","ms":100,"next":5},
+        {"i":5,"src":"release","op":"SET_DO","tag":11,"val":0,"next":6},
+        {"i":6,"src":"open","op":"WAIT_DI","tag":8,"val":1,"tmo":2000,"alarm":4,"next":7},
+        {"i":7,"src":"place","op":"MOVE_ABS","axis":2,"point":15,"spd":100,"next":8},
+        {"i":8,"src":"end","op":"END"}
+      ]
+    }
+  ]
+}

@@ -2,7 +2,7 @@
  * Step 36 · the studio works with spm_rt instead of the mock: the built Electron app against the C runtime.
  *   UI-36.1 link Online with the runtime's version and cycle · UI-36.2 Reset / Start / Hold / Stop through the queue
  *   UI-36.3 the alarm demo on the SimCard: banner, Ack · UI-36.4 open the project, Download → the runtime's CRC
- *   UI-36.5 unplug (runtime killed) → OFFLINE within 3 s; replug (started again) → Online by itself
+ *   UI-36.5 unplug (runtime killed) → OFFLINE within 3 s; replug (started again) → Online by itself, with its program (step 37)
  *   UI-36.6 answers come back fast: ping and command round trips (a second client next to the studio)
  */
 import { spawn, type ChildProcess } from 'node:child_process'
@@ -142,7 +142,9 @@ test('UI-36.5 unplug: spm_rt killed → OFFLINE within 3 s, buttons off; replug:
   await startRuntime()
   await expect(link(page)).toHaveText('Online · 1.00 ms', { timeout: 10_000 }) // nobody clicked anything
   await expect(pill(page)).toHaveText('STOPPED') // a fresh runtime: its own state, not the old one
-  await expect(page.getByTestId('seq-status')).toHaveText(/no program/) // and no program until the next Download
+  // step 37: spm_rt loads program.rt.json at start-up (the studio wrote it at the Download of UI-36.4) — no new Download needed
+  await expect(page.getByTestId('seq-status')).not.toHaveText(/no program|other program/)
+  expect(rtLog).toContain('program 8FF94EA7 from')
 })
 
 test('UI-36.6 answers come back fast: 50 pings and 50 commands, p95 under 20 ms (TCP_NODELAY; was ~44 ms)', async () => {

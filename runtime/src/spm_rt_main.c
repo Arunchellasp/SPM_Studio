@@ -7,7 +7,8 @@
  * Next: flow engine (step 37).
  *
  *   spm_rt [config.json] [--seconds N]     (Ctrl+C stops; outputs go to safe, the summary is logged)
- *   exit codes: 1 config · 2 tags · 3 card · 4 I/O map · 5 RT thread · 6 WebSocket port
+ * Step 37: the flow engine — program.rt.json (loaded at start-up, or downloaded) runs in EXECUTE, one step table per flow.
+ *   exit codes: 1 config · 2 tags · 3 card · 4 I/O map · 5 RT thread · 6 WebSocket port · 7 program.rt.json refused
  */
 #ifdef _WIN32
 #ifndef _CRT_SECURE_NO_WARNINGS
@@ -42,6 +43,17 @@ typedef struct Runtime {
 } Runtime;
 static Runtime g;
 static FILE *g_log;
+
+/* step 37: the flows in the stats line — cycles (END reached) since start-up, and each flow's step */
+static const char *flows_note(const Machine *m)
+{
+    static char s[256];
+    if (!m->prog) return "";
+    int n = snprintf(s, sizeof s, "  flow cycles %u", m->cycles_total);
+    for (uint16_t i = 0; i < m->prog->n_flows && n > 0 && (size_t)n < sizeof s; i++)
+        n += snprintf(s + n, sizeof s - (size_t)n, " · %s step %u", m->prog->flow[i].name, m->inst[i].pc);
+    return s;
+}
 
 static void logf_(const char *fmt, ...)
 {
@@ -78,9 +90,10 @@ static void rt_cycle(void *user, uint64_t deadline_us, uint64_t start_us)
     r->card.vt->axes_update(&r->card, dt);
     Cmd c;
     for (int k = 0; k < 16 && !cmdq_pop(&r->cmdq, &c); k++) machine_cmd(&r->machine, &c, start_us, &r->tags, &r->card); /* 2. commands */
+    machine_flows(&r->machine, start_us);                                                 /* 3. flows (step 37) */
     machine_tick(&r->machine, start_us);                                                  /* 4. machine */
     io_write_outputs(&r->tags, &r->card, &r->io);                                         /* 5. outputs */
-    vtri_publish(&r->values, &r->tags);                                                   /* 6. values → comm */
+    vtri_publish(&r->values, &r->tags, r->machine.pcs, r->machine.prog ? (uint8_t)r->machine.prog->n_flows : 0); /* 6. → comm */
     stats_cycle(&r->stats, deadline_us, start_us, os_now_us());                           /* 7. statistics */
 }
 
@@ -122,8 +135,18 @@ int main(int argc, char **argv)
           g.tags.crc, g.io.n_in, g.io.n_out, g.card.vt->name, ((SimCard *)g.card.impl)->n_cyl);
 
     machine_init(&g.machine, &g.events, g.cfg.sim_demo_alarms);
+    machine_bind(&g.machine, &g.tags, &g.card);
+    Prog *prog = NULL;
+    int prc = prog_load_file(g.cfg.program_path, &g.tags, &prog, &e);
+    if (prc > 1) return fail(7, &e);
+    if (prog) {
+        machine_start_program(&g.machine, prog, os_now_us());
+        logf_("program %s from %s · %u flow%s, %u steps · runs in EXECUTE", prog->meta.crc, g.cfg.program_path, prog->n_flows,
+              prog->n_flows == 1 ? "" : "s", prog->meta.n_steps);
+    } else
+        logf_("no %s yet · Download one from the studio", g.cfg.program_path);
     if (vtri_init(&g.values, g.tags.n, &g.arena)) return fail(2, &(Err){"out of memory (value buffers)"});
-    vtri_publish(&g.values, &g.tags);
+    vtri_publish(&g.values, &g.tags, g.machine.pcs, 0);
     CommConf cc = {g.cfg.ws_port, SPM_RT_VERSION, g.cfg.cycle_us, &g.per_max_1s, &g.tags, &g.cmdq, &g.events, &g.values, logf_};
     Comm *comm = comm_start(&cc, &e);
     if (!comm) return fail(6, &e);
@@ -154,7 +177,7 @@ int main(int argc, char **argv)
             continue;
         }
         stats_line(&w, line, sizeof line);
-        logf_("t=%.0f s  %s  missed %u", (double)(os_now_us() - g.t0) / 1e6, line, g.rt.missed);
+        logf_("t=%.0f s  %s  missed %u%s", (double)(os_now_us() - g.t0) / 1e6, line, g.rt.missed, flows_note(&g.machine));
     }
     os_rt_stop(&g.rt);
     comm_pump(comm);
@@ -164,7 +187,7 @@ int main(int argc, char **argv)
     io_all_safe(&g.tags, &g.card, &g.io);
     card_close(&g.card);
     stats_line(&g.stats.total, line, sizeof line);
-    logf_("stopped after %.0f s · outputs safe · TOTAL %s  missed %u", (double)(os_now_us() - g.t0) / 1e6, line, g.rt.missed);
+    logf_("stopped after %.0f s · outputs safe · TOTAL %s  missed %u%s", (double)(os_now_us() - g.t0) / 1e6, line, g.rt.missed, flows_note(&g.machine));
     logf_("max jitter over the run: %u us (cycle %u us)", g.stats.total.jit_max, g.cfg.cycle_us);
     if (g_log) fclose(g_log);
     arena_free(&g.arena);

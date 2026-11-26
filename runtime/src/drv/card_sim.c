@@ -139,12 +139,22 @@ static int sim_move_abs(Card *c, int axis, double pos, double vel)
     return 0;
 }
 
+static void sim_stop_axes(Card *c)
+{
+    for (int i = 0; i < CARD_AX_MAX; i++) { /* the SimCard stops at once (a real card ramps down with its own deceleration) */
+        CardAxis *a = &c->ax[i];
+        a->target = a->pos;
+        a->moving = 0;
+        a->in_pos = 1;
+    }
+}
+
 static void sim_close(Card *c)
 {
     c->impl = NULL;
 }
 
-const CardVt SIM_CARD = {"SimCard", sim_open, sim_channel, sim_bind, sim_read_inputs, sim_write_outputs, sim_axes_update, sim_move_abs, sim_close};
+const CardVt SIM_CARD = {"SimCard", sim_open, sim_channel, sim_bind, sim_read_inputs, sim_write_outputs, sim_axes_update, sim_move_abs, sim_stop_axes, sim_close};
 
 int card_open(Card *c, const RtConfig *cfg, Err *e)
 {

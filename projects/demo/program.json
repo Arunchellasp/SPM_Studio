@@ -1,0 +1,31 @@
+{
+  "schema": "spm.program/1",
+  "flows": [
+    {
+      "name": "S1_Main",
+      "station": "S1",
+      "autostart": false,
+      "nodes": [
+        { "id": "start", "type": "start", "pos": [160, 16] },
+        { "id": "clamp", "type": "set_do", "pos": [112, 112], "p": { "tag": "DO_S1_ClampValve", "value": true } },
+        { "id": "closed", "type": "wait_di", "pos": [112, 208], "p": { "tag": "DI_S1_ClampClosed", "value": true, "timeout_ms": 2000, "alarm": "A_301_NoPart" } },
+        { "id": "pick", "type": "move_abs", "pos": [112, 304], "p": { "axis": "AX_S1_X", "point": "P_S1_Pick", "speed": 100 } },
+        { "id": "dwell", "type": "delay", "pos": [112, 400], "p": { "ms": 100 } },
+        { "id": "release", "type": "set_do", "pos": [112, 496], "p": { "tag": "DO_S1_ClampValve", "value": false } },
+        { "id": "open", "type": "wait_di", "pos": [112, 592], "p": { "tag": "DI_S1_ClampOpen", "value": true, "timeout_ms": 2000, "alarm": "A_301_NoPart" } },
+        { "id": "place", "type": "move_abs", "pos": [112, 688], "p": { "axis": "AX_S1_X", "point": "P_S1_Place", "speed": 100 } },
+        { "id": "end", "type": "end", "pos": [160, 784] }
+      ],
+      "edges": [
+        ["start", "clamp"],
+        ["clamp", "closed"],
+        ["closed", "pick"],
+        ["pick", "dwell"],
+        ["dwell", "release"],
+        ["release", "open"],
+        ["open", "place"],
+        ["place", "end"]
+      ]
+    }
+  ]
+}

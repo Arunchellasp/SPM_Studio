@@ -188,6 +188,44 @@ static int load_tag(const cJSON *j, Tag *t, uint16_t id, Arena *a, const char *f
         t->k = (float)((e1 - e0) / (r1 - r0));
         t->o = (float)(e0 - r0 * (e1 - e0) / (r1 - r0));
     }
+    if (k == K_AXIS) { /* step 37: speed and soft limits for MOVE_ABS */
+        if (!(t->axis = (AxisDef *)arena_push(a, sizeof(AxisDef)))) return err_set(e, 2, "load arena full");
+        const cJSON *vm = cJSON_GetObjectItemCaseSensitive(j, "vmax"), *ac = cJSON_GetObjectItemCaseSensitive(j, "acc");
+        const cJSON *lo = cJSON_GetObjectItemCaseSensitive(j, "soft_min"), *hi = cJSON_GetObjectItemCaseSensitive(j, "soft_max");
+        if (!cJSON_IsNumber(vm) || vm->valuedouble <= 0) return err_set(e, 2, "%s: axis \"%s\" needs vmax > 0", file, nm);
+        t->axis->vmax = (float)vm->valuedouble;
+        t->axis->acc = cJSON_IsNumber(ac) ? (float)ac->valuedouble : 0.0f;
+        t->axis->soft_min = cJSON_IsNumber(lo) ? (float)lo->valuedouble : 0.0f;
+        t->axis->soft_max = cJSON_IsNumber(hi) ? (float)hi->valuedouble : 0.0f;
+        if (t->axis->soft_min > t->axis->soft_max) return err_set(e, 2, "%s: axis \"%s\": soft_min > soft_max", file, nm);
+    }
+    if (k == K_POINT) { /* step 37: the position of each axis; the axis names are resolved in pass 2 */
+        const cJSON *ax = cJSON_GetObjectItemCaseSensitive(j, "axes"), *vals = cJSON_GetObjectItemCaseSensitive(j, "values");
+        int n = cJSON_GetArraySize(ax);
+        if (!cJSON_IsArray(ax) || !cJSON_IsArray(vals) || n != cJSON_GetArraySize(vals) || n < 1 || n > POINT_AXES)
+            return err_set(e, 2, "%s: point \"%s\" needs \"axes\" and \"values\" of the same length (1 … %d)", file, nm, POINT_AXES);
+        if (!(t->point = (PointDef *)arena_push(a, sizeof(PointDef)))) return err_set(e, 2, "load arena full");
+        for (int q = 0; q < n; q++) {
+            const cJSON *an = cJSON_GetArrayItem(ax, q), *v = cJSON_GetArrayItem(vals, q);
+            if (!cJSON_IsString(an) || !cJSON_IsNumber(v)) return err_set(e, 2, "%s: point \"%s\": axes are names, values numbers", file, nm);
+            t->point->axis_name[q] = arena_strdup(a, an->valuestring);
+            t->point->val[q] = (float)v->valuedouble;
+        }
+        t->point->n = (uint8_t)n;
+    }
+    if (k == K_ALARM) { /* step 37: raised by a WAIT_DI timeout */
+        if (!(t->alarm = (AlarmTagDef *)arena_push(a, sizeof(AlarmTagDef)))) return err_set(e, 2, "load arena full");
+        const cJSON *code = cJSON_GetObjectItemCaseSensitive(j, "code"), *tx = cJSON_GetObjectItemCaseSensitive(j, "text");
+        const cJSON *sev = cJSON_GetObjectItemCaseSensitive(j, "severity"), *re = cJSON_GetObjectItemCaseSensitive(j, "reaction");
+        if (cJSON_IsNumber(code))
+            snprintf(t->alarm->code, sizeof t->alarm->code, "A%d", code->valueint);
+        else
+            snprintf(t->alarm->code, sizeof t->alarm->code, "%.15s", nm);
+        t->alarm->text = arena_strdup(a, cJSON_IsString(tx) ? tx->valuestring : nm);
+        t->alarm->priority = (uint8_t)(cJSON_IsNumber(sev) && sev->valueint >= 1 && sev->valueint <= 3 ? sev->valueint : 2);
+        const char *r = cJSON_IsString(re) ? re->valuestring : "";
+        t->alarm->reaction = (uint8_t)(str_eq(r, "pause") ? AR_PAUSE : str_eq(r, "stop") ? AR_STOP : str_eq(r, "abort") ? AR_ABORT : AR_NONE);
+    }
     if (k == K_UDT) {
         const cJSON *ty = cJSON_GetObjectItemCaseSensitive(j, "type"), *fs = cJSON_GetObjectItemCaseSensitive(j, "fields");
         t->udt_type = cJSON_IsString(ty) ? arena_strdup(a, ty->valuestring) : "";
@@ -258,6 +296,13 @@ int tagdb_load(const char *path, Arena *a, TagDB *db, Err *e)
             int id = tagdb_find(db, target);
             if (id < 0) rc = err_set(e, 2, "%s: UDT \"%s\": field \"%s\" names \"%s\", which is not a tag", path, t->name, t->fields[f].name, target);
             else t->fields[f].tag = (uint16_t)id;
+        }
+        for (uint8_t q = 0; !rc && t->point && q < t->point->n; q++) { /* step 37: point axes → tag ids */
+            int id = tagdb_find(db, t->point->axis_name[q]);
+            if (id < 0 || db->t[id].kind != K_AXIS)
+                rc = err_set(e, 2, "%s: point \"%s\": \"%s\" is not an axis", path, t->name, t->point->axis_name[q]);
+            else
+                t->point->axis[q] = (uint16_t)id;
         }
     }
     cJSON_Delete(root);
